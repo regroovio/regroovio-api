@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const runApp = async (event) => {
+const app = async (event) => {
   try {
     const { token, limit, offset } = event;
     console.log({ token, limit, offset });
@@ -30,4 +30,4 @@ const getUserLikes = async (token, limit, offset) => {
   }
 };
 
-export { runApp };
+export { app };

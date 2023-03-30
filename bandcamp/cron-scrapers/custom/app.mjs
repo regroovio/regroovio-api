@@ -59,7 +59,7 @@ const isValidLink = (link) => {
     }
 };
 
-const runApp = async (event) => {
+const app = async (event) => {
     try {
         const { genre } = event || queryStringParameters;
         if (!genre) {
@@ -79,4 +79,4 @@ const runApp = async (event) => {
 };
 
 
-export { runApp };
+export { app };

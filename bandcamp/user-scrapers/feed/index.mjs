@@ -1,13 +1,13 @@
 // index.mjs
 
 import dotenv from "dotenv";
-import { runApp } from "./app.mjs";
+import { app } from "./app.mjs";
 
 dotenv.config();
 
 const handler = async (event, context) => {
     try {
-        const result = await runApp(event);
+        const result = await app(event);
         return {
             statusCode: 200,
             body: JSON.stringify(result),

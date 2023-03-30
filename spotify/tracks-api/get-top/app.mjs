@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const runApp = async (event) => {
+const app = async (event) => {
   try {
     const { token, type, time_range, limit, offset } = event;
     console.log({ token, type, time_range, limit, offset });
@@ -30,4 +30,4 @@ const getUserTop = async (token, type, time_range, limit, offset) => {
   }
 };
 
-export { runApp };
+export { app };

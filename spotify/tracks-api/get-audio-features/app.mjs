@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const runApp = async (event) => {
+const app = async (event) => {
   try {
     const { token, id } = event;
     console.log({ token, id });
@@ -30,4 +30,4 @@ const getAudioFeatures = async (token, id) => {
   }
 };
 
-export { runApp };
+export { app };

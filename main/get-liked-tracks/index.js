@@ -8,7 +8,7 @@ import { AWS_DYNAMO } from "./common/config.mjs";
 
 const lambdaClient = new LambdaClient({ region: 'us-east-1' });
 
-const runApp = async () => {
+const app = async () => {
     const userId = process.env.ADMIN_ID;
     let user = await getUserById(userId);
 
@@ -113,4 +113,4 @@ const invokeLambda = async (params) => {
     }
 }
 
-runApp();
+app();

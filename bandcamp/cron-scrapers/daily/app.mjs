@@ -56,7 +56,7 @@ const isValidLink = (link) => {
     }
 };
 
-const runApp = async (event) => {
+const app = async (event) => {
     try {
         const table = `bandcamp-daily-${process.env.STAGE}`;
         await createTable(table);
@@ -72,4 +72,4 @@ const runApp = async (event) => {
 };
 
 
-export { runApp };
+export { app };

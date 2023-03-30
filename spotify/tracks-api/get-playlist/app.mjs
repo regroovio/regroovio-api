@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const runApp = async (event) => {
+const app = async (event) => {
   try {
     const { token, playlistName } = event;
     console.log(token, playlistName);
@@ -52,4 +52,4 @@ const getUserPlaylists = async (token, limit = 20, offset = 0) => {
   }
 };
 
-export { runApp };
+export { app };

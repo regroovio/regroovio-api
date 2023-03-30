@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const runApp = async (event) => {
+const app = async (event) => {
   try {
     const { token, playlist, tracks } = event
     console.log(token, playlist, tracks);
@@ -72,4 +72,4 @@ const addTracksToPlaylist = async (token, playlist, tracksToAdd) => {
   }
 };
 
-export { runApp };
+export { app };

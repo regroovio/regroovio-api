@@ -6,7 +6,7 @@ import { saveCookies } from "./common/saveCookies.mjs";
 import { getUserById } from './common/getUserById.mjs';
 import { initializePuppeteer } from "./common/browser.mjs";
 
-const runApp = async (event, context) => {
+const app = async (event, context) => {
     const user_id = event.user_id || event.queryStringParameters.user_id;
     const { browser, page } = await initializePuppeteer(event);
     let user;
@@ -78,4 +78,4 @@ const getTokens = async (page) => {
     } catch { }
 };
 
-export { runApp };
+export { app };

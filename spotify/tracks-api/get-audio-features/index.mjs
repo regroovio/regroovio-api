@@ -1,10 +1,10 @@
 // index.mjs
 
-import { runApp } from './app.mjs';
+import { app } from './app.mjs';
 
 const handler = async (event, context) => {
     try {
-        const result = await runApp(event);
+        const result = await app(event);
         return {
             statusCode: 200,
             body: JSON.stringify(result),

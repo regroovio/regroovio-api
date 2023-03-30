@@ -66,7 +66,7 @@ const isValidLink = (link) => {
     }
 };
 
-const runApp = async (event) => {
+const app = async (event) => {
     try {
         const { user_id } = event || queryStringParameters;
         if (!user_id) {
@@ -90,6 +90,6 @@ const runApp = async (event) => {
     }
 };
 
-export { runApp };
+export { app };
 
 

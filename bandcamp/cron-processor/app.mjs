@@ -13,7 +13,7 @@ const documentClient = DynamoDBDocument.from(new DynamoDB({
 }));
 
 
-const runApp = async (event, context) => {
+const app = async (event, context) => {
     try {
         const table = `bandcamp-${event.table}-${process.env.STAGE}`;
         console.log(`Getting ${table}`);
@@ -98,4 +98,4 @@ const addAlbumToDb = async (table, album) => {
     }
 };
 
-export { runApp }
+export { app }
