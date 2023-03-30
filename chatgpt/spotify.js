@@ -29,7 +29,6 @@ const runApp = async () => {
         try {
             const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
             user.spotify_access_token = tokens.access_token;
-            console.log('tokens ', tokens);
             console.log('access_token ', tokens.access_token);
             if (tokens?.expirationTimestamp) {
                 console.log('expiration_timestamp_spotify ', tokens.expirationTimestamp);
@@ -48,11 +47,11 @@ const runApp = async () => {
     }
 
 
-    const playlist = await getPlaylist({
-        FunctionName: 'spotify-get-playlist-dev',
-        Payload: JSON.stringify({ token, playlistName: 'likes' })
+    const likedTracks = await getPlaylist({
+        FunctionName: 'spotify-get-likes-dev',
+        Payload: JSON.stringify({ token, limit: 100, offset: 0 })
     });
-    console.log(playlist);
+    console.log(JSON.parse(likedTracks));
 }
 
 

@@ -2,9 +2,9 @@ import axios from "axios";
 
 const runApp = async (event) => {
   try {
-    const { token, playlistName } = event;
+    const { token, limit, offset } = event;
     console.log(token, playlistName);
-    const userData = await getUserLikes(token);
+    const userData = await getUserLikes(token, limit, offset);
 
     return { statusCode: 200, body: userData };
   } catch (err) {
@@ -13,11 +13,8 @@ const runApp = async (event) => {
   }
 };
 
-const getUserLikes = async (token) => {
+const getUserLikes = async (token, limit, offset) => {
   try {
-    const limit = 20;
-    const offset = 0;
-
     const response = await axios.get(`https://api.spotify.com/v1/me/tracks?limit=${limit}&offset=${offset}`, {
       headers: {
         Accept: "application/json",
@@ -27,7 +24,7 @@ const getUserLikes = async (token) => {
     });
 
     console.log("response: ", response.data);
-    return response.data;
+    return response.data.items;
   } catch (error) {
     return error.data;
   }
