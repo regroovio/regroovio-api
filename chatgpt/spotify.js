@@ -30,10 +30,8 @@ const runApp = async () => {
             const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
             user.spotify_access_token = tokens.access_token;
             console.log('access_token ', tokens.access_token);
-            if (tokens?.expirationTimestamp) {
-                console.log('expiration_timestamp_spotify ', tokens.expirationTimestamp);
-                user.expiration_timestamp_spotify = tokens.expirationTimestamp;
-            }
+            console.log('expiration_timestamp_spotify ', tokens.expirationTimestamp);
+            user.expiration_timestamp_spotify = tokens.expirationTimestamp;
             if (tokens?.refresh_token) {
                 console.log('refresh_token ', tokens.refresh_token);
                 user.refresh_token_spotify = tokens.refresh_token;
