@@ -22,7 +22,7 @@ const getUserData = async (token) => {
     });
     return response.data;
   } catch (error) {
-    throw new Error(`Failed to fetch user data: ${error.response.statusText}`);
+    throw new Error(`Failed to fetch user data: ${error}`);
   }
 };
 
