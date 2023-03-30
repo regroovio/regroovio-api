@@ -42,6 +42,10 @@ jobs:
             path: "./spotify/tracks-api/get-playlist"
           - name: "spotify-get-recommendations"
             path: "./spotify/tracks-api/get-recommendations"
+          - name: "spotify-get-likes"
+            path: "./spotify/tracks-api/get-likes"
+          - name: "spotify-get-top"
+            path: "./spotify/tracks-api/get-top"
 
           # Sporify Auth API
           - name: "spotify-login"
