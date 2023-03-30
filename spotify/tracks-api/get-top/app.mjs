@@ -2,21 +2,20 @@ import axios from "axios";
 
 const runApp = async (event) => {
   try {
-    const { token, playlistName } = event;
-    console.log(token, playlistName);
-    const userData = await getUserLikes(token);
+    const { token, type, time_range, limit, offset } = event;
+    console.log({ token, type, time_range, limit, offset });
+    const userData = await getUserTop(token, type, time_range, limit, offset);
 
     return { statusCode: 200, body: userData };
   } catch (err) {
-    console.log("Error getting playlist:");
+    console.log("Error getting user's top items:");
     console.log(err);
   }
 };
 
-
-const getUserLikes = async (token) => {
+const getUserTop = async (token, type, time_range, limit, offset) => {
   try {
-    const response = await axios.get("https://api.spotify.com/v1/me", {
+    const response = await axios.get(`https://api.spotify.com/v1/me/top/${type}?time_range=${time_range}&limit=${limit}&offset=${offset}`, {
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
@@ -24,9 +23,8 @@ const getUserLikes = async (token) => {
       },
     });
 
-    // get the users liked songs and return them
     console.log("response: ", response.data);
-    return response.data;
+    return response.data.items;
   } catch (error) {
     return error.data;
   }
