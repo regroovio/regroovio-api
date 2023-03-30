@@ -51,7 +51,7 @@ const runApp = async () => {
         FunctionName: 'spotify-get-likes-dev',
         Payload: JSON.stringify({ token, limit: 100, offset: 0 })
     });
-    console.log(JSON.parse(likedTracks));
+    console.log(likedTracks);
 }
 
 

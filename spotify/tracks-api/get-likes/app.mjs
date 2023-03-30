@@ -3,7 +3,7 @@ import axios from "axios";
 const runApp = async (event) => {
   try {
     const { token, limit, offset } = event;
-    console.log(token, playlistName);
+    console.log({ token, limit, offset });
     const userData = await getUserLikes(token, limit, offset);
 
     return { statusCode: 200, body: userData };
