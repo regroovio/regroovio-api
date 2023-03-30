@@ -22,10 +22,10 @@ const getUserData = async (token) => {
         'Authorization': `Bearer ${token}`,
       },
     });
-    console.log(response.data);
+    console.log(response);
     return response.data;
   } catch (error) {
-    console.log(error.data);
+    console.log(response);
     return error.data
   }
 };
