@@ -25,7 +25,7 @@ const getUserData = async (token) => {
     console.log(response);
     return response.data;
   } catch (error) {
-    console.log(response);
+    console.log(error);
     return error.data
   }
 };
