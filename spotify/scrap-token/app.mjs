@@ -22,7 +22,6 @@ const runApp = async (event, context) => {
 
     try {
         const tokens = await handleAuthentication(page, user);
-        console.log(tokens);
         await page.close();
         await browser.close();
         await saveTokens(user, tokens);
@@ -35,9 +34,9 @@ const runApp = async (event, context) => {
 
 const handleAuthentication = async (page, user) => {
     let endpoint = `${AUTH_LAMBDA}/login`;
-    if (user.spotify_refresh_token) {
+    if (user.refresh_token_spotify) {
         console.log('Refreshing token');
-        endpoint = `${AUTH_LAMBDA}/refresh?refresh_token=${user.spotify_refresh_token}`
+        endpoint = `${AUTH_LAMBDA}/refresh?refresh_token=${user.refresh_token_spotify}`
     } else if (!user.spotify_cookies?.length) {
         console.log('Logging in using credentials');
     } else {

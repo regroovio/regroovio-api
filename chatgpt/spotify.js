@@ -6,29 +6,25 @@ const client = new LambdaClient({ region: 'us-east-1' });
 
 const runApp = async () => {
     const user_id = process.env.ADMIN_ID;
-
     const user = await getUserById(user_id);
-
-    console.log(user);
-    return
-
-
-
-    const token = await getToken({
-        FunctionName: 'spotify-token-dev',
-        Payload: JSON.stringify({ user_id })
-    });
-
+    let token = user.spotify_access_token
+    const remainingTime = user.spotify_expiration_timestamp - new Date().getTime();
+    const isTokenExpiringSoon = remainingTime <= 30 * 60 * 1000;
+    if (isTokenExpiringSoon) {
+        token = await getToken({
+            FunctionName: 'spotify-token-dev',
+            Payload: JSON.stringify({ user_id })
+        });
+    }
     console.log(token);
-
     const playlist = await getPlaylist({
         FunctionName: 'spotify-get-playlist-dev',
         Payload: JSON.stringify({ token, playlistName: 'likes' })
     });
 
     console.log(playlist);
-
 }
+
 
 const getToken = async (params) => {
     try {

@@ -2,15 +2,9 @@ const runApp = async (event) => {
   try {
     const { token, playlistName } = event
     console.log(token, playlistName);
-    return { statusCode: 200, body: 'getting playlist' }
-
-
-
-    // const playlistNameUpper = `${playlistName} ${new Date().getFullYear()}`.toUpperCase();
-    // const userData = await getUserData(token);
-    // const { id: user_id } = userData;
-    // const playlist = await checkOutPlaylist(user_id, playlistNameUpper, token);
-    // return { statusCode: 200, body: playlist }
+    const userData = await getUserData(token);
+    console.log(userData);
+    return { statusCode: 200, body: userData }
   } catch (err) {
     console.log('Error getting playlist:');
     console.log(err);
