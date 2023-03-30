@@ -26,7 +26,7 @@ const runApp = async (event, context) => {
         await browser.close();
         await saveTokens(user, tokens);
 
-        return tokens.access_token
+        return tokens
     } catch (err) {
         throw new Error(`Error retrieving token: ${err}`);
     }

@@ -28,8 +28,8 @@ app.get('/callback', async (req, res) => {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       });
-      const { access_token, refresh_token } = response.data;
-      res.send({ access_token, refresh_token });
+      const { access_token, refresh_token, expires_in } = response.data;
+      res.send({ access_token, refresh_token, expires_in });
     } catch (error) {
       res.status(500).send({ error: error.message });
     }
