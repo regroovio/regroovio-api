@@ -28,8 +28,11 @@ app.get('/callback', async (req, res) => {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       });
+      console.log(response.data);
       const { access_token, refresh_token, expires_in } = response.data;
-      res.send({ access_token, refresh_token, expires_in });
+      const expirationTimestamp = new Date().getTime() + (expires_in * 1000);
+      console.log(expirationTimestamp);
+      res.send({ access_token, refresh_token, expirationTimestamp });
     } catch (error) {
       res.status(500).send({ error: error.message });
     }

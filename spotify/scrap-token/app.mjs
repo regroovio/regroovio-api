@@ -22,6 +22,7 @@ const runApp = async (event, context) => {
 
     try {
         const tokens = await handleAuthentication(page, user);
+        console.log(tokens);
         await page.close();
         await browser.close();
         await saveTokens(user, tokens);
