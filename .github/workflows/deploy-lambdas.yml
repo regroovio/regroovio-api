@@ -1,0 +1,91 @@
+name: Deploy Lambdas
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: "The stage to deploy to (dev or prod)"
+        type: choice
+        options:
+          - dev
+          - prod
+        required: true
+
+jobs:
+  deploy_lambdas:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        function:
+          # Bandcamp Crons
+          - name: "bandcamp-cron-processor"
+            path: "./bandcamp/cron-processor"
+          - name: "bandcamp-cron-daily"
+            path: "./bandcamp/cron-scrapers/daily"
+          - name: "bandcamp-cron-custom"
+            path: "./bandcamp/cron-scrapers/custom"
+          - name: "bandcamp-cron-wishlist"
+            path: "./bandcamp/user-scrapers/wishlist"
+          - name: "bandcamp-cron-collection"
+            path: "./bandcamp/user-scrapers/collection"
+          - name: "bandcamp-cron-feed"
+            path: "./bandcamp/user-scrapers/feed"
+
+          # Sporify Token Scraper
+          - name: "spotify-token"
+            path: "./spotify/scrap-token"
+
+          # Sporify Tracks API
+          - name: "spotify-tracks"
+            path: "./spotify/tracks-api"
+
+          # Sporify Auth API
+          - name: "spotify-login"
+            path: "./spotify/auth-api/login"
+          - name: "spotify-callback"
+            path: "./spotify/auth-api/callback"
+          - name: "spotify-refresh"
+            path: "./spotify/auth-api/refresh"
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Install dependencies
+        run: |
+          cd ${{ matrix.function.path }}
+          npm i
+
+      - name: Package Lambda function
+        run: |
+          cd ${{ matrix.function.path }}
+          zip -r ${{ matrix.function.name }}-${{ inputs.stage }}.zip .
+          aws s3 cp ${{ matrix.function.name }}-${{ inputs.stage }}.zip s3://lambdas-regroovio-${{ inputs.stage }}
+          rm ${{ matrix.function.name }}-${{ inputs.stage }}.zip
+
+      - name: Update Lambda function code
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ matrix.function.name }}-${{ inputs.stage }} \
+            --s3-bucket lambdas-regroovio-${{ inputs.stage }} \
+            --s3-key ${{ matrix.function.name }}-${{ inputs.stage }}.zip
+
+      - name: Wait for Lambda update
+        run: |
+          aws lambda wait function-updated --function-name ${{ matrix.function.name }}-${{ inputs.stage }}
+
+      - name: Update Lambda function configuration
+        run: |
+          aws lambda update-function-configuration \
+          --function-name ${{ matrix.function.name }}-${{ inputs.stage }} \
+          --region us-east-1 \
+          --environment "Variables={
+          AUTH_LAMBDA=\"https://${{ inputs.stage }}.auth.regroovio.com\",
+          STAGE=\"${{ inputs.stage }}\",
+          ${{ secrets.LAMBDAS_ENV }}
+          }"
