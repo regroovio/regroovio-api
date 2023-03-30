@@ -36,8 +36,12 @@ jobs:
             path: "./spotify/scrap-token"
 
           # Sporify Tracks API
-          - name: "spotify-tracks"
-            path: "./spotify/tracks-api"
+          - name: "spotify-add-tracks"
+            path: "./spotify/tracks-api/add-tracks"
+          - name: "spotify-get-playlist"
+            path: "./spotify/tracks-api/get-playlist"
+          - name: "spotify-get-recommendations"
+            path: "./spotify/tracks-api/get-recommendations"
 
           # Sporify Auth API
           - name: "spotify-login"
