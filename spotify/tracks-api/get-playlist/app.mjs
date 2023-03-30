@@ -1,3 +1,5 @@
+import axios from "axios";
+
 const runApp = async (event) => {
   try {
     const { token, playlistName } = event
@@ -22,7 +24,7 @@ const getUserData = async (token) => {
     });
     return response.data;
   } catch (error) {
-    throw new Error(`Failed to fetch user data: ${error}`);
+    return error
   }
 };
 
