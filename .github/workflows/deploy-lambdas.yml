@@ -63,7 +63,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd ${{ matrix.function.path }}
-          npm ci
+          npm ci --production
 
       - name: Cache Node modules
         uses: actions/cache@v2
