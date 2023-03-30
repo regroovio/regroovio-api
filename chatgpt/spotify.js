@@ -26,17 +26,26 @@ const runApp = async () => {
             token = tokens.access_token;
         }
     }
+    const tracksUris = [];
+
     const likedTracks = JSON.parse(await lambda({
         FunctionName: 'spotify-get-likes-dev',
         Payload: JSON.stringify({ token, limit: 50, offset: 0 })
     })).body
-    // console.log(likedTracks);
-
+    for (const track of likedTracks) {
+        tracksUris.push(track.track.uri);
+    }
     const topTracks = JSON.parse(await lambda({
         FunctionName: 'spotify-get-top-dev',
         Payload: JSON.stringify({ token, type: 'tracks', time_range: 'medium_term', limit: 50, offset: 0 })
     })).body
-    console.log(topTracks);
+    for (const track of topTracks) {
+        tracksUris.push(track.uri);
+    }
+
+
+
+    console.log(tracksUris);
 };
 
 
