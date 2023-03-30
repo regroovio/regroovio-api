@@ -26,22 +26,34 @@ const runApp = async () => {
             token = tokens.access_token;
         }
     }
-    const tracksUris = [];
+    const tracksIds = [];
 
     const likedTracks = JSON.parse(await lambda({
         FunctionName: 'spotify-get-likes-dev',
         Payload: JSON.stringify({ token, limit: 50, offset: 0 })
     })).body
     for (const track of likedTracks) {
-        tracksUris.push(track.track.uri);
+        tracksIds.push(track.track.id);
     }
     const topTracks = JSON.parse(await lambda({
         FunctionName: 'spotify-get-top-dev',
         Payload: JSON.stringify({ token, type: 'tracks', time_range: 'medium_term', limit: 50, offset: 0 })
     })).body
     for (const track of topTracks) {
-        tracksUris.push(track.uri);
+        tracksIds.push(track.id);
     }
+
+    console.log(tracksIds);
+    return
+
+    for (const id of tracksIds) {
+        const features = JSON.parse(await lambda({
+            FunctionName: 'spotify-get-audio-features-dev',
+            Payload: JSON.stringify({ token, id: id })
+        })).body
+        console.log(features);
+    }
+
 
 
 
@@ -54,7 +66,7 @@ const updateUserTokens = async (user, tokens) => {
     try {
         const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
         user.spotify_access_token = tokens.access_token;
-        user.spotify_expiration_timestamp = tokens.expirationTimestamp;
+        user.spotify_expiration_timestamp = tokens.expiration_timestamp;
 
         if (tokens?.refresh_token) {
             user.refresh_token_spotify = tokens.refresh_token;

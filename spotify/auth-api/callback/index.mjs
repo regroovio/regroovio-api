@@ -30,8 +30,8 @@ app.get('/callback', async (req, res) => {
       });
       console.log(response.data);
       const { access_token, refresh_token, expires_in } = response.data;
-      const expirationTimestamp = new Date().getTime() + (expires_in * 1000);
-      res.send({ access_token, refresh_token, expirationTimestamp });
+      const expiration_timestamp = new Date().getTime() + (expires_in * 1000);
+      res.send({ access_token, refresh_token, expiration_timestamp });
     } catch (error) {
       res.status(500).send({ error: error.message });
     }
