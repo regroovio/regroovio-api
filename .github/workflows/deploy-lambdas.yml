@@ -28,6 +28,7 @@ jobs:
             path: "./bandcamp/user-scrapers/wishlist"
           - name: "bandcamp-cron-collection"
             path: "./bandcamp/user-scrapers/collection"
+
           - name: "bandcamp-cron-feed"
             path: "./bandcamp/user-scrapers/feed"
 
