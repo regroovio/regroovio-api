@@ -1,3 +1,5 @@
+import axios from "axios";
+
 const runApp = async (event) => {
   try {
     const { token, playlist, tracks } = event
