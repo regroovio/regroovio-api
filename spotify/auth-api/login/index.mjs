@@ -31,7 +31,7 @@ const scopes = [
   'user-follow-modify',
 ];
 
-function generateRandomString(length) {
+const generateRandomString = (length) => {
   let text = '';
   const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   for (let i = 0; i < length; i++) {

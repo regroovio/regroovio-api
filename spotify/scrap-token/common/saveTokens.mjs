@@ -8,7 +8,7 @@ const saveTokens = async (user, tokens) => {
     try {
         const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
         user.access_token = tokens.access_token;
-        if (tokens.refresh_token) {
+        if (tokens?.refresh_token) {
             user.refresh_token = tokens.refresh_token;
         }
         await documentClient.put({ TableName: "users", Item: user });

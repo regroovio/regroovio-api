@@ -17,16 +17,16 @@ const userInterface = readline.createInterface({
 
 const previousMessages = [];
 
-function displayLoadingIndicator() {
+const displayLoadingIndicator = () => {
   process.stdout.write("Loading...");
 }
 
-function clearLoadingIndicator() {
+const clearLoadingIndicator = () => {
   readline.clearLine(process.stdout, 0);
   readline.cursorTo(process.stdout, 0);
 }
 
-async function getChatCompletion(userInput) {
+const getChatCompletion = async (userInput) => {
   previousMessages.push({ role: "user", content: userInput });
   const response = await openAi.createChatCompletion({
     model: "gpt-3.5-turbo",

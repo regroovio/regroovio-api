@@ -6,7 +6,7 @@ import { addExtra } from 'puppeteer-extra';
 import chromium from 'chrome-aws-lambda';
 import userAgent from 'user-agents';
 
-const initializePuppeteer = async function (event) {
+const initializePuppeteer = async (event) => {
     const puppeteerExtra = addExtra(chromium.puppeteer);
     puppeteerExtra.use(pluginStealth());
     puppeteerExtra.use(

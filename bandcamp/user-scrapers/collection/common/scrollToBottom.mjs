@@ -1,6 +1,6 @@
 // scrollToBottom.mjs
 
-async function scrollToBottom(page) {
+const scrollToBottom = async (page) => {
     await page.evaluate("window.scrollTo(0,9999999999999999)");
 }
 

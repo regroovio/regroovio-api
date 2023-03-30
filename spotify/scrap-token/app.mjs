@@ -20,11 +20,8 @@ const runApp = async (event, context) => {
         throw new Error(`Error retrieving user from DynamoDB: ${err}`);
     }
 
-    console.log(`Logging in to: ${user.username_spotify}`);
     try {
-        await handleAuthentication(page, user);
-        const tokens = await getTokens(page);
-
+        const tokens = await handleAuthentication(page, user);
         await page.close();
         await browser.close();
         await saveTokens(user, tokens);
@@ -36,28 +33,22 @@ const runApp = async (event, context) => {
 };
 
 const handleAuthentication = async (page, user) => {
-    let access_token = null;
+    let endpoint = `${AUTH_LAMBDA}/login`;
     if (user.refresh_token) {
         console.log('Refreshing token');
-        try {
-            await page.goto(`${AUTH_LAMBDA}/refresh?refresh_token=${user.refresh_token}`);
-            const tokens = await getTokens(page);
-            access_token = tokens.access_token;
-        } catch (err) {
-            console.log(`Error refreshing token: ${err}`);
-        }
+        endpoint = `${AUTH_LAMBDA}/refresh?refresh_token=${user.refresh_token}`
+    } else if (!user.spotify_cookies?.length) {
+        console.log('Logging in using credentials');
+    } else {
+        console.log('Using cookies');
+        await page.setCookie(...user.spotify_cookies);
     }
-    if (!access_token) {
-        if (!user.spotify_cookies?.length) {
-            console.log('Logging in using credentials');
-            await page.goto(`${AUTH_LAMBDA}/login`);
-        } else {
-            console.log('Using cookies');
-            await page.setCookie(...user.spotify_cookies);
-            await page.goto(`${AUTH_LAMBDA}/login`);
-        }
-        await enterCredentialsAndAcceptAuth(page, user);
+    await page.goto(endpoint);
+    const tokens = await getTokens(page);
+    if (tokens?.length) {
+        return tokens
     }
+    return await enterCredentialsAndAcceptAuth(page, user);
 };
 
 const enterCredentialsAndAcceptAuth = async (page, user) => {
@@ -77,11 +68,14 @@ const enterCredentialsAndAcceptAuth = async (page, user) => {
             console.log(`Error accepting authorization: ${err}`);
         }
     }
+    return await getTokens(page);
 };
 
 const getTokens = async (page) => {
-    await page.waitForSelector('pre');
-    return JSON.parse(await page.evaluate(() => document.querySelector('pre').innerText));
+    try {
+        await page.waitForSelector('pre', { timeout: 1000 });
+        return JSON.parse(await page.evaluate(() => document.querySelector('pre').innerText));
+    } catch { }
 };
 
 export { runApp };

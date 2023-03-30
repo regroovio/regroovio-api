@@ -50,7 +50,7 @@ const new_song = {
     musicEra: "90s",
 };
 
-async function predictSongLikelihood(likedSongs, newSong) {
+const predictSongLikelihood = async (likedSongs, newSong) => {
     const systemPrompt = `Given the following liked songs of a user:\n\n${likedSongs.map(song => JSON.stringify(song, null, 2)).join("\n\n")}\n\nPredict the likelihood the user will like this new song:\n\n${JSON.stringify(newSong, null, 2)}\n\nLikelihood (1 to 10): `;
     const messages = [{ role: "system", content: systemPrompt }];
 
@@ -62,7 +62,7 @@ async function predictSongLikelihood(likedSongs, newSong) {
     return likelihood;
 }
 
-async function getRecommendation() {
+const getRecommendation = async () => {
     const likelihood = await predictSongLikelihood(liked_songs, new_song);
     return { song: new_song.name, likelihood: likelihood };
 }
