@@ -18,7 +18,14 @@ const app = async () => {
     }
 
     let token = user.spotify_access_token || null;
+    await refreshTokenIfNecessary(user, token);
 
+    const tracks = await fetchTracks(token);
+    const tracksWithFeatures = await enrichTracksWithFeatures(tracks, token);
+    await saveTracksWithFeatures(user, tracksWithFeatures);
+};
+
+const refreshTokenIfNecessary = async (user, token) => {
     if (token) {
         const remainingTimeInMinutes = (user.spotify_expiration_timestamp - Date.now()) / 1000 / 60;
         console.log("Remaining time in minutes:", remainingTimeInMinutes.toFixed(0));
@@ -26,33 +33,27 @@ const app = async () => {
             console.log('Token is expiring soon or already expired, refreshing...');
             const tokens = JSON.parse(await invokeLambda({
                 FunctionName: 'spotify-token-dev',
-                Payload: JSON.stringify({ user_id: userId })
+                Payload: JSON.stringify({ user_id: user.id })
             }));
             await updateUserTokens(user, tokens);
             token = tokens.access_token;
         }
     }
-    const tracks = [];
+};
 
+const fetchTracks = async (token) => {
     const likedTracks = JSON.parse(await invokeLambda({
         FunctionName: 'spotify-get-likes-dev',
         Payload: JSON.stringify({ token, limit: 50, offset: 0 })
     })).body;
-    for (const track of likedTracks) {
-        tracks.push(track.track);
-    }
 
     const topTracks = JSON.parse(await invokeLambda({
         FunctionName: 'spotify-get-top-dev',
         Payload: JSON.stringify({ token, type: 'tracks', time_range: 'medium_term', limit: 50, offset: 0 })
     })).body;
-    for (const track of topTracks) {
-        tracks.push(track);
-    }
 
-    const tracksWithFeatures = await enrichTracksWithFeatures(tracks, token);
-    await saveTracksWithFeatures(user, tracksWithFeatures);
-}
+    return [...likedTracks.map(t => t.track), ...topTracks];
+};
 
 const enrichTracksWithFeatures = async (tracks, token) => {
     const tracksWithFeatures = [];
@@ -62,29 +63,33 @@ const enrichTracksWithFeatures = async (tracks, token) => {
             FunctionName: 'spotify-get-audio-features-dev',
             Payload: JSON.stringify({ token, id: track.id })
         })).body;
-        trackWithFeatures.popularity = track.popularity;
-        trackWithFeatures.release_date = track.album.release_date;
-        trackWithFeatures.album = track.album.name;
-        trackWithFeatures.name = track.name;
-        delete trackWithFeatures.type;
-        delete trackWithFeatures.track_href;
-        delete trackWithFeatures.analysis_url;
+        enrichTrackInfo(trackWithFeatures, track);
         tracksWithFeatures.push(trackWithFeatures);
     }
 
     return tracksWithFeatures;
-}
+};
+
+const enrichTrackInfo = (trackWithFeatures, track) => {
+    trackWithFeatures.popularity = track.popularity;
+    trackWithFeatures.release_date = track.album.release_date;
+    trackWithFeatures.album = track.album.name;
+    trackWithFeatures.name = track.name;
+    delete trackWithFeatures.type;
+    delete trackWithFeatures.track_href;
+    delete trackWithFeatures.analysis_url;
+};
 
 const saveTracksWithFeatures = async (user, tracksWithFeatures) => {
     try {
         const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
-        user.liked_tracks = tracksWithFeatures
+        user.liked_tracks = tracksWithFeatures;
         await documentClient.put({ TableName: "users", Item: user });
     } catch (err) {
         console.error(`Error saveTracksWithFeatures: ${err}`);
         throw err;
     }
-}
+};
 
 const updateUserTokens = async (user, tokens) => {
     try {
@@ -99,7 +104,7 @@ const updateUserTokens = async (user, tokens) => {
         console.error(`Error updateUserTokens: ${err}`);
         throw err;
     }
-}
+};
 
 const invokeLambda = async (params) => {
     try {
@@ -111,6 +116,6 @@ const invokeLambda = async (params) => {
     } catch (error) {
         console.error('Error invoking Lambda function:', error);
     }
-}
+};
 
 app();
