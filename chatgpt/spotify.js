@@ -14,9 +14,8 @@ const runApp = async () => {
     console.log(token);
 
     const playlist = await getPlaylist({
-        FunctionName: 'spotify-tracks-dev',
+        FunctionName: 'spotify-get-playlist-dev',
         Payload: JSON.stringify({
-            method: token,
             token: token,
             playlistName: 'likes'
         })

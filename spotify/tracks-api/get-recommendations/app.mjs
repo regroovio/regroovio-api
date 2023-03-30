@@ -2,7 +2,9 @@ const runApp = async (event) => {
   try {
     const { id, token } = event
     console.log(id, token);
-    return { statusCode: 200, body: 'getting audio features' }
+    return { statusCode: 200, body: 'getting recommendations' }
+
+
 
     // const audioFeatures = await getAudioFeaturesForTracks(token, [id]);
     // const trackRecommendations = await getRecommendations(token, { min_energy: +min_energy, seed_tracks: [id], min_popularity: +min_popularity });
