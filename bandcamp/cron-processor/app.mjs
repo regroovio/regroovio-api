@@ -29,7 +29,6 @@ const runApp = async (event, context) => {
                 const { linkInfo, streams } = data;
                 const tracksS3 = await Promise.all(streams.map(stream => uploadAlbumData(stream, linkInfo)));
                 const albumDetails = {
-                    release_date: linkInfo.releaseDate,
                     artist_name: linkInfo.artist.name,
                     key_words: linkInfo.keywords,
                     album_name: linkInfo.name,

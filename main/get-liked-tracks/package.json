@@ -1,5 +1,5 @@
 {
-  "name": "chatgpt",
+  "name": "get-liked-tracks",
   "version": "1.0.0",
   "type": "module",
   "main": "index.mjs",
@@ -11,8 +11,8 @@
   "author": "",
   "description": "",
   "dependencies": {
-    "@aws-sdk/client-lambda": "^3.301.0",
-    "@aws-sdk/lib-dynamodb": "^3.301.0",
+    "@aws-sdk/client-lambda": "^3.303.0",
+    "@aws-sdk/lib-dynamodb": "^3.303.0",
     "dotenv": "^16.0.3"
   }
 }
