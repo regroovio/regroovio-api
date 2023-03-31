@@ -21,7 +21,7 @@ const app = async () => {
     const remainingTimeInMinutes = (user.spotify_expiration_timestamp - Date.now()) / 1000 / 60;
     console.log("Remaining time in minutes:", remainingTimeInMinutes.toFixed(0));
 
-    if (remainingTimeInMinutes <= 20) {
+    if (remainingTimeInMinutes <= 15) {
         console.log('Token is expiring soon or already expired, refreshing...');
         const rawTokens = await invokeLambda({
             FunctionName: `spotify-token-${process.env.STAGE}`,

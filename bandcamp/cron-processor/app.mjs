@@ -13,59 +13,33 @@ const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
 
 const app = async (event, context) => {
     try {
-        const { tableName, album } = event
+        const { tableName, album, token } = event
 
-        const admin_id = process.env.ADMIN_ID;
-        let admin = await getUserById(admin_id);
+        // get the track info. If there is an error getting the track info, save the error to the album
+        // else save the track info to the album
 
-        if (!admin) {
-            console.error('User not found');
-            return;
-        }
-
-        let token = admin.spotify_access_token || null;
-        const remainingTimeInMinutes = (admin.spotify_expiration_timestamp - Date.now()) / 1000 / 60;
-        console.log("Remaining time in minutes:", remainingTimeInMinutes.toFixed(0));
-
-        if (remainingTimeInMinutes <= 20) {
-            console.log('Token is expiring soon or already expired, refreshing...');
-            const rawTokens = await invokeLambda({
-                FunctionName: `spotify-token-${process.env.STAGE}`,
-                Payload: JSON.stringify({ user_id: admin_id })
-            });
-            const tokens = JSON.parse(rawTokens);
-            await updateUserTokens(admin, tokens);
-            token = tokens.access_token;
-        }
-
-        const tracks = [];
         for (const track of album.tracks) {
             try {
-                tracks.push(track);
-                // const trackInfo = await getTrackInfo(track.url);
-                // const trackResult = trackInfo.result
-                // let genres = [];
-                // if (trackResult?.apple_music) {
-                //     genres = trackInfo.result.apple_music.genreNames
-                // }
-                // if (trackResult?.spotify) {
-                //     const trackInfo = trackInfo.result.spotify;
-                //     const trackWithFeatures = await enrichTrackWithFeatures(trackInfo, token);
-                //     enrichTrackInfo(trackWithFeatures, trackInfo, genres);
-                //     console.log(trackWithFeatures);
-                //     tracks.push(trackWithFeatures);
-                // }
-                // console.log('No track info found for', track.url);
-                // console.log('Track result:', trackResult);
+                const trackInfo = await getTrackInfo(track.url);
+                const trackResult = trackInfo.result
+                let genres = [];
+                if (trackResult?.apple_music) {
+                    genres = trackInfo.result.apple_music.genreNames
+                }
+                if (trackResult?.spotify) {
+                    const trackInfo = trackInfo.result.spotify;
+                    const trackWithFeatures = await enrichTrackWithFeatures(trackInfo, token);
+                    enrichTrackInfo(trackWithFeatures, trackInfo, genres);
+                    console.log(trackWithFeatures);
+                }
+                console.log('No track info found for', track.url);
+                console.log('Track result:', trackResult);
             } catch (err) {
                 console.error("Error updateTrackInfo:", err);
             }
         }
 
-        // await saveTracksWithFeatures(admin, tracks);
-        // return { message: 'Done.', tracksWithFeatures: tracks };
-        console.log(tracks);
-        return { message: 'Done.', tracks: tracks };
+        return { message: 'Done.', tracksWithFeatures: tracks };
     } catch (err) {
         return { message: 'Failed', err };
     }
@@ -80,21 +54,6 @@ const enrichTrackInfo = (trackWithFeatures, track, genres) => {
     delete trackWithFeatures.type;
     delete trackWithFeatures.track_href;
     delete trackWithFeatures.analysis_url;
-};
-
-const saveTracksWithFeatures = async (admin, tracksWithFeatures) => {
-    try {
-        const documentClient = DynamoDBDocument.from(new DynamoDB({
-            region: process.env.REGION,
-            accessKeyId: process.env.ACCESS_KEY,
-            secretAccessKey: process.env.SECRET_ACCESS_KEY
-        }));
-        admin.liked_tracks = tracksWithFeatures;
-        await documentClient.put({ TableName: "users", Item: admin });
-    } catch (err) {
-        console.error(`Error saveTracksWithFeatures: ${err}`);
-        throw err;
-    }
 };
 
 const enrichTrackWithFeatures = async (track, token) => {
@@ -151,17 +110,5 @@ const updateUserTokens = async (admin, tokens) => {
         throw err;
     }
 };
-
-// const addAlbumToDb = async (table, album) => {
-//     try {
-//         await documentClient
-//             .put({
-//                 TableName: table,
-//                 Item: album,
-//             });
-//     } catch (err) {
-//         console.log(err);
-//     }
-// };
 
 export { app }

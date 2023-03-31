@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
+import { getUserById } from './common/getUserById.mjs';
 
 dotenv.config();
 
@@ -17,7 +18,6 @@ const documentClient = DynamoDBDocument.from(new DynamoDB({
 // this function will need to be modified to be able to handle multiple tables with limited runtime
 const app = async (event, context) => {
     try {
-
         const bandcampTables = await listBandcampTables();
         for (const tableName of bandcampTables) {
             console.log(`Retrieving unsaved albums from ${tableName}`);
@@ -28,13 +28,31 @@ const app = async (event, context) => {
             }
             console.log(`Found ${unsavedAlbums.length} unsaved albums.`);
             await invokeLambdasInChunks(`bandcamp-cron-downloader-${process.env.STAGE}`, unsavedAlbums, tableName);
-
             let unprocessedAlbums = await fetchUnprocessedAlbums(tableName);
             if (!unprocessedAlbums?.length) {
                 console.log({ message: 'No unprocessed albums found.' });
             }
+            const admin_id = process.env.ADMIN_ID;
+            let admin = await getUserById(admin_id);
+            if (!admin) {
+                console.error('User not found');
+                return;
+            }
+            let token = admin.spotify_access_token || null;
+            const remainingTimeInMinutes = (admin.spotify_expiration_timestamp - Date.now()) / 1000 / 60;
+            console.log("Remaining time in minutes:", remainingTimeInMinutes.toFixed(0));
+            if (remainingTimeInMinutes <= 15) {
+                console.log('Token is expiring soon or already expired, refreshing...');
+                const rawTokens = await invokeLambda({
+                    FunctionName: `spotify-token-${process.env.STAGE}`,
+                    Payload: JSON.stringify({ user_id: admin_id })
+                });
+                const tokens = JSON.parse(rawTokens);
+                await updateUserTokens(admin, tokens);
+                token = tokens.access_token;
+            }
             console.log(`Found ${unprocessedAlbums.length} unprocessed albums.`);
-            await invokeLambdasInChunks(`bandcamp-cron-processor-${process.env.STAGE}`, albums, tableName);
+            await invokeLambdasInChunks(`bandcamp-cron-processor-${process.env.STAGE}`, unprocessedAlbums, tableName, token);
         }
         return { message: 'All albums are saved.' };
     } catch (err) {
