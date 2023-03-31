@@ -28,7 +28,7 @@ const app = async (event, context) => {
         if (remainingTimeInMinutes <= 20) {
             console.log('Token is expiring soon or already expired, refreshing...');
             const rawTokens = await invokeLambda({
-                FunctionName: 'spotify-token-dev',
+                FunctionName: `spotify-token-${process.env.STAGE}`,
                 Payload: JSON.stringify({ user_id: user_id })
             });
             const tokens = JSON.parse(rawTokens);
@@ -103,7 +103,7 @@ const saveTracksWithFeatures = async (user, tracksWithFeatures) => {
 
 const enrichTrackWithFeatures = async (track, token) => {
     const trackWithFeatures = JSON.parse(await invokeLambda({
-        FunctionName: 'spotify-get-audio-features-dev',
+        FunctionName: `spotify-get-audio-features-${process.env.STAGE}`,
         Payload: JSON.stringify({ token, id: track.id })
     })).body;
     return trackWithFeatures;

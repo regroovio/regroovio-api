@@ -24,7 +24,7 @@ const app = async () => {
     if (remainingTimeInMinutes <= 20) {
         console.log('Token is expiring soon or already expired, refreshing...');
         const rawTokens = await invokeLambda({
-            FunctionName: 'spotify-token-dev',
+            FunctionName: `spotify-token-${process.env.STAGE}`,
             Payload: JSON.stringify({ user_id: user_id })
         });
         const tokens = JSON.parse(rawTokens);
@@ -51,12 +51,12 @@ const invokeLambda = async (params) => {
 
 const fetchTracks = async (token) => {
     const rawLikedTracks = await invokeLambda({
-        FunctionName: 'spotify-get-likes-dev',
+        FunctionName: `spotify-get-likes-${process.env.STAGE}`,
         Payload: JSON.stringify({ token, limit: 50, offset: 0 })
     });
     const likedTracks = JSON.parse(rawLikedTracks).body;
     const rawTopTracks = await invokeLambda({
-        FunctionName: 'spotify-get-top-dev',
+        FunctionName: `spotify-get-top-${process.env.STAGE}`,
         Payload: JSON.stringify({ token, type: 'tracks', time_range: 'medium_term', limit: 50, offset: 0 })
     });
     const topTracks = JSON.parse(rawTopTracks).body;
@@ -68,7 +68,7 @@ const enrichTracksWithFeatures = async (tracks, token) => {
 
     for (const track of tracks) {
         const rawTrackWithFeatures = await invokeLambda({
-            FunctionName: 'spotify-get-audio-features-dev',
+            FunctionName: `spotify-get-audio-features-${process.env.STAGE}`,
             Payload: JSON.stringify({ token, id: track.id })
         });
         const trackWithFeatures = JSON.parse(rawTrackWithFeatures).body;

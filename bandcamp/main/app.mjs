@@ -41,7 +41,7 @@ const invokeLambdasInChunks = async (albums, tableName) => {
 
         await Promise.all(chunk.map(async (album) => {
             const response = await invokeLambda({
-                FunctionName: 'bandcamp-cron-downloader-dev',
+                FunctionName: `bandcamp-cron-downloader-${process.env.STAGE}`,
                 Payload: JSON.stringify({ tableName, album })
             });
             console.log(`Album processed: ${album.id}. Response:`, response);
