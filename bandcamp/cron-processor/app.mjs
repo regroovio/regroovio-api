@@ -3,7 +3,6 @@
 import axios from 'axios';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
-import { getUserById } from './common/getUserById.mjs';
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { AWS_DYNAMO } from "./common/config.mjs";
 
@@ -14,10 +13,6 @@ const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
 const app = async (event, context) => {
     try {
         const { tableName, album, token } = event
-
-        // get the track info. If there is an error getting the track info, save the error to the album
-        // else save the track info to the album
-
         for (const track of album.tracks) {
             try {
                 const trackInfo = await getTrackInfo(track.url);
@@ -27,13 +22,16 @@ const app = async (event, context) => {
                     genres = trackInfo.result.apple_music.genreNames
                 }
                 if (trackResult?.spotify) {
-                    const trackInfo = trackInfo.result.spotify;
+                    const trackResultSpotify = trackResult.spotify;
                     const trackWithFeatures = await enrichTrackWithFeatures(trackInfo, token);
-                    enrichTrackInfo(trackWithFeatures, trackInfo, genres);
-                    console.log(trackWithFeatures);
+                    console.log('');
+                    console.log("trackResultSpotify ", trackResultSpotify);
+                    console.log("trackWithFeatures ", trackWithFeatures);
+                    // enrichTrackInfo(trackWithFeatures, trackInfo, genres);
+                    // console.log(trackWithFeatures);
                 }
                 console.log('No track info found for', track.url);
-                console.log('Track result:', trackResult);
+                console.log(trackResult);
             } catch (err) {
                 console.error("Error updateTrackInfo:", err);
             }
@@ -93,21 +91,6 @@ const invokeLambda = async (params) => {
         return cleanedPayload.body;
     } catch (error) {
         console.error('Error invoking Lambda function:', error);
-    }
-};
-
-const updateUserTokens = async (admin, tokens) => {
-    try {
-        const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
-        admin.spotify_access_token = tokens.access_token;
-        admin.spotify_expiration_timestamp = tokens.expiration_timestamp;
-        if (tokens?.refresh_token) {
-            admin.refresh_token_spotify = tokens.refresh_token;
-        }
-        await documentClient.put({ TableName: "users", Item: admin });
-    } catch (err) {
-        console.error(`Error updateUserTokens: ${err}`);
-        throw err;
     }
 };
 

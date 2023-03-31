@@ -154,5 +154,4 @@ const fetchUnprocessedAlbums = async (tableName) => {
     }
 };
 
-
 export { app }
