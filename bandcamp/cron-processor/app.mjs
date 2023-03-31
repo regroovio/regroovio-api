@@ -22,10 +22,10 @@ const app = async (event, context) => {
                     genres = trackInfo.result.apple_music.genreNames
                 }
                 if (trackResult?.spotify) {
-                    const trackResultSpotify = trackResult.spotify;
-                    const trackWithFeatures = await enrichTrackWithFeatures(trackInfo, token);
+                    const trackSpotify = trackResult.spotify;
+                    const trackWithFeatures = await enrichTrackWithFeatures(trackSpotify, token);
                     console.log('');
-                    console.log("trackResultSpotify ", trackResultSpotify);
+                    enrichTrackInfo(trackWithFeatures, trackSpotify, genres)
                     console.log("trackWithFeatures ", trackWithFeatures);
                     // enrichTrackInfo(trackWithFeatures, trackInfo, genres);
                     // console.log(trackWithFeatures);

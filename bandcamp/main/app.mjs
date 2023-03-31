@@ -5,6 +5,7 @@ import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { getUserById } from './common/getUserById.mjs';
+import { AWS_DYNAMO } from './common/config.mjs';
 
 dotenv.config();
 
@@ -87,7 +88,7 @@ const listBandcampTables = async () => {
 };
 
 const invokeLambdasInChunks = async (functionName, albums, tableName) => {
-    let chunkSize = 10;
+    let chunkSize = 1;
 
     if (albums.length < 10) {
         chunkSize = albums.length;
@@ -151,6 +152,21 @@ const fetchUnprocessedAlbums = async (tableName) => {
     } catch (err) {
         console.error(`Error fetching unprocessed albums: ${err}`);
         return [];
+    }
+};
+
+const updateUserTokens = async (user, tokens) => {
+    try {
+        const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
+        user.spotify_access_token = tokens.access_token;
+        user.spotify_expiration_timestamp = tokens.expiration_timestamp;
+        if (tokens?.refresh_token) {
+            user.refresh_token_spotify = tokens.refresh_token;
+        }
+        await documentClient.put({ TableName: "users", Item: user });
+    } catch (err) {
+        console.error(`Error updateUserTokens: ${err}`);
+        throw err;
     }
 };
 
