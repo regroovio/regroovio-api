@@ -17,8 +17,8 @@ const app = async () => {
         return;
     }
 
-    let token = user.spotify_access_token || null;
-    const remainingTimeInMinutes = (user.spotify_expiration_timestamp - Date.now()) / 1000 / 60;
+    let token = user.access_token_spotify || null;
+    const remainingTimeInMinutes = (user.expiration_timestamp_spotify - Date.now()) / 1000 / 60;
     console.log("Remaining time in minutes:", remainingTimeInMinutes.toFixed(0));
 
     if (remainingTimeInMinutes <= 15) {
@@ -32,11 +32,20 @@ const app = async () => {
         token = tokens.access_token;
     }
 
+    console.log('getting liked tracks');
     const tracks = await fetchTracks(token);
-    for (const track of tracks) {
-        const trackWithFeatures = await enrichTrackWithFeatures(track, token);
-        enrichTrackInfo(trackWithFeatures, track)
-        await saveTracksWithFeatures(user, trackWithFeatures);
+    console.log(`Found ${tracks.length} tracks.`);
+    const chunkSize = 10;
+    for (let i = 0; i < tracks.length; i += chunkSize) {
+        const chunk = tracks.slice(i, i + chunkSize);
+        const tracksWithFeaturesPromises = chunk.map((track) => enrichTrackWithFeatures(track, token));
+        const tracksWithFeatures = await Promise.all(tracksWithFeaturesPromises);
+        for (let j = 0; j < tracksWithFeatures.length; j++) {
+            const trackWithFeatures = tracksWithFeatures[j];
+            const track = chunk[j];
+            enrichTrackInfo(trackWithFeatures, track);
+            await saveTracksWithFeatures(user, trackWithFeatures);
+        }
     }
 };
 
@@ -103,8 +112,8 @@ const saveTracksWithFeatures = async (user, tracksWithFeatures) => {
 const updateUserTokens = async (user, tokens) => {
     try {
         const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
-        user.spotify_access_token = tokens.access_token;
-        user.spotify_expiration_timestamp = tokens.expiration_timestamp;
+        user.access_token_spotify = tokens.access_token;
+        user.expiration_timestamp_spotify = tokens.expiration_timestamp;
         if (tokens?.refresh_token) {
             user.refresh_token_spotify = tokens.refresh_token;
         }

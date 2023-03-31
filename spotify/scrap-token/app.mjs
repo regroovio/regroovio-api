@@ -37,11 +37,11 @@ const handleAuthentication = async (page, user) => {
     if (user.refresh_token_spotify) {
         console.log('Refreshing token');
         endpoint = `${AUTH_LAMBDA}/refresh?refresh_token=${user.refresh_token_spotify}`
-    } else if (!user.spotify_cookies?.length) {
+    } else if (!user.cookies_spotify?.length) {
         console.log('Logging in using credentials');
     } else {
         console.log('Using cookies');
-        await page.setCookie(...user.spotify_cookies);
+        await page.setCookie(...user.cookies_spotify);
     }
     await page.goto(endpoint);
     const tokens = await getTokens(page);
