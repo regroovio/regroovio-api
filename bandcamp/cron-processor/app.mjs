@@ -27,11 +27,9 @@ const app = async (event, context) => {
                     console.log('');
                     enrichTrackInfo(trackWithFeatures, trackSpotify, genres)
                     console.log("trackWithFeatures ", trackWithFeatures);
-                    // enrichTrackInfo(trackWithFeatures, trackInfo, genres);
-                    // console.log(trackWithFeatures);
                 }
                 console.log('No track info found for', track.url);
-                console.log(trackResult);
+                // console.log(trackInfo);
             } catch (err) {
                 console.error("Error updateTrackInfo:", err);
             }
@@ -44,14 +42,18 @@ const app = async (event, context) => {
 };
 
 const enrichTrackInfo = (trackWithFeatures, track, genres) => {
-    trackWithFeatures.popularity = track.popularity;
-    trackWithFeatures.release_date = track.album.release_date;
-    trackWithFeatures.album = track.album.name;
-    trackWithFeatures.name = track.name;
-    trackWithFeatures.genres = genres;
-    delete trackWithFeatures.type;
-    delete trackWithFeatures.track_href;
-    delete trackWithFeatures.analysis_url;
+    if (trackWithFeatures) {
+        trackWithFeatures.popularity = track.popularity;
+        trackWithFeatures.release_date = track.album.release_date;
+        trackWithFeatures.album = track.album.name;
+        trackWithFeatures.name = track.name;
+        trackWithFeatures.genres = genres;
+        delete trackWithFeatures.type;
+        delete trackWithFeatures.track_href;
+        delete trackWithFeatures.analysis_url;
+    } else {
+        console.error("trackWithFeatures is undefined");
+    }
 };
 
 const enrichTrackWithFeatures = async (track, token) => {
