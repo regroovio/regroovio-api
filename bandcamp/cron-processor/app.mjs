@@ -46,7 +46,7 @@ const app = async (event, context) => {
         for (const album of albums) {
             for (const track of album.tracks) {
                 try {
-                    const updatedTrack = await getAlbumInfo(track);
+                    const updatedTrack = await getAlbumInfo(track.url);
                     const trackResult = updatedTrack.result
                     let genre = [];
                     if (trackResult?.apple_music) {

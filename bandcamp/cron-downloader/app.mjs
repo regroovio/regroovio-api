@@ -16,37 +16,29 @@ const documentClient = DynamoDBDocument.from(new DynamoDB({
 
 const app = async (event, context) => {
     try {
-        const table = `bandcamp-${event.table}-${process.env.STAGE}`;
-        console.log(`Getting ${table}`);
-        let albums = await getTableItems(table);
-        if (!albums?.length) {
-            return { message: 'No albums found' };
-        }
-        console.log(`Found albums: [${albums.length}]`);
-        await processAlbums(albums, table);
-        return { message: 'Done.' };
+        const { tableName, album } = event
+        await processAndSaveAlbum(album, tableName);
+        return { message: 'Processing complete.' };
     } catch (err) {
-        return { message: 'Failed', err };
+        return { message: 'Processing failed', err };
     }
 };
 
-const processAlbums = async (albums, table) => {
-    for (const album of albums) {
-        try {
-            const data = await fetchAlbumInfo(album.id);
-            if (!data || !data.linkInfo || !data.streams) continue;
-            const { linkInfo, streams } = data;
-            const tracksS3 = await Promise.all(streams.map(stream => uploadAlbumData(stream, linkInfo)));
-            const albumDetails = await createAlbumDetails(linkInfo, tracksS3);
-            console.log('adding', linkInfo.name);
-            await addAlbumToDb(table, { ...album, ...albumDetails });
-        } catch (err) {
-            console.error("Error updateTrackInfo:", err);
-        }
+const processAndSaveAlbum = async (album, tableName) => {
+    try {
+        const data = await fetchAlbumData(album.id);
+        if (!data || !data.linkInfo || !data.streams) return;
+        const { linkInfo, streams } = data;
+        const tracksS3 = (await Promise.all(streams.map(stream => downloadTrack(stream, linkInfo)))).filter(track => track !== undefined);
+        const albumDetails = await generateAlbumDetails(linkInfo, tracksS3);
+        console.log('Adding album:', linkInfo.name);
+        await saveAlbumToDatabase(tableName, { ...album, ...albumDetails });
+    } catch (err) {
+        console.error("Error processing album:", err);
     }
 };
 
-const createAlbumDetails = async (linkInfo, tracksS3) => {
+const generateAlbumDetails = async (linkInfo, tracksS3) => {
     const imageUrl = await saveImageToS3({ imageUrl: linkInfo.imageUrl, album: linkInfo.name, artist: linkInfo.artist.name });
     return {
         artist_name: linkInfo.artist.name,
@@ -58,25 +50,7 @@ const createAlbumDetails = async (linkInfo, tracksS3) => {
     };
 };
 
-const getTableItems = async (tableName) => {
-    try {
-        const params = { TableName: tableName, Limit: 100 };
-        let result;
-        const items = [];
-        do {
-            result = await documentClient.scan(params);
-            items.push(...result.Items);
-            params.ExclusiveStartKey = result.LastEvaluatedKey;
-        } while (result.LastEvaluatedKey);
-        const filteredItems = items.filter(album => !album.processed);
-        return filteredItems;
-    } catch (err) {
-        console.error(`Error fetching items: ${err}`);
-        return [];
-    }
-};
-
-const fetchAlbumInfo = async (album) => {
+const fetchAlbumData = async (album) => {
     try {
         const linkInfo = await bcfetch.getAlbumInfo(album, { includeRawData: true });
         const streams = [...new Set(linkInfo.tracks.map((track) => {
@@ -84,26 +58,32 @@ const fetchAlbumInfo = async (album) => {
         }))];
         return { linkInfo, streams };
     } catch (err) {
-        console.error(`Error fetching album info for ${album.id}: ${err}`);
+        console.error(`Error fetching album data for ${album.id}: ${err}`);
         return { linkInfo: null, streams: null };
+
     }
 };
 
-const uploadAlbumData = async (stream, linkInfo) => {
+const downloadTrack = async (stream, linkInfo) => {
     if (stream.stream) {
+        console.log(`Downloading track:`, stream.url);
         const { url, name } = await saveAlbumToS3({ ...stream, album: linkInfo.name, artist: linkInfo.artist.name });
         return { url, name };
+    } else {
+        console.log(`Undefined track:`, stream);
     }
 };
 
-const addAlbumToDb = async (table, album) => {
+const saveAlbumToDatabase = async (tableName, album) => {
     try {
         await documentClient.put({
-            TableName: table,
+            TableName: tableName,
             Item: album,
         });
     } catch (err) {
-        console.log(err);
+        console.error(`Error saving album to database: ${err}`);
+        console.log('Table:', tableName);
+        console.log('Album:', album);
     }
 };
 

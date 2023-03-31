@@ -61,7 +61,7 @@ const isValidLink = (link) => {
 
 const app = async (event) => {
     try {
-        const { genre } = event || queryStringParameters;
+        const { genre } = event
         if (!genre) {
             throw new Error('Missing required parameters');
         }
