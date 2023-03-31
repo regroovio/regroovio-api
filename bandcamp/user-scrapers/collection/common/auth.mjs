@@ -73,9 +73,9 @@ const login = async (page, username_bandcamp, password_bandcamp) => {
 };
 
 const authenticateUser = async (page, user) => {
-    const { cookies, username, username_bandcamp, password_bandcamp } = user;
+    const { bandcamp_cookies, username, username_bandcamp, password_bandcamp } = user;
 
-    if (cookies?.length) await page.setCookie(...cookies);
+    if (bandcamp_cookies?.length) await page.setCookie(...bandcamp_cookies);
 
     let isAuth = await checkCredentials(page, username);
 

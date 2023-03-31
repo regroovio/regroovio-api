@@ -1,3 +1,5 @@
+// app.mjs
+
 import bcfetch from 'bandcamp-fetch';
 import dotenv from 'dotenv';
 import { saveAlbumToS3, saveImageToS3 } from './s3.mjs';
@@ -35,7 +37,7 @@ const processAlbums = async (albums, table) => {
             if (!data || !data.linkInfo || !data.streams) continue;
             const { linkInfo, streams } = data;
             const tracksS3 = await Promise.all(streams.map(stream => uploadAlbumData(stream, linkInfo)));
-            const albumDetails = createAlbumDetails(linkInfo, tracksS3);
+            const albumDetails = await createAlbumDetails(linkInfo, tracksS3);
             console.log('adding', linkInfo.name);
             await addAlbumToDb(table, { ...album, ...albumDetails });
         } catch (err) {
@@ -96,11 +98,10 @@ const uploadAlbumData = async (stream, linkInfo) => {
 
 const addAlbumToDb = async (table, album) => {
     try {
-        await documentClient
-            .put({
-                TableName: table,
-                Item: album,
-            });
+        await documentClient.put({
+            TableName: table,
+            Item: album,
+        });
     } catch (err) {
         console.log(err);
     }
