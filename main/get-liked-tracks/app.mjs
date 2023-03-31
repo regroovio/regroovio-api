@@ -36,7 +36,6 @@ const app = async () => {
     for (const track of tracks) {
         const trackWithFeatures = await enrichTrackWithFeatures(track, token);
         enrichTrackInfo(trackWithFeatures, track)
-        console.log(trackWithFeatures);
         await saveTracksWithFeatures(user, trackWithFeatures);
     }
 };

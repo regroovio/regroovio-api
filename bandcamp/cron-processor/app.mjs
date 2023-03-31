@@ -11,7 +11,6 @@ const lambdaClient = new LambdaClient({ region: 'us-east-1' });
 const app = async (event, context) => {
     try {
         const { tableName, album, token } = event
-        console.log({ tableName, album, token });
 
         for (const track of album.tracks) {
             try {
@@ -26,15 +25,16 @@ const app = async (event, context) => {
                     const trackWithFeatures = await enrichTrackWithFeatures(trackSpotify, token);
                     enrichTrackInfo(trackWithFeatures, trackSpotify, [...key_words, ...album.key_words])
                     track.spotify = trackWithFeatures
+                } else {
+                    console.log('No track info found for', track.name);
+                    track.spotify = trackInfo.data || trackInfo.status
                 }
-                console.log('No track info found for', track.name);
-                track.spotify = trackInfo
             } catch (err) {
                 console.error("Error updateTrackInfo:", err);
             }
         }
+        await saveTracksWithFeatures(tableName, album)
 
-        console.log(album.tracks);
         return { message: 'Done.' };
     } catch (err) {
         return { message: 'Failed', err };
@@ -97,10 +97,10 @@ const invokeLambda = async (params) => {
     }
 };
 
-const saveTracksWithFeatures = async (tableName, track) => {
+const saveTracksWithFeatures = async (tableName, album) => {
     try {
         const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
-        await documentClient.put({ TableName: tableName, Item: track });
+        await documentClient.put({ TableName: tableName, Item: album });
     } catch (err) {
         console.error(`Error saveTracksWithFeatures: ${err}`);
         throw err;
