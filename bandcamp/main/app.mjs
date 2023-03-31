@@ -34,9 +34,7 @@ const app = async (event, context) => {
                 console.log({ message: 'No unprocessed albums found.' });
             }
             console.log(`Found ${unprocessedAlbums.length} unprocessed albums.`);
-            console.log(unprocessedAlbums);
-            return
-            // await invokeLambdasInChunks(`bandcamp-cron-processor-${process.env.STAGE}`, albums, tableName);
+            await invokeLambdasInChunks(`bandcamp-cron-processor-${process.env.STAGE}`, albums, tableName);
         }
         return { message: 'All albums are saved.' };
     } catch (err) {

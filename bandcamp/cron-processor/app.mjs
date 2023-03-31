@@ -64,7 +64,7 @@ const app = async (event, context) => {
 
         // await saveTracksWithFeatures(admin, tracks);
         // return { message: 'Done.', tracksWithFeatures: tracks };
-
+        console.log(tracks);
         return { message: 'Done.', tracks: tracks };
     } catch (err) {
         return { message: 'Failed', err };
