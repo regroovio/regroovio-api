@@ -87,7 +87,7 @@ const listBandcampTables = async () => {
     }
 };
 
-const invokeLambdasInChunks = async (functionName, albums, tableName) => {
+const invokeLambdasInChunks = async (functionName, albums, tableName, token) => {
     let chunkSize = 1;
 
     if (albums.length < 10) {
@@ -101,7 +101,7 @@ const invokeLambdasInChunks = async (functionName, albums, tableName) => {
         await Promise.all(chunk.map(async (album) => {
             await invokeLambda({
                 FunctionName: functionName,
-                Payload: JSON.stringify({ tableName, album })
+                Payload: JSON.stringify({ tableName, album, token: token ? token : null })
             });
         }));
     }

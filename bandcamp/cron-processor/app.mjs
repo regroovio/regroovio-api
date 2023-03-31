@@ -8,8 +8,6 @@ import { AWS_DYNAMO } from "./common/config.mjs";
 
 const lambdaClient = new LambdaClient({ region: 'us-east-1' });
 
-const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
-
 const app = async (event, context) => {
     try {
         const { tableName, album, token } = event
@@ -17,18 +15,18 @@ const app = async (event, context) => {
             try {
                 const trackInfo = await getTrackInfo(track.url);
                 const trackResult = trackInfo.result
-                let genres = [];
+                let key_words = [];
                 if (trackResult?.apple_music) {
-                    genres = trackInfo.result.apple_music.genreNames
+                    key_words = trackInfo.result.apple_music.genreNames
                 }
                 if (trackResult?.spotify) {
                     const trackSpotify = trackResult.spotify;
                     const trackWithFeatures = await enrichTrackWithFeatures(trackSpotify, token);
                     console.log('');
-                    enrichTrackInfo(trackWithFeatures, trackSpotify, genres)
+                    enrichTrackInfo(trackWithFeatures, trackSpotify, [...key_words, ...album.key_words])
                     console.log("trackWithFeatures ", trackWithFeatures);
                 }
-                console.log('No track info found for', track.url);
+                console.log('No track info found for', track.name);
                 // console.log(trackInfo);
             } catch (err) {
                 console.error("Error updateTrackInfo:", err);
@@ -41,13 +39,13 @@ const app = async (event, context) => {
     }
 };
 
-const enrichTrackInfo = (trackWithFeatures, track, genres) => {
+const enrichTrackInfo = (trackWithFeatures, track, key_words) => {
     if (trackWithFeatures) {
         trackWithFeatures.popularity = track.popularity;
         trackWithFeatures.release_date = track.album.release_date;
         trackWithFeatures.album = track.album.name;
         trackWithFeatures.name = track.name;
-        trackWithFeatures.genres = genres;
+        trackWithFeatures.key_words = key_words;
         delete trackWithFeatures.type;
         delete trackWithFeatures.track_href;
         delete trackWithFeatures.analysis_url;
