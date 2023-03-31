@@ -21,7 +21,7 @@ const initializePuppeteer = async (event) => {
         defaultViewport: chromium.defaultViewport,
         args: chromium.args,
         slowMo: 350,
-        headless: true,
+        headless: false,
     });
 
     const page = await browser.newPage();

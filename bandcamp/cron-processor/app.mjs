@@ -1,25 +1,20 @@
 // app.mjs
 
 import axios from 'axios';
-import dotenv from 'dotenv';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
 import { getUserById } from './common/getUserById.mjs';
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
-dotenv.config();
+import { AWS_DYNAMO } from "./common/config.mjs";
 
 const lambdaClient = new LambdaClient({ region: 'us-east-1' });
 
-const documentClient = DynamoDBDocument.from(new DynamoDB({
-    region: process.env.REGION,
-    accessKeyId: process.env.ACCESS_KEY,
-    secretAccessKey: process.env.SECRET_ACCESS_KEY
-}));
+const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
 
 const app = async (event, context) => {
     try {
-        const userId = process.env.ADMIN_ID;
-        let user = await getUserById(userId);
+        const user_id = process.env.ADMIN_ID;
+        let user = await getUserById(user_id);
 
         if (!user) {
             console.error('User not found');
@@ -27,7 +22,19 @@ const app = async (event, context) => {
         }
 
         let token = user.spotify_access_token || null;
-        await refreshTokenIfNecessary(user, token);
+        const remainingTimeInMinutes = (user.spotify_expiration_timestamp - Date.now()) / 1000 / 60;
+        console.log("Remaining time in minutes:", remainingTimeInMinutes.toFixed(0));
+
+        if (remainingTimeInMinutes <= 20) {
+            console.log('Token is expiring soon or already expired, refreshing...');
+            const rawTokens = await invokeLambda({
+                FunctionName: 'spotify-token-dev',
+                Payload: JSON.stringify({ user_id: user_id })
+            });
+            const tokens = JSON.parse(rawTokens);
+            await updateUserTokens(user, tokens);
+            token = tokens.access_token;
+        }
 
         const table = `bandcamp-${event.table}-${process.env.STAGE}`;
         let albums = await getTableItems(table);
@@ -40,10 +47,22 @@ const app = async (event, context) => {
             for (const track of album.tracks) {
                 try {
                     const updatedTrack = await getAlbumInfo(track);
-                    const trackInfo = updatedTrack.result.spotify;
-                    const trackWithFeatures = await enrichTrackWithFeatures(trackInfo, token);
-                    enrichTrackInfo(trackWithFeatures, trackInfo, updatedTrack.result.apple_music.genreNames);
-                    tracks.push(trackWithFeatures);
+                    const trackResult = updatedTrack.result
+                    let genre = [];
+                    if (trackResult?.apple_music) {
+                        genre = updatedTrack.result.apple_music.genreNames
+                    }
+                    if (trackResult?.spotify) {
+                        const trackInfo = updatedTrack.result.spotify;
+                        const trackWithFeatures = await enrichTrackWithFeatures(trackInfo, token);
+                        enrichTrackInfo(trackWithFeatures, trackInfo, genre);
+                        console.log(trackWithFeatures);
+
+                        // execute logic to save track to database
+
+                        return
+                        tracks.push(trackWithFeatures);
+                    }
                 } catch (err) {
                     console.error("Error updateTrackInfo:", err);
                 }
@@ -79,22 +98,6 @@ const saveTracksWithFeatures = async (user, tracksWithFeatures) => {
     } catch (err) {
         console.error(`Error saveTracksWithFeatures: ${err}`);
         throw err;
-    }
-};
-
-const refreshTokenIfNecessary = async (user, token) => {
-    if (token) {
-        const remainingTimeInMinutes = (user.spotify_expiration_timestamp - Date.now()) / 1000 / 60;
-        console.log("Remaining time in minutes:", remainingTimeInMinutes.toFixed(0));
-        if (remainingTimeInMinutes <= 20) {
-            console.log('Token is expiring soon or already expired, refreshing...');
-            const tokens = JSON.parse(await invokeLambda({
-                FunctionName: 'spotify-token-dev',
-                Payload: JSON.stringify({ user_id: user.id })
-            }));
-            await updateUserTokens(user, tokens);
-            token = tokens.access_token;
-        }
     }
 };
 
@@ -153,6 +156,21 @@ const invokeLambda = async (params) => {
         return cleanedPayload.body;
     } catch (error) {
         console.error('Error invoking Lambda function:', error);
+    }
+};
+
+const updateUserTokens = async (user, tokens) => {
+    try {
+        const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
+        user.spotify_access_token = tokens.access_token;
+        user.spotify_expiration_timestamp = tokens.expiration_timestamp;
+        if (tokens?.refresh_token) {
+            user.refresh_token_spotify = tokens.refresh_token;
+        }
+        await documentClient.put({ TableName: "users", Item: user });
+    } catch (err) {
+        console.error(`Error updateUserTokens: ${err}`);
+        throw err;
     }
 };
 

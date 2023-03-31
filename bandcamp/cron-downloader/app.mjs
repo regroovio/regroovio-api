@@ -12,7 +12,6 @@ const documentClient = DynamoDBDocument.from(new DynamoDB({
     secretAccessKey: process.env.SECRET_ACCESS_KEY
 }));
 
-
 const app = async (event, context) => {
     try {
         const table = `bandcamp-${event.table}-${process.env.STAGE}`;
@@ -22,30 +21,39 @@ const app = async (event, context) => {
             return { message: 'No albums found' };
         }
         console.log(`Found albums: [${albums.length}]`);
-        for (const album of albums) {
-            try {
-                const data = await fetchAlbumInfo(album.id);
-                if (!data || !data.linkInfo || !data.streams) continue;
-                const { linkInfo, streams } = data;
-                const tracksS3 = await Promise.all(streams.map(stream => uploadAlbumData(stream, linkInfo)));
-                const albumDetails = {
-                    artist_name: linkInfo.artist.name,
-                    key_words: linkInfo.keywords,
-                    album_name: linkInfo.name,
-                    processed: true,
-                };
-                albumDetails.image_url = await saveImageToS3({ imageUrl: linkInfo.imageUrl, album: linkInfo.name, artist: linkInfo.artist.name });
-                albumDetails.tracks = tracksS3.filter((url) => url);
-                console.log('adding', linkInfo.name);
-                await addAlbumToDb(table, { ...album, ...albumDetails });
-            } catch (err) {
-                console.error("Error updateTrackInfo:", err);
-            }
-        }
+        await processAlbums(albums, table);
         return { message: 'Done.' };
     } catch (err) {
         return { message: 'Failed', err };
     }
+};
+
+const processAlbums = async (albums, table) => {
+    for (const album of albums) {
+        try {
+            const data = await fetchAlbumInfo(album.id);
+            if (!data || !data.linkInfo || !data.streams) continue;
+            const { linkInfo, streams } = data;
+            const tracksS3 = await Promise.all(streams.map(stream => uploadAlbumData(stream, linkInfo)));
+            const albumDetails = createAlbumDetails(linkInfo, tracksS3);
+            console.log('adding', linkInfo.name);
+            await addAlbumToDb(table, { ...album, ...albumDetails });
+        } catch (err) {
+            console.error("Error updateTrackInfo:", err);
+        }
+    }
+};
+
+const createAlbumDetails = async (linkInfo, tracksS3) => {
+    const imageUrl = await saveImageToS3({ imageUrl: linkInfo.imageUrl, album: linkInfo.name, artist: linkInfo.artist.name });
+    return {
+        artist_name: linkInfo.artist.name,
+        key_words: linkInfo.keywords,
+        album_name: linkInfo.name,
+        processed: true,
+        image_url: imageUrl,
+        tracks: tracksS3
+    };
 };
 
 const getTableItems = async (tableName) => {
@@ -81,8 +89,8 @@ const fetchAlbumInfo = async (album) => {
 
 const uploadAlbumData = async (stream, linkInfo) => {
     if (stream.stream) {
-        const url = await saveAlbumToS3({ ...stream, album: linkInfo.name, artist: linkInfo.artist.name });
-        return url;
+        const { url, name } = await saveAlbumToS3({ ...stream, album: linkInfo.name, artist: linkInfo.artist.name });
+        return { url, name };
     }
 };
 

@@ -28,7 +28,7 @@ const addAlbumsToDb = async (table, links, user_id) => {
         let albumData = await getAlbumData(table, id);
 
         if (albumData) {
-            if (!albumData.user_ids.L.some((userId) => userId.S === user_id)) {
+            if (!albumData.user_ids.L.some((id) => id.S === user_id)) {
                 albumData.user_ids.L.push({ S: user_id });
             }
         } else {

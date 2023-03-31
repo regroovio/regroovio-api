@@ -7,7 +7,7 @@ import { getUserById } from './common/getUserById.mjs';
 import { initializePuppeteer } from "./common/browser.mjs";
 
 const app = async (event, context) => {
-    const user_id = event.user_id || event.queryStringParameters.user_id;
+    const user_id = event.user_id
     const { browser, page } = await initializePuppeteer(event);
     let user;
 
