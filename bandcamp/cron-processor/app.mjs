@@ -99,6 +99,7 @@ const invokeLambda = async (params) => {
 
 const saveTracksWithFeatures = async (tableName, album) => {
     try {
+        album.processed = true
         const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
         await documentClient.put({ TableName: tableName, Item: album });
     } catch (err) {
