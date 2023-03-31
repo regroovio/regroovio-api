@@ -24,7 +24,7 @@ const getUserLikes = async (token, limit, offset) => {
         Authorization: `Bearer ${token}`,
       },
     });
-    return response.data.Items;
+    return response.data;
   } catch (error) {
     return error.data;
   }
