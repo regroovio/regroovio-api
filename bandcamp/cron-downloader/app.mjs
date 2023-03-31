@@ -46,7 +46,7 @@ const generateAlbumDetails = async (linkInfo, tracksS3) => {
         artist_name: linkInfo.artist.name,
         key_words: linkInfo.keywords,
         album_name: linkInfo.name,
-        processed: true,
+        saved: true,
         image_url: imageUrl,
         tracks: tracksS3
     };

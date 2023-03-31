@@ -20,21 +20,25 @@ const app = async (event, context) => {
 
         const bandcampTables = await listBandcampTables();
         for (const tableName of bandcampTables) {
-            console.log(`Retrieving unprocessed albums from ${tableName}`);
-            let albums = await fetchUnprocessedAlbums(tableName);
-            if (!albums?.length) {
+            console.log(`Retrieving unsaved albums from ${tableName}`);
+
+            let unsavedAlbums = await fetchUnsavedAlbums(tableName);
+            if (!unsavedAlbums?.length) {
+                console.log({ message: 'No unsaved albums found.' });
+            }
+            console.log(`Found ${unsavedAlbums.length} unsaved albums.`);
+            await invokeLambdasInChunks(`bandcamp-cron-downloader-${process.env.STAGE}`, unsavedAlbums, tableName);
+
+            let unprocessedAlbums = await fetchUnprocessedAlbums(tableName);
+            if (!unprocessedAlbums?.length) {
                 console.log({ message: 'No unprocessed albums found.' });
             }
-            console.log(`Found ${albums.length} unprocessed albums.`);
-            await invokeLambdasInChunks(`bandcamp-cron-downloader-${process.env.STAGE}`, albums, tableName);
-            await invokeLambdasInChunks(`bandcamp-cron-processor-${process.env.STAGE}`, albums, tableName);
+            console.log(`Found ${unprocessedAlbums.length} unprocessed albums.`);
+            console.log(unprocessedAlbums);
+            return
+            // await invokeLambdasInChunks(`bandcamp-cron-processor-${process.env.STAGE}`, albums, tableName);
         }
-
-
-
-
-
-        return { message: 'All albums are processed.' };
+        return { message: 'All albums are saved.' };
     } catch (err) {
         console.error('Error processing albums:', err);
         return { message: 'Failed to process albums', err };
@@ -98,6 +102,24 @@ const invokeLambda = async (params) => {
     }
 };
 
+const fetchUnsavedAlbums = async (tableName) => {
+    try {
+        const params = { TableName: tableName, Limit: 100 };
+        let result;
+        const items = [];
+        do {
+            result = await documentClient.scan(params);
+            items.push(...result.Items);
+            params.ExclusiveStartKey = result.LastEvaluatedKey;
+        } while (result.LastEvaluatedKey);
+        const unsavedAlbums = items.filter(album => !album.saved);
+        return unsavedAlbums;
+    } catch (err) {
+        console.error(`Error fetching unsaved albums: ${err}`);
+        return [];
+    }
+};
+
 const fetchUnprocessedAlbums = async (tableName) => {
     try {
         const params = { TableName: tableName, Limit: 100 };
@@ -108,12 +130,13 @@ const fetchUnprocessedAlbums = async (tableName) => {
             items.push(...result.Items);
             params.ExclusiveStartKey = result.LastEvaluatedKey;
         } while (result.LastEvaluatedKey);
-        const unprocessedAlbums = items.filter(album => !album.processed);
+        const unprocessedAlbums = items.filter(album => album.saved && !album.processed);
         return unprocessedAlbums;
     } catch (err) {
         console.error(`Error fetching unprocessed albums: ${err}`);
         return [];
     }
 };
+
 
 export { app }
