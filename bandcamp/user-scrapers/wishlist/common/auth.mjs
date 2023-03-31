@@ -39,8 +39,6 @@ const saveCookies = async (page, user) => {
 };
 
 const login = async (page, username_bandcamp, password_bandcamp) => {
-    console.log(`Logging in user: ${username_bandcamp}`);
-
     await page.goto("https://bandcamp.com/login", {
         waitUntil: "load",
         timeout: 300000,
@@ -84,10 +82,10 @@ const authenticateUser = async (page, user) => {
     }
 
     if (isAuth) {
-        console.log("Logged in");
         await saveCookies(page, user);
+        return isAuth
     } else {
-        console.log("error logging in");
+        return isAuth
     }
 };
 

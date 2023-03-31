@@ -6,23 +6,34 @@ import { AWS_DYNAMO } from "./config.mjs";
 const dynamoClient = new DynamoDB(AWS_DYNAMO);
 
 const addAlbumsToDb = async (table, links) => {
-    for (const link of links) {
-        const id = link?.split("?")[0] ? link.split("?")[0] : link;
+    let chunkSize = 50;
 
-        const albumData = {
-            id: { S: id },
-        };
+    if (links.length < 50) {
+        chunkSize = links.length;
+    }
 
-        const params = {
-            TableName: table,
-            Item: albumData,
-        };
+    for (let i = 0; i < links.length; i += chunkSize) {
+        const chunk = links.slice(i, i + chunkSize);
+        console.log(`Processing chunk ${i / chunkSize + 1} of ${Math.ceil(links.length / chunkSize)}`);
 
-        try {
-            await dynamoClient.putItem(params);
-        } catch (error) {
-            console.log(error);
-        }
+        await Promise.all(chunk.map(async (link) => {
+            const id = link?.split("?")[0] ? link.split("?")[0] : link;
+
+            const albumData = {
+                id: { S: id },
+            };
+
+            const params = {
+                TableName: table,
+                Item: albumData,
+            };
+
+            try {
+                await dynamoClient.putItem(params);
+            } catch (error) {
+                console.log(error);
+            }
+        }));
     }
 };
 

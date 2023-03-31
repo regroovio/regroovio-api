@@ -79,7 +79,12 @@ const app = async (event) => {
         const table = `bandcamp-collection-${process.env.STAGE}`;
         await createTable(table);
         const { browser, page } = await initializePuppeteer(event);
-        await authenticateUser(page, user);
+        console.log(`Logging in user: ${user.username_bandcamp}`);
+        const isAuth = await authenticateUser(page, user);
+        if (!isAuth) {
+            console.log("error logging in");
+            return
+        }
         const albumLinks = await collectAlbumLinks(page);
         await page.close();
         await browser.close();

@@ -17,10 +17,12 @@ const documentClient = DynamoDBDocument.from(new DynamoDB({
 const app = async (event, context) => {
     try {
         const { tableName, album } = event
+        console.log(`Processing album ${album.id} for table ${tableName}`);
         await processAndSaveAlbum(album, tableName);
-        return { message: 'Processing complete.' };
+        return { message: `Album ${album.id} added to ${tableName}.` };
     } catch (err) {
-        return { message: 'Processing failed', err };
+        console.error('Error processing album:', err);
+        return { message: 'Failed to process album', err };
     }
 };
 

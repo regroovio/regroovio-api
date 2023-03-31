@@ -1,12 +1,13 @@
 // app.mjs
 
-import bcfetch from 'bandcamp-fetch';
 import dotenv from 'dotenv';
-import { saveAlbumToS3, saveImageToS3 } from './s3.mjs';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
+import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 
 dotenv.config();
+
+const lambdaClient = new LambdaClient({ region: 'us-east-1' });
 
 const documentClient = DynamoDBDocument.from(new DynamoDB({
     region: process.env.REGION,
@@ -17,29 +18,34 @@ const documentClient = DynamoDBDocument.from(new DynamoDB({
 const app = async (event, context) => {
     try {
         const tableName = `bandcamp-${event.table}-${process.env.STAGE}`;
-        console.log(`Retrieving data from ${tableName}`);
+        console.log(`Retrieving unprocessed albums from ${tableName}`);
         let albums = await fetchUnprocessedAlbums(tableName);
         if (!albums?.length) {
-            return { message: 'No unprocessed albums found' };
+            return { message: 'No unprocessed albums found.' };
         }
-        console.log(`Found unprocessed albums: [${albums.length}]`);
-
-
-
-
-        // const rawTrackWithFeatures = await invokeLambda({
-        //     FunctionName: 'spotify-get-audio-features-dev',
-        //     Payload: JSON.stringify({ token, id: track.id })
-        // });
-        // const trackWithFeatures = JSON.parse(rawTrackWithFeatures).body;
-        // enrichTrackInfo(trackWithFeatures, track);
-        // tracksWithFeatures.push(trackWithFeatures);
-
-
-
-        return { message: 'Processing complete.' };
+        console.log(`Found ${albums.length} unprocessed albums.`);
+        await invokeLambdasInChunks(albums, tableName);
+        return { message: 'All albums processed.' };
     } catch (err) {
-        return { message: 'Processing failed', err };
+        console.error('Error processing albums:', err);
+        return { message: 'Failed to process albums', err };
+    }
+};
+
+const invokeLambdasInChunks = async (albums, tableName) => {
+    const chunkSize = 10;
+
+    for (let i = 0; i < albums.length; i += chunkSize) {
+        const chunk = albums.slice(i, i + chunkSize);
+        console.log(`Processing chunk ${i / chunkSize + 1} of ${Math.ceil(albums.length / chunkSize)}`);
+
+        await Promise.all(chunk.map(async (album) => {
+            const response = await invokeLambda({
+                FunctionName: 'bandcamp-cron-downloader-dev',
+                Payload: JSON.stringify({ tableName, album })
+            });
+            console.log(`Album processed: ${album.id}. Response:`, response);
+        }));
     }
 };
 
@@ -72,70 +78,5 @@ const fetchUnprocessedAlbums = async (tableName) => {
         return [];
     }
 };
-
-// const processAndSaveAlbums = async (albums, tableName) => {
-//     for (const album of albums) {
-//         try {
-//             const data = await fetchAlbumData(album.id);
-//             if (!data || !data.linkInfo || !data.streams) continue;
-//             const { linkInfo, streams } = data;
-//             const tracksS3 = (await Promise.all(streams.map(stream => downloadTrack(stream, linkInfo)))).filter(track => track !== undefined);
-//             const albumDetails = await generateAlbumDetails(linkInfo, tracksS3);
-//             console.log('Adding album:', linkInfo.name);
-//             await saveAlbumToDatabase(tableName, { ...album, ...albumDetails });
-//         } catch (err) {
-//             console.error("Error processing album:", err);
-//         }
-//     }
-// };
-
-// const generateAlbumDetails = async (linkInfo, tracksS3) => {
-//     const imageUrl = await saveImageToS3({ imageUrl: linkInfo.imageUrl, album: linkInfo.name, artist: linkInfo.artist.name });
-//     return {
-//         artist_name: linkInfo.artist.name,
-//         key_words: linkInfo.keywords,
-//         album_name: linkInfo.name,
-//         processed: true,
-//         image_url: imageUrl,
-//         tracks: tracksS3
-//     };
-// };
-
-// const fetchAlbumData = async (album) => {
-//     try {
-//         const linkInfo = await bcfetch.getAlbumInfo(album, { includeRawData: true });
-//         const streams = [...new Set(linkInfo.tracks.map((track) => {
-//             return { stream: track.streamUrl, name: track.name };
-//         }))];
-//         return { linkInfo, streams };
-//     } catch (err) {
-//         console.error(`Error fetching album data for ${album.id}: ${err}`);
-//         return { linkInfo: null, streams: null };
-
-//     }
-// };
-
-// const downloadTrack = async (stream, linkInfo) => {
-//     if (stream.stream) {
-//         console.log(`Downloading track:`, stream.url);
-//         const { url, name } = await saveAlbumToS3({ ...stream, album: linkInfo.name, artist: linkInfo.artist.name });
-//         return { url, name };
-//     } else {
-//         console.log(`Undefined track:`, stream);
-//     }
-// };
-
-// const saveAlbumToDatabase = async (tableName, album) => {
-//     try {
-//         await documentClient.put({
-//             TableName: tableName,
-//             Item: album,
-//         });
-//     } catch (err) {
-//         console.error(`Error saving album to database: ${err}`);
-//         console.log('Table:', tableName);
-//         console.log('Album:', album);
-//     }
-// };
 
 export { app }
