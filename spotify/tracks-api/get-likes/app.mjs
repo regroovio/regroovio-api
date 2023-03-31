@@ -6,6 +6,8 @@ const app = async (event) => {
     console.log({ token, limit, offset });
     const userData = await getUserLikes(token, limit, offset);
 
+    console.log("userData: ", userData);
+
     return { statusCode: 200, body: userData };
   } catch (err) {
     console.log("Error getting playlist:");
@@ -22,8 +24,6 @@ const getUserLikes = async (token, limit, offset) => {
         Authorization: `Bearer ${token}`,
       },
     });
-
-    console.log("response: ", response.data);
     return response.data.items;
   } catch (error) {
     return error.data;

@@ -18,7 +18,7 @@ const app = async () => {
     }
 
     let token = user.access_token_spotify || null;
-    const remainingTimeInMinutes = (user.expiration_timestamp_spotify - Date.now()) / 1000 / 60;
+    const remainingTimeInMinutes = (user.spotify_expiration_timestamp - Date.now()) / 1000 / 60;
     console.log("Remaining time in minutes:", remainingTimeInMinutes.toFixed(0));
 
     if (remainingTimeInMinutes <= 15) {
@@ -34,18 +34,18 @@ const app = async () => {
 
     console.log('getting liked tracks');
     const tracks = await fetchTracks(token);
+
+    if (!tracks?.length) {
+        return { message: 'No liked tracks found.' };
+    }
+
     console.log(`Found ${tracks.length} tracks.`);
-    const chunkSize = 10;
-    for (let i = 0; i < tracks.length; i += chunkSize) {
-        const chunk = tracks.slice(i, i + chunkSize);
-        const tracksWithFeaturesPromises = chunk.map((track) => enrichTrackWithFeatures(track, token));
-        const tracksWithFeatures = await Promise.all(tracksWithFeaturesPromises);
-        for (let j = 0; j < tracksWithFeatures.length; j++) {
-            const trackWithFeatures = tracksWithFeatures[j];
-            const track = chunk[j];
-            enrichTrackInfo(trackWithFeatures, track);
-            await saveTracksWithFeatures(user, trackWithFeatures);
-        }
+
+    for (const track of tracks) {
+        const trackWithFeatures = await enrichTrackWithFeatures(track, token);
+        console.log(trackWithFeatures);
+        enrichTrackInfo(trackWithFeatures, track)
+        await saveTracksWithFeatures(user, trackWithFeatures);
     }
 };
 
@@ -66,6 +66,8 @@ const fetchTracks = async (token) => {
         FunctionName: `spotify-get-likes-${process.env.STAGE}`,
         Payload: JSON.stringify({ token, limit: 50, offset: 0 })
     });
+    console.log(rawLikedTracks);
+    return
     const likedTracks = JSON.parse(rawLikedTracks).body;
     const rawTopTracks = await invokeLambda({
         FunctionName: `spotify-get-top-${process.env.STAGE}`,
@@ -91,6 +93,8 @@ const enrichTrackInfo = (trackWithFeatures, track) => {
 };
 
 const enrichTrackWithFeatures = async (track, token) => {
+    // implement cuncurennt calls to invokeLambda in chunks of 10
+
     const trackWithFeatures = JSON.parse(await invokeLambda({
         FunctionName: `spotify-get-audio-features-${process.env.STAGE}`,
         Payload: JSON.stringify({ token, id: track.id })
@@ -113,7 +117,7 @@ const updateUserTokens = async (user, tokens) => {
     try {
         const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
         user.access_token_spotify = tokens.access_token;
-        user.expiration_timestamp_spotify = tokens.expiration_timestamp;
+        user.spotify_expiration_timestamp = tokens.expiration_timestamp;
         if (tokens?.refresh_token) {
             user.refresh_token_spotify = tokens.refresh_token;
         }

@@ -40,7 +40,7 @@ const app = async (event, context) => {
                 return;
             }
             let token = admin.access_token_spotify || null;
-            const remainingTimeInMinutes = (admin.expiration_timestamp_spotify - Date.now()) / 1000 / 60;
+            const remainingTimeInMinutes = (admin.spotify_expiration_timestamp - Date.now()) / 1000 / 60;
             console.log("Remaining time in minutes:", remainingTimeInMinutes.toFixed(0));
             if (remainingTimeInMinutes <= 15) {
                 console.log('Token is expiring soon or already expired, refreshing...');
@@ -159,7 +159,7 @@ const updateUserTokens = async (user, tokens) => {
     try {
         const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
         user.access_token_spotify = tokens.access_token;
-        user.expiration_timestamp_spotify = tokens.expiration_timestamp;
+        user.spotify_expiration_timestamp = tokens.expiration_timestamp;
         if (tokens?.refresh_token) {
             user.refresh_token_spotify = tokens.refresh_token;
         }
