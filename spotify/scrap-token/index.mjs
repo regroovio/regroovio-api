@@ -1,5 +1,6 @@
 // index.mjs
-import { app } from './app.mjs';
+
+import { app } from "./app.mjs";
 
 const handler = async (event, context) => {
     try {
@@ -12,11 +13,10 @@ const handler = async (event, context) => {
         console.error(`Error handler: ${error}`);
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: error.message }),
+            body: JSON.stringify({ error: error }),
             exitCode: process.exit(1),
         };
     }
 };
 
 export { handler };
-

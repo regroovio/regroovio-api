@@ -1,4 +1,4 @@
-// spotify.js
+// app.mjs
 
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { getUserById } from "./common/getUserById.mjs";
@@ -23,6 +23,11 @@ const app = async () => {
     const tracks = await fetchTracks(token);
     const tracksWithFeatures = await enrichTracksWithFeatures(tracks, token);
     await saveTracksWithFeatures(user, tracksWithFeatures);
+
+    return {
+        message: "Success",
+        tracksWithFeatures: tracksWithFeatures,
+    };
 };
 
 const refreshTokenIfNecessary = async (user, token) => {
@@ -118,4 +123,4 @@ const invokeLambda = async (params) => {
     }
 };
 
-app();
+export { app };

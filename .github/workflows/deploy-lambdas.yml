@@ -18,6 +18,8 @@ jobs:
       matrix:
         function:
           # Bandcamp Crons
+          - name: "bandcamp-cron-downloader"
+            path: "./bandcamp/cron-downloader"
           - name: "bandcamp-cron-processor"
             path: "./bandcamp/cron-processor"
           - name: "bandcamp-cron-daily"
