@@ -11,29 +11,31 @@ const lambdaClient = new LambdaClient({ region: 'us-east-1' });
 const app = async (event, context) => {
     try {
         const { tableName, album, token } = event
+        console.log({ tableName, album, token });
+
         for (const track of album.tracks) {
             try {
                 const trackInfo = await getTrackInfo(track.url);
-                const trackResult = trackInfo.result
+                const trackResult = trackInfo.data.result
                 let key_words = [];
                 if (trackResult?.apple_music) {
-                    key_words = trackInfo.result.apple_music.genreNames
+                    key_words = trackResult.apple_music.genreNames
                 }
                 if (trackResult?.spotify) {
                     const trackSpotify = trackResult.spotify;
                     const trackWithFeatures = await enrichTrackWithFeatures(trackSpotify, token);
-                    console.log('');
                     enrichTrackInfo(trackWithFeatures, trackSpotify, [...key_words, ...album.key_words])
-                    console.log("trackWithFeatures ", trackWithFeatures);
+                    track.spotify = trackWithFeatures
                 }
                 console.log('No track info found for', track.name);
-                // console.log(trackInfo);
+                track.spotify = trackInfo
             } catch (err) {
                 console.error("Error updateTrackInfo:", err);
             }
         }
 
-        return { message: 'Done.', tracksWithFeatures: tracks };
+        console.log(album.tracks);
+        return { message: 'Done.' };
     } catch (err) {
         return { message: 'Failed', err };
     }
@@ -43,6 +45,7 @@ const enrichTrackInfo = (trackWithFeatures, track, key_words) => {
     if (trackWithFeatures) {
         trackWithFeatures.popularity = track.popularity;
         trackWithFeatures.release_date = track.album.release_date;
+        trackWithFeatures.artists = track.album.artists;
         trackWithFeatures.album = track.album.name;
         trackWithFeatures.name = track.name;
         trackWithFeatures.key_words = key_words;
@@ -74,7 +77,7 @@ const getTrackInfo = async (url) => {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
             });
-        return response.data
+        return response
     } catch (error) {
         console.error(error);
         return error
@@ -91,6 +94,16 @@ const invokeLambda = async (params) => {
         return cleanedPayload.body;
     } catch (error) {
         console.error('Error invoking Lambda function:', error);
+    }
+};
+
+const saveTracksWithFeatures = async (tableName, track) => {
+    try {
+        const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
+        await documentClient.put({ TableName: tableName, Item: track });
+    } catch (err) {
+        console.error(`Error saveTracksWithFeatures: ${err}`);
+        throw err;
     }
 };
 

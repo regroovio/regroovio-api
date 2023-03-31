@@ -33,8 +33,12 @@ const app = async () => {
     }
 
     const tracks = await fetchTracks(token);
-    const tracksWithFeatures = await enrichTracksWithFeatures(tracks, token);
-    await saveTracksWithFeatures(user, tracksWithFeatures);
+    for (const track of tracks) {
+        const trackWithFeatures = await enrichTrackWithFeatures(track, token);
+        enrichTrackInfo(trackWithFeatures, track)
+        console.log(trackWithFeatures);
+        await saveTracksWithFeatures(user, trackWithFeatures);
+    }
 };
 
 const invokeLambda = async (params) => {
@@ -63,30 +67,27 @@ const fetchTracks = async (token) => {
     return [...likedTracks.map(t => t.track), ...topTracks];
 };
 
-const enrichTracksWithFeatures = async (tracks, token) => {
-    const tracksWithFeatures = [];
-
-    for (const track of tracks) {
-        const rawTrackWithFeatures = await invokeLambda({
-            FunctionName: `spotify-get-audio-features-${process.env.STAGE}`,
-            Payload: JSON.stringify({ token, id: track.id })
-        });
-        const trackWithFeatures = JSON.parse(rawTrackWithFeatures).body;
-        enrichTrackInfo(trackWithFeatures, track);
-        tracksWithFeatures.push(trackWithFeatures);
+const enrichTrackInfo = (trackWithFeatures, track) => {
+    if (trackWithFeatures) {
+        trackWithFeatures.popularity = track.popularity;
+        trackWithFeatures.release_date = track.album.release_date;
+        trackWithFeatures.artists = track.album.artists;
+        trackWithFeatures.album = track.album.name;
+        trackWithFeatures.name = track.name;
+        delete trackWithFeatures.type;
+        delete trackWithFeatures.track_href;
+        delete trackWithFeatures.analysis_url;
+    } else {
+        console.error("trackWithFeatures is undefined");
     }
-
-    return tracksWithFeatures;
 };
 
-const enrichTrackInfo = (trackWithFeatures, track) => {
-    trackWithFeatures.popularity = track.popularity;
-    trackWithFeatures.release_date = track.album.release_date;
-    trackWithFeatures.album = track.album.name;
-    trackWithFeatures.name = track.name;
-    delete trackWithFeatures.type;
-    delete trackWithFeatures.track_href;
-    delete trackWithFeatures.analysis_url;
+const enrichTrackWithFeatures = async (track, token) => {
+    const trackWithFeatures = JSON.parse(await invokeLambda({
+        FunctionName: `spotify-get-audio-features-${process.env.STAGE}`,
+        Payload: JSON.stringify({ token, id: track.id })
+    })).body;
+    return trackWithFeatures;
 };
 
 const saveTracksWithFeatures = async (user, tracksWithFeatures) => {
