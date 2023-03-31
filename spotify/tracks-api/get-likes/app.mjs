@@ -5,7 +5,6 @@ const app = async (event) => {
     const { token, limit, offset } = event;
     console.log({ token, limit, offset });
     const userData = await getUserLikes(token, limit, offset);
-
     console.log("userData: ", userData);
 
     return { statusCode: 200, body: userData };
@@ -24,7 +23,9 @@ const getUserLikes = async (token, limit, offset) => {
         Authorization: `Bearer ${token}`,
       },
     });
-    return response.data;
+
+    console.log("response: ", response.data);
+    return response.data.items;
   } catch (error) {
     return error.data;
   }
