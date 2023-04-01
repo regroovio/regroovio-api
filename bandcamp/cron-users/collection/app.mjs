@@ -72,7 +72,7 @@ const app = async (event) => {
         if (!user_id) {
             throw new Error('Missing required parameters');
         }
-        const user = await getUserById(user_id, AWS_DYNAMO);
+        const user = await getUserById(user_id);
         if (!user) {
             throw new Error(`User not found with id ${user_id}`);
         }

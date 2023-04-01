@@ -13,8 +13,7 @@ const app = async () => {
     let user = await getUserById(user_id);
 
     if (!user) {
-        console.error('User not found');
-        return;
+        throw new Error(`User not found with id ${user_id}`);
     }
 
     let token = user.access_token_spotify || null;

@@ -14,7 +14,7 @@ const app = async (event, context) => {
     try {
         user = await getUserById(user_id);
         if (!user) {
-            throw new Error('User not found');
+            throw new Error(`User not found with id ${user_id}`);
         }
     } catch (err) {
         throw new Error(`Error retrieving user from DynamoDB: ${err}`);
