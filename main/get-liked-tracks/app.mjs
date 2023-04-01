@@ -18,6 +18,8 @@ const app = async () => {
 
     let token = user.access_token_spotify || null;
     const remainingTimeInMinutes = (user.expiration_timestamp_spotify - Date.now()) / 1000 / 60;
+    console.log(`Token expires in: ${remainingTimeInMinutes.toFixed(0)} minutes`);
+
     if (remainingTimeInMinutes <= 15 || !remainingTimeInMinutes) {
         console.log('Token is expiring soon or already expired, refreshing...');
         const rawTokens = await invokeLambda({
@@ -29,19 +31,23 @@ const app = async () => {
         token = tokens.access_token;
     }
 
-    console.log(`Token expires in: ${remainingTimeInMinutes.toFixed(0)} minutes`);
 
     console.log('getting liked tracks');
 
-    const tracks = await fetchTracks(token);
+    let tracks = await fetchTracks(token);
 
     if (!tracks?.length) {
         return { message: 'No liked tracks found.' };
     }
 
     console.log(`Found ${tracks.length} tracks.`);
+    const tracksWithFeatures = []
 
-    const tracksWithFeatures = await enrichTrackWithFeatures(tracks, token);
+    for (const track of tracks) {
+        const trackWithFeatures = await enrichTracksWithFeatures(track, token);
+        tracksWithFeatures.push({ ...trackWithFeatures, ...track });
+    }
+
     await saveTracksWithFeatures(user, tracksWithFeatures);
     return { message: 'All tracks are saved.' };
 };
@@ -59,45 +65,20 @@ const invokeLambda = async (params) => {
 };
 
 const fetchTracks = async (token) => {
-    const rawLikedTracks = await invokeLambda({
-        FunctionName: `spotify-get-likes-${process.env.STAGE}`,
-        Payload: JSON.stringify({ token, limit: 50, offset: 0 })
-    });
-    const likedTracks = JSON.parse(rawLikedTracks).body;
     const rawTopTracks = await invokeLambda({
         FunctionName: `spotify-get-top-${process.env.STAGE}`,
         Payload: JSON.stringify({ token, type: 'tracks', time_range: 'medium_term', limit: 50, offset: 0 })
     });
     const topTracks = JSON.parse(rawTopTracks).body;
-    return [...likedTracks.map(t => t.track), ...topTracks];
+    return topTracks
 };
 
-const enrichTrackWithFeatures = async (tracks, token) => {
-    const chunkSize = 10;
-    const trackFeatures = [];
-
-    for (let i = 0; i < tracks.length; i += chunkSize) {
-        const chunk = tracks.slice(i, i + chunkSize);
-        const promises = chunk.map(track => invokeLambda({
-            FunctionName: `spotify-get-audio-features-${process.env.STAGE}`,
-            Payload: JSON.stringify({ token, id: track.id })
-        }));
-
-        const results = await Promise.all(promises);
-        results.forEach(result => {
-            const trackWithFeatures = JSON.parse(result).body;
-            trackWithFeatures.popularity = tracks[i].popularity;
-            trackWithFeatures.release_date = tracks[i].album.release_date;
-            trackWithFeatures.artists = tracks[i].album.artists;
-            trackWithFeatures.album = tracks[i].album.name;
-            trackWithFeatures.name = tracks[i].name;
-            delete trackWithFeatures.type;
-            delete trackWithFeatures.track_href;
-            delete trackWithFeatures.analysis_url;
-            trackFeatures.push(trackWithFeatures);
-        });
-    }
-
+const enrichTracksWithFeatures = async (track, token) => {
+    const result = await invokeLambda({
+        FunctionName: `spotify-get-audio-features-${process.env.STAGE}`,
+        Payload: JSON.stringify({ token, id: track.id })
+    })
+    const trackFeatures = JSON.parse(result).body;
     return trackFeatures;
 };
 

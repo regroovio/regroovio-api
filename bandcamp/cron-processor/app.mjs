@@ -17,11 +17,13 @@ const documentClient = DynamoDBDocument.from(new DynamoDB({
     secretAccessKey: process.env.SECRET_ACCESS_KEY
 }));
 
-// this function will need to be modified to be able to handle multiple tables with a limited runtime
-
 const app = async (event, context) => {
     try {
-        const bandcampTables = await listBandcampTables();
+        const serction = event.section
+
+        console.log(`Getting ${serction}...`);
+
+        const bandcampTables = await listBandcampTables(serction);
         for (const tableName of bandcampTables) {
             console.log(`Retrieving unsaved albums from ${tableName}`);
 
@@ -36,6 +38,7 @@ const app = async (event, context) => {
             let unprocessedAlbums = await fetchUnprocessedAlbums(tableName);
             if (!unprocessedAlbums?.length) {
                 console.log({ message: 'No unprocessed albums found.' });
+                return
             }
             const admin_id = process.env.ADMIN_ID;
             let admin = await getUserById(admin_id);
@@ -46,6 +49,8 @@ const app = async (event, context) => {
 
             let token = admin.access_token_spotify || null;
             const remainingTimeInMinutes = (admin.expiration_timestamp_spotify - Date.now()) / 1000 / 60;
+            console.log(`Token expires in: ${remainingTimeInMinutes.toFixed(0)} minutes`);
+
             if (remainingTimeInMinutes <= 15) {
                 console.log('Token is expiring soon or already expired, refreshing...');
                 const rawTokens = await invokeLambda({
@@ -56,7 +61,6 @@ const app = async (event, context) => {
                 await updateUserTokens(admin, tokens);
                 token = tokens.access_token;
             }
-            console.log(`Token expires in: ${remainingTimeInMinutes.toFixed(0)} minutes`);
 
             console.log(`Found ${unprocessedAlbums.length} unprocessed albums.`);
 
@@ -69,7 +73,7 @@ const app = async (event, context) => {
     }
 };
 
-const listBandcampTables = async () => {
+const listBandcampTables = async (serction) => {
     const dynamoDB = new DynamoDB({
         region: process.env.REGION,
         accessKeyId: process.env.ACCESS_KEY,
@@ -83,7 +87,7 @@ const listBandcampTables = async () => {
 
         do {
             result = await dynamoDB.listTables(params);
-            bandcampTables.push(...result.TableNames.filter(name => name.includes('bandcamp') && name.includes(process.env.STAGE)));
+            bandcampTables.push(...result.TableNames.filter(name => name.includes('bandcamp') && name.includes(serction) && name.includes(process.env.STAGE)));
             params.ExclusiveStartTableName = result.LastEvaluatedTableName;
         } while (result.LastEvaluatedTableName);
 
