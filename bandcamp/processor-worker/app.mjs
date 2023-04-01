@@ -25,8 +25,9 @@ const app = async (event, context) => {
                     const trackSpotify = trackResult.spotify;
                     console.log('Track found', trackSpotify.name);
                     const trackWithFeatures = await enrichTrackWithFeatures(trackSpotify, token);
-                    enrichTrackInfo(trackWithFeatures, trackSpotify, [...key_words, ...album.key_words])
                     console.log("trackWithFeatures", trackWithFeatures);
+                    enrichTrackInfo(trackWithFeatures, trackSpotify, [...key_words, ...album.key_words])
+                    console.log("enrichTrackInfo", trackWithFeatures);
                     track.spotify = trackWithFeatures
                 } else {
                     console.log('No track info found for', track.name);
