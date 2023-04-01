@@ -22,12 +22,11 @@ const app = async (event, context) => {
                     key_words = trackResult.apple_music.genreNames
                 }
                 if (trackResult?.spotify) {
-                    console.log('Track found', track.name);
                     const trackSpotify = trackResult.spotify;
-                    console.log("trackSpotify", trackSpotify);
+                    console.log('Track found', trackSpotify.name);
                     const trackWithFeatures = await enrichTrackWithFeatures(trackSpotify, token);
-                    console.log("trackWithFeatures", trackWithFeatures);
                     enrichTrackInfo(trackWithFeatures, trackSpotify, [...key_words, ...album.key_words])
+                    console.log("trackWithFeatures", trackWithFeatures);
                     track.spotify = trackWithFeatures
                 } else {
                     console.log('No track info found for', track.name);
