@@ -12,6 +12,7 @@ const app = async (event, context) => {
     try {
         const { tableName, album, token } = event
 
+        console.log('Getting album info', album.album_id);
         for (const track of album.tracks) {
             try {
                 const trackInfo = await getTrackInfo(track.url);
@@ -21,8 +22,11 @@ const app = async (event, context) => {
                     key_words = trackResult.apple_music.genreNames
                 }
                 if (trackResult?.spotify) {
+                    console.log('Track found', track.name);
                     const trackSpotify = trackResult.spotify;
+                    console.log("trackSpotify", trackSpotify);
                     const trackWithFeatures = await enrichTrackWithFeatures(trackSpotify, token);
+                    console.log("trackWithFeatures", trackWithFeatures);
                     enrichTrackInfo(trackWithFeatures, trackSpotify, [...key_words, ...album.key_words])
                     track.spotify = trackWithFeatures
                 } else {
