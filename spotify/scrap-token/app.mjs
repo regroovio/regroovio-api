@@ -24,6 +24,11 @@ const app = async (event, context) => {
         const tokens = await handleAuthentication(page, user);
         await page.close();
         await browser.close();
+
+        if (!tokens.access_token) {
+            throw new Error('No access token found');
+        }
+
         await saveTokens(user, tokens);
 
         return tokens

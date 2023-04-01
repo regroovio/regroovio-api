@@ -41,9 +41,9 @@ const app = async (event, context) => {
                 console.error('User not found');
                 return;
             }
+
             let token = admin.access_token_spotify || null;
-            const remainingTimeInMinutes = (admin.spotify_expiration_timestamp - Date.now()) / 1000 / 60;
-            console.log("Remaining time in minutes:", remainingTimeInMinutes.toFixed(0));
+            const remainingTimeInMinutes = (admin.expiration_timestamp_spotify - Date.now()) / 1000 / 60;
             if (remainingTimeInMinutes <= 15) {
                 console.log('Token is expiring soon or already expired, refreshing...');
                 const rawTokens = await invokeLambda({
@@ -54,7 +54,10 @@ const app = async (event, context) => {
                 await updateUserTokens(admin, tokens);
                 token = tokens.access_token;
             }
+            console.log(`Token expires in: ${remainingTimeInMinutes.toFixed(0)} minutes`);
+
             console.log(`Found ${unprocessedAlbums.length} unprocessed albums.`);
+
             await invokeLambdasInChunks(`bandcamp-processor-worker-${process.env.STAGE}`, unprocessedAlbums, tableName, token);
         }
         return { message: 'All albums are saved.' };
@@ -90,9 +93,9 @@ const listBandcampTables = async () => {
 };
 
 const invokeLambdasInChunks = async (functionName, albums, tableName, token) => {
-    let chunkSize = 10;
+    let chunkSize = 5;
 
-    if (albums.length < 10) {
+    if (albums.length < chunkSize) {
         chunkSize = albums.length;
     }
 
@@ -161,7 +164,7 @@ const updateUserTokens = async (user, tokens) => {
     try {
         const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
         user.access_token_spotify = tokens.access_token;
-        user.spotify_expiration_timestamp = tokens.expiration_timestamp;
+        user.expiration_timestamp_spotify = tokens.expiration_timestamp;
         if (tokens?.refresh_token) {
             user.refresh_token_spotify = tokens.refresh_token;
         }

@@ -18,10 +18,8 @@ const app = async () => {
     }
 
     let token = user.access_token_spotify || null;
-    const remainingTimeInMinutes = (user.spotify_expiration_timestamp - Date.now()) / 1000 / 60;
-    console.log("Remaining time in minutes:", remainingTimeInMinutes.toFixed(0));
-
-    if (remainingTimeInMinutes <= 15) {
+    const remainingTimeInMinutes = (user.expiration_timestamp_spotify - Date.now()) / 1000 / 60;
+    if (remainingTimeInMinutes <= 15 || !remainingTimeInMinutes) {
         console.log('Token is expiring soon or already expired, refreshing...');
         const rawTokens = await invokeLambda({
             FunctionName: `spotify-token-${process.env.STAGE}`,
@@ -32,7 +30,10 @@ const app = async () => {
         token = tokens.access_token;
     }
 
+    console.log(`Token expires in: ${remainingTimeInMinutes.toFixed(0)} minutes`);
+
     console.log('getting liked tracks');
+
     const tracks = await fetchTracks(token);
 
     if (!tracks?.length) {
@@ -117,7 +118,7 @@ const updateUserTokens = async (user, tokens) => {
     try {
         const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
         user.access_token_spotify = tokens.access_token;
-        user.spotify_expiration_timestamp = tokens.expiration_timestamp;
+        user.expiration_timestamp_spotify = tokens.expiration_timestamp;
         if (tokens?.refresh_token) {
             user.refresh_token_spotify = tokens.refresh_token;
         }
