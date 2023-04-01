@@ -5,7 +5,6 @@ import { DynamoDB } from "@aws-sdk/client-dynamodb";
 import { AWS_DYNAMO } from "./config.mjs";
 
 const checkCredentials = async (page, username) => {
-    console.log(`Checking credentials for ${username}...`);
     try {
         await page.goto("https://bandcamp.com/login", {
             waitUntil: "load",

@@ -26,10 +26,7 @@ const app = async (event, context) => {
                 if (trackResult?.spotify) {
                     const trackSpotify = trackResult.spotify;
                     console.log('Track found', trackSpotify.name);
-
                     const trackFeatures = await getTrackFeatures(trackSpotify, token);
-                    console.log("trackFeatures", trackFeatures);
-
                     track.spotify = {
                         ...trackFeatures,
                         popularity: trackSpotify.popularity,
@@ -39,12 +36,11 @@ const app = async (event, context) => {
                         name: trackSpotify.name,
                         key_words: [...key_words, ...album.key_words],
                     };
-
-                    console.log("trackWithFeatures", track.spotify);
                 } else {
                     console.log('No track info found for', track.name);
                     track.spotify = trackInfo.data || trackInfo.status;
                 }
+
             } catch (err) {
                 console.error("Error updateTrackInfo:", err);
             }
