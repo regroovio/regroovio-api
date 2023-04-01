@@ -16,7 +16,9 @@ const documentClient = DynamoDBDocument.from(new DynamoDB({
     accessKeyId: process.env.ACCESS_KEY,
     secretAccessKey: process.env.SECRET_ACCESS_KEY
 }));
-// this function will need to be modified to be able to handle multiple tables with limited runtime
+
+// this function will need to be modified to be able to handle multiple tables with a limited runtime
+
 const app = async (event, context) => {
     try {
         const bandcampTables = await listBandcampTables();

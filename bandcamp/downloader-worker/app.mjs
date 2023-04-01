@@ -31,6 +31,7 @@ const processAndSaveAlbum = async (album, tableName) => {
         const data = await fetchAlbumData(album.id);
         if (!data || !data.linkInfo || !data.streams) return;
         const { linkInfo, streams } = data;
+        console.log(streams);
         const tracksS3 = (await Promise.all(streams.map(stream => downloadTrack(stream, linkInfo)))).filter(track => track !== undefined);
         const albumDetails = await generateAlbumDetails(linkInfo, tracksS3);
         console.log('Adding album:', linkInfo.name);
