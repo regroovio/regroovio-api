@@ -69,7 +69,7 @@ const fetchAlbumData = async (album) => {
 
 const downloadTrack = async (stream, linkInfo) => {
     if (stream.stream) {
-        console.log(`Downloading track:`, stream.url);
+        console.log(`Downloading track:`, stream.name);
         const { url, name } = await saveAlbumToS3({ ...stream, album: linkInfo.name, artist: linkInfo.artist.name });
         return { url, name };
     } else {
