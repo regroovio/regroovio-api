@@ -17,9 +17,13 @@ jobs:
     strategy:
       matrix:
         function:
+          # Bandcamp Workers
+          - name: "bandcamp-downloader-worker"
+            path: "./bandcamp/downloader-worker"
+          - name: "bandcamp-processor-worker"
+            path: "./bandcamp/processor-worker"
+
           # Bandcamp Crons
-          - name: "bandcamp-cron-downloader"
-            path: "./bandcamp/cron-downloader"
           - name: "bandcamp-cron-processor"
             path: "./bandcamp/cron-processor"
           - name: "bandcamp-cron-daily"
@@ -27,11 +31,11 @@ jobs:
           - name: "bandcamp-cron-custom"
             path: "./bandcamp/cron-scrapers/custom"
           - name: "bandcamp-cron-wishlist"
-            path: "./bandcamp/user-scrapers/wishlist"
+            path: "./bandcamp/cron-users/wishlist"
           - name: "bandcamp-cron-collection"
-            path: "./bandcamp/user-scrapers/collection"
+            path: "./bandcamp/cron-users/collection"
           - name: "bandcamp-cron-feed"
-            path: "./bandcamp/user-scrapers/feed"
+            path: "./bandcamp/cron-users/feed"
 
           # Sporify Token Scraper
           - name: "spotify-token"

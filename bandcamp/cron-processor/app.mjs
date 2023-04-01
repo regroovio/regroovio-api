@@ -1,89 +1,111 @@
 // app.mjs
 
-import axios from 'axios';
+import dotenv from 'dotenv';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
-import { AWS_DYNAMO } from "./common/config.mjs";
+import { getUserById } from './common/getUserById.mjs';
+import { AWS_DYNAMO } from './common/config.mjs';
+
+dotenv.config();
 
 const lambdaClient = new LambdaClient({ region: 'us-east-1' });
 
+const documentClient = DynamoDBDocument.from(new DynamoDB({
+    region: process.env.REGION,
+    accessKeyId: process.env.ACCESS_KEY,
+    secretAccessKey: process.env.SECRET_ACCESS_KEY
+}));
+// this function will need to be modified to be able to handle multiple tables with limited runtime
 const app = async (event, context) => {
     try {
-        const { tableName, album, token } = event
+        const bandcampTables = await listBandcampTables();
+        for (const tableName of bandcampTables) {
+            console.log(`Retrieving unsaved albums from ${tableName}`);
 
-        for (const track of album.tracks) {
-            try {
-                const trackInfo = await getTrackInfo(track.url);
-                const trackResult = trackInfo.data.result
-                let key_words = [];
-                if (trackResult?.apple_music) {
-                    key_words = trackResult.apple_music.genreNames
-                }
-                if (trackResult?.spotify) {
-                    const trackSpotify = trackResult.spotify;
-                    const trackWithFeatures = await enrichTrackWithFeatures(trackSpotify, token);
-                    enrichTrackInfo(trackWithFeatures, trackSpotify, [...key_words, ...album.key_words])
-                    track.spotify = trackWithFeatures
-                } else {
-                    console.log('No track info found for', track.name);
-                    track.spotify = trackInfo.data || trackInfo.status
-                }
-            } catch (err) {
-                console.error("Error updateTrackInfo:", err);
+            let unsavedAlbums = await fetchUnsavedAlbums(tableName);
+            if (!unsavedAlbums?.length) {
+                console.log({ message: 'No unsaved albums found.' });
             }
+            console.log(`Found ${unsavedAlbums.length} unsaved albums.`);
+            await invokeLambdasInChunks(`bandcamp-downloader-worker-${process.env.STAGE}`, unsavedAlbums, tableName);
+            let unprocessedAlbums = await fetchUnprocessedAlbums(tableName);
+            if (!unprocessedAlbums?.length) {
+                console.log({ message: 'No unprocessed albums found.' });
+            }
+            const admin_id = process.env.ADMIN_ID;
+            let admin = await getUserById(admin_id);
+            if (!admin) {
+                console.error('User not found');
+                return;
+            }
+            let token = admin.access_token_spotify || null;
+            const remainingTimeInMinutes = (admin.spotify_expiration_timestamp - Date.now()) / 1000 / 60;
+            console.log("Remaining time in minutes:", remainingTimeInMinutes.toFixed(0));
+            if (remainingTimeInMinutes <= 15) {
+                console.log('Token is expiring soon or already expired, refreshing...');
+                const rawTokens = await invokeLambda({
+                    FunctionName: `spotify-token-${process.env.STAGE}`,
+                    Payload: JSON.stringify({ user_id: admin_id })
+                });
+                const tokens = JSON.parse(rawTokens);
+                await updateUserTokens(admin, tokens);
+                token = tokens.access_token;
+            }
+            console.log(`Found ${unprocessedAlbums.length} unprocessed albums.`);
+            await invokeLambdasInChunks(`bandcamp-processor-worker-${process.env.STAGE}`, unprocessedAlbums, tableName, token);
         }
-        await saveTracksWithFeatures(tableName, album)
-
-        return { message: 'Done.' };
+        return { message: 'All albums are saved.' };
     } catch (err) {
-        return { message: 'Failed', err };
+        console.error('Error processing albums:', err);
+        return { message: 'Failed to process albums', err };
     }
 };
 
-const enrichTrackInfo = (trackWithFeatures, track, key_words) => {
-    if (trackWithFeatures) {
-        trackWithFeatures.popularity = track.popularity;
-        trackWithFeatures.release_date = track.album.release_date;
-        trackWithFeatures.artists = track.album.artists;
-        trackWithFeatures.album = track.album.name;
-        trackWithFeatures.name = track.name;
-        trackWithFeatures.key_words = key_words;
-        delete trackWithFeatures.type;
-        delete trackWithFeatures.track_href;
-        delete trackWithFeatures.analysis_url;
-    } else {
-        console.error("trackWithFeatures is undefined");
-    }
-};
+const listBandcampTables = async () => {
+    const dynamoDB = new DynamoDB({
+        region: process.env.REGION,
+        accessKeyId: process.env.ACCESS_KEY,
+        secretAccessKey: process.env.SECRET_ACCESS_KEY
+    });
 
-const enrichTrackWithFeatures = async (track, token) => {
-    const trackWithFeatures = JSON.parse(await invokeLambda({
-        FunctionName: `spotify-get-audio-features-${process.env.STAGE}`,
-        Payload: JSON.stringify({ token, id: track.id })
-    })).body;
-    return trackWithFeatures;
-};
-
-const getTrackInfo = async (url) => {
     try {
-        const response = await axios.post('https://api.audd.io/', {
-            url: url,
-            return: 'apple_music,spotify',
-            api_token: process.env.AUDD_API_KEY,
-        },
-            {
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-            });
-        return response
-    } catch (error) {
-        console.error(error);
-        return error
+        let result;
+        let bandcampTables = [];
+        let params = {};
+
+        do {
+            result = await dynamoDB.listTables(params);
+            bandcampTables.push(...result.TableNames.filter(name => name.includes('bandcamp') && name.includes(process.env.STAGE)));
+            params.ExclusiveStartTableName = result.LastEvaluatedTableName;
+        } while (result.LastEvaluatedTableName);
+
+        return bandcampTables;
+    } catch (err) {
+        console.error(`Error listing Bandcamp tables: ${err}`);
+        return [];
     }
 };
 
+const invokeLambdasInChunks = async (functionName, albums, tableName, token) => {
+    let chunkSize = 10;
+
+    if (albums.length < 10) {
+        chunkSize = albums.length;
+    }
+
+    for (let i = 0; i < albums.length; i += chunkSize) {
+        const chunk = albums.slice(i, i + chunkSize);
+        console.log(`Processing chunk ${i / chunkSize + 1} of ${Math.ceil(albums.length / chunkSize)}`);
+
+        await Promise.all(chunk.map(async (album) => {
+            await invokeLambda({
+                FunctionName: functionName,
+                Payload: JSON.stringify({ tableName, album, token: token ? token : null })
+            });
+        }));
+    }
+};
 
 const invokeLambda = async (params) => {
     try {
@@ -97,13 +119,53 @@ const invokeLambda = async (params) => {
     }
 };
 
-const saveTracksWithFeatures = async (tableName, album) => {
+const fetchUnsavedAlbums = async (tableName) => {
     try {
-        album.processed = true
-        const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
-        await documentClient.put({ TableName: tableName, Item: album });
+        const params = { TableName: tableName, Limit: 100 };
+        let result;
+        const items = [];
+        do {
+            result = await documentClient.scan(params);
+            items.push(...result.Items);
+            params.ExclusiveStartKey = result.LastEvaluatedKey;
+        } while (result.LastEvaluatedKey);
+        const unsavedAlbums = items.filter(album => !album.saved);
+        return unsavedAlbums;
     } catch (err) {
-        console.error(`Error saveTracksWithFeatures: ${err}`);
+        console.error(`Error fetching unsaved albums: ${err}`);
+        return [];
+    }
+};
+
+const fetchUnprocessedAlbums = async (tableName) => {
+    try {
+        const params = { TableName: tableName, Limit: 100 };
+        let result;
+        const items = [];
+        do {
+            result = await documentClient.scan(params);
+            items.push(...result.Items);
+            params.ExclusiveStartKey = result.LastEvaluatedKey;
+        } while (result.LastEvaluatedKey);
+        const unprocessedAlbums = items.filter(album => album.saved && !album.processed);
+        return unprocessedAlbums;
+    } catch (err) {
+        console.error(`Error fetching unprocessed albums: ${err}`);
+        return [];
+    }
+};
+
+const updateUserTokens = async (user, tokens) => {
+    try {
+        const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
+        user.access_token_spotify = tokens.access_token;
+        user.spotify_expiration_timestamp = tokens.expiration_timestamp;
+        if (tokens?.refresh_token) {
+            user.refresh_token_spotify = tokens.refresh_token;
+        }
+        await documentClient.put({ TableName: "users", Item: user });
+    } catch (err) {
+        console.error(`Error updateUserTokens: ${err}`);
         throw err;
     }
 };

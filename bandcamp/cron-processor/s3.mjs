@@ -21,7 +21,7 @@ const saveAlbumToS3 = async (item) => {
         await s3.send(new PutObjectCommand(params));
         const command = new GetObjectCommand(params);
         const url = await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
-        return url;
+        return { url, name };
     } catch (err) {
         console.error(`Error saving album to S3: ${err}`);
         return null;

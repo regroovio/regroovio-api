@@ -1,5 +1,5 @@
 {
-  "name": "cron-downloader",
+  "name": "downloader-worker",
   "version": "1.0.0",
   "type": "module",
   "main": "index.mjs",
