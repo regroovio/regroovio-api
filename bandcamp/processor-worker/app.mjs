@@ -11,33 +11,46 @@ const lambdaClient = new LambdaClient({ region: 'us-east-1' });
 const app = async (event, context) => {
     try {
         const { tableName, album, token } = event
-
         console.log('Getting album info', album.album_id);
-        for (const track of album.tracks) {
+
+        await Promise.all(album.tracks.map(async (track) => {
             try {
                 const trackInfo = await getTrackInfo(track.url);
-                const trackResult = trackInfo.data.result
+                const trackResult = trackInfo.data.result;
                 let key_words = [];
+
                 if (trackResult?.apple_music) {
-                    key_words = trackResult.apple_music.genreNames
+                    key_words = trackResult.apple_music.genreNames;
                 }
+
                 if (trackResult?.spotify) {
                     const trackSpotify = trackResult.spotify;
                     console.log('Track found', trackSpotify.name);
-                    const trackWithFeatures = await enrichTrackWithFeatures(trackSpotify, token);
-                    console.log("trackWithFeatures", trackWithFeatures);
-                    enrichTrackInfo(trackWithFeatures, trackSpotify, [...key_words, ...album.key_words])
-                    console.log("enrichTrackInfo", trackWithFeatures);
-                    track.spotify = trackWithFeatures
+
+                    const trackFeatures = await getTrackFeatures(trackSpotify, token);
+                    console.log("trackFeatures", trackFeatures);
+
+                    track.spotify = {
+                        ...trackFeatures,
+                        popularity: trackSpotify.popularity,
+                        release_date: trackSpotify.album.release_date,
+                        artists: trackSpotify.album.artists,
+                        album: trackSpotify.album.name,
+                        name: trackSpotify.name,
+                        key_words: [...key_words, ...album.key_words],
+                    };
+
+                    console.log("trackWithFeatures", track.spotify);
                 } else {
                     console.log('No track info found for', track.name);
-                    track.spotify = trackInfo.data || trackInfo.status
+                    track.spotify = trackInfo.data || trackInfo.status;
                 }
             } catch (err) {
                 console.error("Error updateTrackInfo:", err);
             }
-        }
-        await saveTracksWithFeatures(tableName, album)
+        }));
+
+        await saveTracksWithFeatures(tableName, album);
 
         return { message: 'Done.' };
     } catch (err) {
@@ -45,28 +58,14 @@ const app = async (event, context) => {
     }
 };
 
-const enrichTrackInfo = (trackWithFeatures, track, key_words) => {
-    if (trackWithFeatures) {
-        trackWithFeatures.popularity = track.popularity;
-        trackWithFeatures.release_date = track.album.release_date;
-        trackWithFeatures.artists = track.album.artists;
-        trackWithFeatures.album = track.album.name;
-        trackWithFeatures.name = track.name;
-        trackWithFeatures.key_words = key_words;
-        delete trackWithFeatures.type;
-        delete trackWithFeatures.track_href;
-        delete trackWithFeatures.analysis_url;
-    } else {
-        console.error("trackWithFeatures is undefined");
-    }
-};
-
-const enrichTrackWithFeatures = async (track, token) => {
-    const trackWithFeatures = JSON.parse(await invokeLambda({
+const getTrackFeatures = async (track, token) => {
+    const payload = JSON.stringify({ token, id: track.id });
+    const trackFeatures = JSON.parse(await invokeLambda({
         FunctionName: `spotify-get-audio-features-${process.env.STAGE}`,
-        Payload: JSON.stringify({ token, id: track.id })
+        Payload: payload,
     })).body;
-    return trackWithFeatures;
+
+    return trackFeatures;
 };
 
 const getTrackInfo = async (url) => {
@@ -75,19 +74,17 @@ const getTrackInfo = async (url) => {
             url: url,
             return: 'apple_music,spotify',
             api_token: process.env.AUDD_API_KEY,
-        },
-            {
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-            });
-        return response
+        }, {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+        });
+        return response;
     } catch (error) {
         console.error(error);
-        return error
+        return error;
     }
 };
-
 
 const invokeLambda = async (params) => {
     try {
@@ -103,7 +100,7 @@ const invokeLambda = async (params) => {
 
 const saveTracksWithFeatures = async (tableName, album) => {
     try {
-        album.processed = true
+        album.processed = true;
         const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
         await documentClient.put({ TableName: tableName, Item: album });
     } catch (err) {
@@ -112,4 +109,4 @@ const saveTracksWithFeatures = async (tableName, album) => {
     }
 };
 
-export { app }
+export { app };
