@@ -31,6 +31,8 @@ const app = async (event, context) => {
             }
             console.log(`Found ${unsavedAlbums.length} unsaved albums.`);
             await invokeLambdasInChunks(`bandcamp-downloader-worker-${process.env.STAGE}`, unsavedAlbums, tableName);
+
+            console.log(`Retrieving unprocessed albums from ${tableName}`);
             let unprocessedAlbums = await fetchUnprocessedAlbums(tableName);
             if (!unprocessedAlbums?.length) {
                 console.log({ message: 'No unprocessed albums found.' });

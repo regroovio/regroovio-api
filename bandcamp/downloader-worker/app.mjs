@@ -42,11 +42,15 @@ const processAndSaveAlbum = async (album, tableName) => {
 
 const generateAlbumDetails = async (linkInfo, tracksS3) => {
     const imageUrl = await saveImageToS3({ imageUrl: linkInfo.imageUrl, album: linkInfo.name, artist: linkInfo.artist.name });
+    let saved = false
+    if (tracksS3.length) {
+        saved = true
+    }
     return {
         artist_name: linkInfo.artist.name,
         key_words: linkInfo.keywords,
         album_name: linkInfo.name,
-        saved: true,
+        saved: saved,
         image_url: imageUrl,
         tracks: tracksS3
     };
