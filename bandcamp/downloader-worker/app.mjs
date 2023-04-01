@@ -17,9 +17,9 @@ const documentClient = DynamoDBDocument.from(new DynamoDB({
 const app = async (event, context) => {
     try {
         const { tableName, album } = event
-        console.log(`Processing album ${album.id} for table ${tableName}`);
+        console.log(`Processing album ${album.album_id} for table ${tableName}`);
         await processAndSaveAlbum(album, tableName);
-        return { message: `Album ${album.id} added to ${tableName}.` };
+        return { message: `Album ${album.album_id} added to ${tableName}.` };
     } catch (err) {
         console.error('Error processing album:', err);
         return { message: 'Failed to process album', err };
@@ -28,7 +28,7 @@ const app = async (event, context) => {
 
 const processAndSaveAlbum = async (album, tableName) => {
     try {
-        const data = await fetchAlbumData(album.id);
+        const data = await fetchAlbumData(album.album_id);
         if (!data || !data.linkInfo || !data.streams) return;
         const { linkInfo, streams } = data;
         const tracksS3 = (await Promise.all(streams.map(stream => downloadTrack(stream, linkInfo)))).filter(track => track !== undefined);
@@ -60,7 +60,7 @@ const fetchAlbumData = async (album) => {
         }))];
         return { linkInfo, streams };
     } catch (err) {
-        console.error(`Error fetching album data for ${album.id}: ${err}`);
+        console.error(`Error fetching album data for ${album.album_id}: ${err}`);
         return { linkInfo: null, streams: null };
 
     }

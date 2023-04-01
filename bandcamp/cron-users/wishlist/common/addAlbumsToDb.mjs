@@ -5,11 +5,11 @@ import { AWS_DYNAMO } from "./config.mjs";
 
 const dynamoClient = new DynamoDB(AWS_DYNAMO);
 
-const getAlbumData = async (table, albumId) => {
+const getAlbumData = async (table, album_id) => {
     const params = {
         TableName: table,
         Key: {
-            id: { S: albumId },
+            album_id: { S: album_id },
         },
     };
 
@@ -23,19 +23,13 @@ const getAlbumData = async (table, albumId) => {
 };
 
 const addAlbumsToDb = async (table, links, user_id) => {
-    let chunkSize = 50;
-
-    if (links.length < 50) {
-        chunkSize = links.length;
-    }
-
+    const chunkSize = links.length;
     for (let i = 0; i < links.length; i += chunkSize) {
         const chunk = links.slice(i, i + chunkSize);
-        console.log(`Processing chunk ${i / chunkSize + 1} of ${Math.ceil(links.length / chunkSize)}`);
-
+        console.log(`Uploading`);
         await Promise.all(chunk.map(async (link) => {
-            const id = link?.split("?")[0] ? link.split("?")[0] : link;
-            let albumData = await getAlbumData(table, id);
+            const album_id = link?.split("?")[0] ? link.split("?")[0] : link;
+            let albumData = await getAlbumData(table, album_id);
 
             if (albumData) {
                 if (!albumData.user_ids.L.some((id) => id.S === user_id)) {
@@ -43,7 +37,7 @@ const addAlbumsToDb = async (table, links, user_id) => {
                 }
             } else {
                 albumData = {
-                    id: { S: id },
+                    album_id: { S: album_id },
                     user_ids: { L: [{ S: user_id }] },
                 };
             }

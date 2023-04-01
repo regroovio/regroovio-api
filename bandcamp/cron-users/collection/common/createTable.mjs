@@ -9,13 +9,13 @@ const createTable = async (TableName) => {
     const params = {
         AttributeDefinitions: [
             {
-                AttributeName: "id",
+                AttributeName: "album_id",
                 AttributeType: "S",
             },
         ],
         KeySchema: [
             {
-                AttributeName: "id",
+                AttributeName: "album_id",
                 KeyType: "HASH",
             },
         ],
