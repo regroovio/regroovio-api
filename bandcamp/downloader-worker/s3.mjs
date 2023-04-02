@@ -21,7 +21,8 @@ const saveAlbumToS3 = async (item) => {
         };
         await s3.send(new PutObjectCommand(params));
         const url = `https://${bucketName}.s3.${region}.amazonaws.com/${key}`;
-        return { url, name };
+        const urlWithoutSpaces = url.replace(/\s/g, '');
+        return { url: urlWithoutSpaces, name };
     } catch (err) {
         console.error(`Error saving album to S3: ${err}`);
         return null;
