@@ -14,17 +14,21 @@ const documentClient = DynamoDBDocument.from(new DynamoDB({
 
 const app = async (event, context) => {
     try {
-        const section = event.section
-        console.log(`Getting ${section}...`);
-        const tableName = await randomBandcampTable(section);
+        const serction = event.section
+        console.log(`Getting ${serction}...`);
+        const tableName = await randomBandcampTable(serction);
         console.log(`Retrieving albums from ${tableName}`);
-        let album = await fetchRandomAlbum(tableName);
-        if (!album) {
+        let albums = await fetchAlbums(tableName);
+        if (!albums?.length) {
             console.log({ message: 'No albums found.' });
         }
         const tracks = [];
-        for (const track of album.tracks) {
-            tracks.push(track);
+        for (const album of albums) {
+            console.log(album.artist_name);
+            console.log(album.name);
+            for (const track of album.tracks) {
+                tracks.push({ album_name: album.album_name, artist_name: album.artist_name, image_url: album.image_url, ...track });
+            }
         }
         return { tracks: tracks };
     } catch (err) {
@@ -33,7 +37,7 @@ const app = async (event, context) => {
     }
 };
 
-const randomBandcampTable = async (section) => {
+const randomBandcampTable = async (serction) => {
     const dynamoDB = new DynamoDB({
         region: process.env.REGION,
         accessKeyId: process.env.ACCESS_KEY,
@@ -57,13 +61,11 @@ const randomBandcampTable = async (section) => {
         return [];
     }
 };
-
-const fetchRandomAlbum = async (tableName) => {
+const fetchAlbums = async (tableName) => {
     try {
-        const params = { TableName: tableName, Limit: 25 };
+        const params = { TableName: tableName, Limit: 50 };
         const result = await documentClient.scan(params);
-        const randomIndex = Math.floor(Math.random() * result.Items.length);
-        return result.Items[randomIndex];
+        return result.Items;
     } catch (err) {
         console.error(`Error fetching albums: ${err}`);
         return [];
