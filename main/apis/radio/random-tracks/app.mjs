@@ -29,8 +29,8 @@ const app = async () => {
         const tracks = [];
         for (const album of albums) {
             const params = {
-                Bucket: album.bucket,
-                Key: album.key,
+                Bucket: album.image_url.bucket,
+                Key: album.image_url.key,
             };
             const command = new GetObjectCommand(params);
             const imageUrl = await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
