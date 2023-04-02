@@ -52,7 +52,6 @@ const randomBandcampTable = async (serction) => {
             bandcampTables.push(...result.TableNames.filter(name => name.includes('bandcamp') && name.includes(process.env.STAGE)));
             params.ExclusiveStartTableName = result.LastEvaluatedTableName;
         } while (result.LastEvaluatedTableName);
-        // return a random table from the list of tables 
         const randomTable = bandcampTables[Math.floor(Math.random() * bandcampTables.length)];
         return randomTable;
     } catch (err) {
@@ -62,15 +61,9 @@ const randomBandcampTable = async (serction) => {
 };
 const fetchAlbums = async (tableName) => {
     try {
-        const params = { TableName: tableName, Limit: 100 };
-        let result;
-        const items = [];
-        do {
-            result = await documentClient.scan(params);
-            items.push(...result.Items);
-            params.ExclusiveStartKey = result.LastEvaluatedKey;
-        } while (result.LastEvaluatedKey);
-        return items;
+        const params = { TableName: tableName, Limit: 25 };
+        const result = await documentClient.scan(params);
+        return result.Items;
     } catch (err) {
         console.error(`Error fetching albums: ${err}`);
         return [];
