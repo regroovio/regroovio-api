@@ -24,8 +24,6 @@ const app = async (event, context) => {
         }
         const tracks = [];
         for (const album of albums) {
-            console.log(album.artist_name);
-            console.log(album.name);
             for (const track of album.tracks) {
                 tracks.push({ album_name: album.album_name, artist_name: album.artist_name, image_url: album.image_url, ...track });
             }
