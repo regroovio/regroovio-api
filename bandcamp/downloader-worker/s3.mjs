@@ -21,7 +21,6 @@ const saveAlbumToS3 = async (item) => {
         await s3.send(new PutObjectCommand(params));
         // const command = new GetObjectCommand(params);
         // const url = await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
-        console.log({ bucket: params.Bucket, key: params.Key, name });
         return { bucket: params.Bucket, key: params.Key, name };
     } catch (err) {
         console.error(`Error saving album to S3: ${err}`);
@@ -48,7 +47,6 @@ const saveImageToS3 = async (item) => {
         // console.log(command);
         // const url = await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
         // return url;
-        console.log({ bucket: params.Bucket, key: params.Key });
         return { bucket: params.Bucket, key: params.Key };
     } catch (err) {
         console.error(`Error saving image to S3: ${err}`);
