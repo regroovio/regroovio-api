@@ -41,7 +41,7 @@ const processAndSaveAlbum = async (album, tableName) => {
 };
 
 const generateAlbumDetails = async (linkInfo, tracksS3) => {
-    const imageUrl = await saveImageToS3({ imageUrl: linkInfo.imageUrl, album: linkInfo.name, artist: linkInfo.artist.name });
+    const { imageUrl } = await saveImageToS3({ imageUrl: linkInfo.imageUrl, album: linkInfo.name, artist: linkInfo.artist.name });
     let saved = false
     if (tracksS3.length) {
         saved = true
@@ -73,8 +73,8 @@ const fetchAlbumData = async (album) => {
 const downloadTrack = async (stream, linkInfo) => {
     if (stream.stream) {
         console.log(`Downloading track:`, stream.name);
-        const { url, name } = await saveAlbumToS3({ ...stream, album: linkInfo.name, artist: linkInfo.artist.name });
-        return { url, name };
+        const track = await saveAlbumToS3({ ...stream, album: linkInfo.name, artist: linkInfo.artist.name });
+        return track;
     } else {
         console.log(`Undefined track:`, stream);
     }

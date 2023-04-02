@@ -19,10 +19,9 @@ const saveAlbumToS3 = async (item) => {
             ContentType: response.headers['content-type']
         };
         await s3.send(new PutObjectCommand(params));
-        const command = new GetObjectCommand(params);
-        console.log(command);
+        // const command = new GetObjectCommand(params);
         // const url = await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
-        // return { url, name };
+        return { bucket: params.Bucket, key: params.Key, name };
     } catch (err) {
         console.error(`Error saving album to S3: ${err}`);
         return null;
@@ -44,10 +43,11 @@ const saveImageToS3 = async (item) => {
             ContentType: response.headers['content-type']
         };
         await s3.send(new PutObjectCommand(params));
-        const command = new GetObjectCommand(params);
-        console.log(command);
+        // const command = new GetObjectCommand(params);
+        // console.log(command);
         // const url = await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
         // return url;
+        return { bucket: params.Bucket, key: params.Key };
     } catch (err) {
         console.error(`Error saving image to S3: ${err}`);
         return null;
