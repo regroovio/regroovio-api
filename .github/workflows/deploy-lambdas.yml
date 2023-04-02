@@ -17,6 +17,10 @@ jobs:
     strategy:
       matrix:
         function:
+          # Main Functions
+          - name: "application-radio"
+            path: "./main/apis/radio"
+
           # Bandcamp Workers
           - name: "bandcamp-downloader-worker"
             path: "./bandcamp/downloader-worker"
