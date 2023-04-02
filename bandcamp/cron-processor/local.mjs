@@ -1,6 +1,7 @@
 import { handler } from './index.mjs'
 const start = async () => {
-    const response = await handler({ section: 'trap' })
+    const response = await 
+handler({ section: 'feed' })
     console.log(response)
 }
 start()

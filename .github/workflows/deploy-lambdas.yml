@@ -19,7 +19,7 @@ jobs:
         function:
           # Main Functions
           - name: "application-radio"
-            path: "./main/apis/radio"
+            path: "./main/apis/radio/random-tracks"
 
           # Bandcamp Workers
           - name: "bandcamp-downloader-worker"

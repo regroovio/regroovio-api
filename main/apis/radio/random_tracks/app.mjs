@@ -12,7 +12,7 @@ const documentClient = DynamoDBDocument.from(new DynamoDB({
     secretAccessKey: process.env.SECRET_ACCESS_KEY
 }));
 
-const app = async (event, context) => {
+const app = async () => {
     try {
         const tableName = await randomBandcampTable();
         console.log(`Getting ${tableName}...`);
@@ -23,9 +23,7 @@ const app = async (event, context) => {
         }
         const tracks = [];
         for (const album of albums) {
-            for (const track of album.tracks) {
-                tracks.push({ album_name: album.album_name, artist_name: album.artist_name, image_url: album.image_url, ...track });
-            }
+            tracks.push({ album_name: album.album_name, artist_name: album.artist_name, image_url: album.image_url, image_id: album.image_id, ...album.tracks[0] });
         }
         return { tracks: tracks };
     } catch (err) {
