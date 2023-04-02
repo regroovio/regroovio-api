@@ -3,8 +3,12 @@
 import dotenv from 'dotenv';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 dotenv.config();
+
+const s3 = new S3Client({ region: 'us-east-1' });;
 
 const documentClient = DynamoDBDocument.from(new DynamoDB({
     region: process.env.REGION,
@@ -21,14 +25,44 @@ const app = async () => {
         if (!albums?.length) {
             console.log({ message: 'No albums found.' });
         }
+
         const tracks = [];
         for (const album of albums) {
-            tracks.push({ album_name: album.album_name, artist_name: album.artist_name, image_url: album.image_url, image_id: album.image_id, ...album.tracks[0] });
+            const params = {
+                Bucket: album.bucket,
+                Key: album.key,
+            };
+            const command = new GetObjectCommand(params);
+            const imageUrl = await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
+            for (const track of album.tracks) {
+                const params = {
+                    Bucket: track.bucket,
+                    Key: track.key,
+                };
+                const command = new GetObjectCommand(params);
+                const url = await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
+                tracks.push({ album_name: album.album_name, artist_name: album.artist_name, image_url: album.image_url, image_id: imageUrl, name: track.name, url });
+            }
         }
-        return { tracks: tracks };
+        return tracks
     } catch (err) {
         console.error('Error processing albums:', err);
         return { message: 'Failed to process albums', err };
+    }
+};
+
+const getObjectFromS3 = async (bucketName, objectKey) => {
+    const s3 = new S3Client({ region: 'us-east-1' });
+    const getObjectParams = {
+        Bucket: bucketName,
+        Key: objectKey
+    };
+    try {
+        const response = await s3.send(new GetObjectCommand(getObjectParams));
+        return response.Body;
+    } catch (err) {
+        console.error(`Error getting object from S3: ${err}`);
+        return null;
     }
 };
 
