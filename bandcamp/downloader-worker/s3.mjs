@@ -19,10 +19,9 @@ const saveAlbumToS3 = async (item) => {
             Body: buffer,
             ContentType: response.headers['content-type']
         };
-        await s3.send(new PutObjectCommand(params));
-        const url = `https://${bucketName}.s3.${region}.amazonaws.com/${key}`;
-        const urlWithoutSpaces = url.replace(/\s/g, '+');
-        return { url: urlWithoutSpaces, name };
+        const res = await s3.send(new PutObjectCommand(params));
+        console.log(res.ETag);
+        return res.ETag
     } catch (err) {
         console.error(`Error saving album to S3: ${err}`);
         return null;
@@ -45,10 +44,9 @@ const saveImageToS3 = async (item) => {
             Body: buffer,
             ContentType: response.headers['content-type']
         };
-        await s3.send(new PutObjectCommand(params));
-        const url = `https://${bucketName}.s3.${region}.amazonaws.com/${key}`;
-        const urlWithoutSpaces = url.replace(/\s/g, '+');
-        return urlWithoutSpaces;
+        const res = await s3.send(new PutObjectCommand(params));
+        console.log(res.ETag);
+        return res.ETag
     } catch (err) {
         console.error(`Error saving image to S3: ${err}`);
         return null;
