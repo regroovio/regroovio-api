@@ -21,7 +21,7 @@ const saveAlbumToS3 = async (item) => {
         };
         await s3.send(new PutObjectCommand(params));
         const url = `https://${bucketName}.s3.${region}.amazonaws.com/${key}`;
-        const urlWithoutSpaces = url.replace(/\s/g, '');
+        const urlWithoutSpaces = url.replace(/\s/g, '+');
         return { url: urlWithoutSpaces, name };
     } catch (err) {
         console.error(`Error saving album to S3: ${err}`);
@@ -47,7 +47,7 @@ const saveImageToS3 = async (item) => {
         };
         await s3.send(new PutObjectCommand(params));
         const url = `https://${bucketName}.s3.${region}.amazonaws.com/${key}`;
-        const urlWithoutSpaces = url.replace(/\s/g, '');
+        const urlWithoutSpaces = url.replace(/\s/g, '+');
         return urlWithoutSpaces;
     } catch (err) {
         console.error(`Error saving image to S3: ${err}`);
