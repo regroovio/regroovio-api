@@ -14,19 +14,17 @@ const documentClient = DynamoDBDocument.from(new DynamoDB({
 
 const app = async (event, context) => {
     try {
-        const serction = event.section
-        console.log(`Getting ${serction}...`);
-        const tableName = await randomBandcampTable(serction);
+        const section = event.section
+        console.log(`Getting ${section}...`);
+        const tableName = await randomBandcampTable(section);
         console.log(`Retrieving albums from ${tableName}`);
-        let albums = await fetchAlbums(tableName);
-        if (!albums?.length) {
+        let album = await fetchRandomAlbum(tableName);
+        if (!album) {
             console.log({ message: 'No albums found.' });
         }
         const tracks = [];
-        for (const album of albums) {
-            for (const track of album.tracks) {
-                tracks.push(track);
-            }
+        for (const track of album.tracks) {
+            tracks.push(track);
         }
         return { tracks: tracks };
     } catch (err) {
@@ -35,7 +33,7 @@ const app = async (event, context) => {
     }
 };
 
-const randomBandcampTable = async (serction) => {
+const randomBandcampTable = async (section) => {
     const dynamoDB = new DynamoDB({
         region: process.env.REGION,
         accessKeyId: process.env.ACCESS_KEY,
@@ -59,11 +57,13 @@ const randomBandcampTable = async (serction) => {
         return [];
     }
 };
-const fetchAlbums = async (tableName) => {
+
+const fetchRandomAlbum = async (tableName) => {
     try {
         const params = { TableName: tableName, Limit: 25 };
         const result = await documentClient.scan(params);
-        return result.Items;
+        const randomIndex = Math.floor(Math.random() * result.Items.length);
+        return result.Items[randomIndex];
     } catch (err) {
         console.error(`Error fetching albums: ${err}`);
         return [];
