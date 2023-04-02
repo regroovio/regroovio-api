@@ -14,9 +14,8 @@ const documentClient = DynamoDBDocument.from(new DynamoDB({
 
 const app = async (event, context) => {
     try {
-        const serction = event.section
-        console.log(`Getting ${serction}...`);
-        const tableName = await randomBandcampTable(serction);
+        const tableName = await randomBandcampTable();
+        console.log(`Getting ${tableName}...`);
         console.log(`Retrieving albums from ${tableName}`);
         let albums = await fetchAlbums(tableName);
         if (!albums?.length) {
@@ -35,13 +34,12 @@ const app = async (event, context) => {
     }
 };
 
-const randomBandcampTable = async (serction) => {
+const randomBandcampTable = async () => {
     const dynamoDB = new DynamoDB({
         region: process.env.REGION,
         accessKeyId: process.env.ACCESS_KEY,
         secretAccessKey: process.env.SECRET_ACCESS_KEY
     });
-
     try {
         let result;
         let bandcampTables = [];
@@ -59,15 +57,25 @@ const randomBandcampTable = async (serction) => {
         return [];
     }
 };
+
 const fetchAlbums = async (tableName) => {
     try {
         const params = { TableName: tableName, Limit: 50 };
         const result = await documentClient.scan(params);
-        return result.Items;
+        const shuffledAlbums = shuffleArray(result.Items);
+        return shuffledAlbums;
     } catch (err) {
         console.error(`Error fetching albums: ${err}`);
         return [];
     }
+};
+
+const shuffleArray = (array) => {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
 };
 
 export { app }
