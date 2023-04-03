@@ -41,7 +41,7 @@ const app = async () => {
                 };
                 const command = new GetObjectCommand(params);
                 const url = await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
-                tracks.push({ artist: album.artist_name, album: album.album_name, track: track.name, image_url: image, track_url: url });
+                tracks.push({ artist: album.artist_name, album: album.album_name, title: track.name, image_url: image, track_url: url });
             }
         }
         return tracks
