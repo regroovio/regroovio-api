@@ -40,8 +40,7 @@ const app = async () => {
             const url = await getSignedUrl(s3, trackCommand, { expiresIn: 60 * 60 });
             tracks.push({ artist: item.track.spotify.artists[0].name, album: item.track.spotify.album, title: item.track.name, image_url: image, track_url: url });
         }
-        console.log(tracks.length);
-        // return tracks
+        return tracks
     } catch (err) {
         console.error('Error processing albums:', err);
         return { message: 'Failed to process albums', err };
@@ -58,7 +57,6 @@ const randomBandcampTable = async () => {
         let result;
         let bandcampTables = [];
         let params = {};
-
         do {
             result = await dynamoDB.listTables(params);
             bandcampTables.push(...result.TableNames.filter(name => name.includes('bandcamp') && name.includes(process.env.STAGE)));
