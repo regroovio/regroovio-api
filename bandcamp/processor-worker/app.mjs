@@ -5,6 +5,10 @@ import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { AWS_DYNAMO } from "./common/config.mjs";
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+
+const s3 = new S3Client({ region: 'us-east-1' });;
 
 const lambdaClient = new LambdaClient({ region: 'us-east-1' });
 
@@ -16,37 +20,38 @@ const app = async (event, context) => {
         await Promise.all(album.tracks.map(async (track) => {
             try {
                 const trackInfo = await getTrackInfo(track.url);
-                const trackResult = trackInfo.data.result;
-                let key_words = [];
+                console.log(trackInfo);
+                //     const trackResult = trackInfo.data.result;
+                //     let key_words = [];
 
-                if (trackResult?.apple_music) {
-                    key_words = trackResult.apple_music.genreNames;
-                }
+                //     if (trackResult?.apple_music) {
+                //         key_words = trackResult.apple_music.genreNames;
+                //     }
 
-                if (trackResult?.spotify) {
-                    const trackSpotify = trackResult.spotify;
-                    console.log('Track found', trackSpotify.name);
-                    const trackFeatures = await getTrackFeatures(trackSpotify, token);
-                    track.spotify = {
-                        ...trackFeatures,
-                        popularity: trackSpotify.popularity,
-                        release_date: trackSpotify.album.release_date,
-                        artists: trackSpotify.album.artists,
-                        album: trackSpotify.album.name,
-                        name: trackSpotify.name,
-                        key_words: [...key_words, ...album.key_words],
-                    };
-                } else {
-                    console.log('No track info found for', track.name);
-                    track.spotify = trackInfo.data || trackInfo.status;
-                }
+                //     if (trackResult?.spotify) {
+                //         const trackSpotify = trackResult.spotify;
+                //         console.log('Track found', trackSpotify.name);
+                //         const trackFeatures = await getTrackFeatures(trackSpotify, token);
+                //         track.spotify = {
+                //             ...trackFeatures,
+                //             popularity: trackSpotify.popularity,
+                //             release_date: trackSpotify.album.release_date,
+                //             artists: trackSpotify.album.artists,
+                //             album: trackSpotify.album.name,
+                //             name: trackSpotify.name,
+                //             key_words: [...key_words, ...album.key_words],
+                //         };
+                //     } else {
+                //         console.log('No track info found for', track.name);
+                //         track.spotify = trackInfo.data || trackInfo.status;
+                //     }
 
             } catch (err) {
                 console.error("Error updateTrackInfo:", err);
             }
         }));
 
-        await saveTracksWithFeatures(tableName, album);
+        // await saveTracksWithFeatures(tableName, album);
 
         return { message: 'Done.' };
     } catch (err) {
@@ -64,18 +69,24 @@ const getTrackFeatures = async (track, token) => {
     return trackFeatures;
 };
 
-const getTrackInfo = async (url) => {
+const getTrackInfo = async (track) => {
     try {
-        const response = await axios.post('https://api.audd.io/', {
-            url: url,
-            return: 'apple_music,spotify',
-            api_token: process.env.AUDD_API_KEY,
-        }, {
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-        });
-        return response;
+        const params = {
+            Bucket: track.bucket,
+            Key: track.key,
+        };
+        const command = new GetObjectCommand(params);
+        const url = await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
+        // const response = await axios.post('https://api.audd.io/', {
+        //     url: url,
+        //     return: 'apple_music,spotify',
+        //     api_token: process.env.AUDD_API_KEY,
+        // }, {
+        //     headers: {
+        //         'Content-Type': 'application/x-www-form-urlencoded',
+        //     },
+        // });
+        return url;
     } catch (error) {
         console.error(error);
         return error;

@@ -77,9 +77,17 @@ const randomBandcampTable = async () => {
 
 const fetchAlbums = async (tableName) => {
     try {
-        const params = { TableName: tableName, Limit: 50 };
+        const params = { TableName: tableName, Limit: 100 };
         const result = await documentClient.scan(params);
         const shuffledAlbums = shuffleArray(result.Items);
+        const populateAlbums = []
+        for (const album of shuffledAlbums) {
+            console.log(album);
+
+            // for (const track of album.tracks) {
+            // console.log(track);
+            // }
+        }
         return shuffledAlbums;
     } catch (err) {
         console.error(`Error fetching albums: ${err}`);
