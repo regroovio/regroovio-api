@@ -21,37 +21,37 @@ const app = async (event, context) => {
             try {
                 const trackInfo = await getTrackInfo(track);
                 console.log(trackInfo);
-                //     const trackResult = trackInfo.data.result;
-                //     let key_words = [];
+                const trackResult = trackInfo.data.result;
+                let key_words = [];
 
-                //     if (trackResult?.apple_music) {
-                //         key_words = trackResult.apple_music.genreNames;
-                //     }
+                if (trackResult?.apple_music) {
+                    key_words = trackResult.apple_music.genreNames;
+                }
 
-                //     if (trackResult?.spotify) {
-                //         const trackSpotify = trackResult.spotify;
-                //         console.log('Track found', trackSpotify.name);
-                //         const trackFeatures = await getTrackFeatures(trackSpotify, token);
-                //         track.spotify = {
-                //             ...trackFeatures,
-                //             popularity: trackSpotify.popularity,
-                //             release_date: trackSpotify.album.release_date,
-                //             artists: trackSpotify.album.artists,
-                //             album: trackSpotify.album.name,
-                //             name: trackSpotify.name,
-                //             key_words: [...key_words, ...album.key_words],
-                //         };
-                //     } else {
-                //         console.log('No track info found for', track.name);
-                //         track.spotify = trackInfo.data || trackInfo.status;
-                //     }
+                if (trackResult?.spotify) {
+                    const trackSpotify = trackResult.spotify;
+                    console.log('Track found', trackSpotify.name);
+                    const trackFeatures = await getTrackFeatures(trackSpotify, token);
+                    track.spotify = {
+                        ...trackFeatures,
+                        popularity: trackSpotify.popularity,
+                        release_date: trackSpotify.album.release_date,
+                        artists: trackSpotify.album.artists,
+                        album: trackSpotify.album.name,
+                        name: trackSpotify.name,
+                        key_words: [...key_words, ...album.key_words],
+                    };
+                } else {
+                    console.log('No track info found for', track.name);
+                    track.spotify = trackInfo.data || trackInfo.status;
+                }
 
             } catch (err) {
                 console.error("Error updateTrackInfo:", err);
             }
         }));
 
-        // await saveTracksWithFeatures(tableName, album);
+        await saveTracksWithFeatures(tableName, album);
 
         return { message: 'Done.' };
     } catch (err) {
@@ -77,16 +77,16 @@ const getTrackInfo = async (track) => {
         };
         const command = new GetObjectCommand(params);
         const url = await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
-        // const response = await axios.post('https://api.audd.io/', {
-        //     url: url,
-        //     return: 'apple_music,spotify',
-        //     api_token: process.env.AUDD_API_KEY,
-        // }, {
-        //     headers: {
-        //         'Content-Type': 'application/x-www-form-urlencoded',
-        //     },
-        // });
-        return url;
+        const response = await axios.post('https://api.audd.io/', {
+            url: url,
+            return: 'apple_music,spotify',
+            api_token: process.env.AUDD_API_KEY,
+        }, {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+        });
+        return response;
     } catch (error) {
         console.error(error);
         return error;
