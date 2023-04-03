@@ -40,8 +40,8 @@ const app = async () => {
                     Key: track.key,
                 };
                 const command = new GetObjectCommand(params);
-                const track = await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
-                tracks.push({ album_name: album.album_name, artist_name: album.artist_name, name: track.name, image, track });
+                const url = await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
+                tracks.push({ artist: album.artist_name, album: album.album_name, track: track.name, image, url });
             }
         }
         return tracks
