@@ -51,21 +51,6 @@ const app = async () => {
     }
 };
 
-const getObjectFromS3 = async (bucketName, objectKey) => {
-    const s3 = new S3Client({ region: 'us-east-1' });
-    const getObjectParams = {
-        Bucket: bucketName,
-        Key: objectKey
-    };
-    try {
-        const response = await s3.send(new GetObjectCommand(getObjectParams));
-        return response.Body;
-    } catch (err) {
-        console.error(`Error getting object from S3: ${err}`);
-        return null;
-    }
-};
-
 const randomBandcampTable = async () => {
     const dynamoDB = new DynamoDB({
         region: process.env.REGION,
