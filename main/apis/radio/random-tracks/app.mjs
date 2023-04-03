@@ -20,29 +20,25 @@ const app = async () => {
     try {
         const tableName = await randomBandcampTable();
         console.log(`Getting ${tableName}...`);
-        console.log(`Retrieving albums from ${tableName}`);
-        let albums = await fetchAlbums(tableName);
-        if (!albums?.length) {
-            console.log({ message: 'No albums found.' });
+        console.log(`Retrieving tracks from ${tableName}`);
+        let items = await fetchTracks(tableName);
+        if (!items?.length) {
+            console.log({ message: 'No tracks found.' });
         }
-
         const tracks = [];
-        for (const album of albums) {
-            const params = {
-                Bucket: album.image_url.bucket,
-                Key: album.image_url.key,
-            };
-            const command = new GetObjectCommand(params);
-            const image = await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
-            for (const track of album.tracks) {
-                const params = {
-                    Bucket: track.bucket,
-                    Key: track.key,
-                };
-                const command = new GetObjectCommand(params);
-                const url = await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
-                tracks.push({ artist: album.artist_name, album: album.album_name, title: track.name, image_url: image, track_url: url });
-            }
+        for (const item of items) {
+            const imageCommand = new GetObjectCommand({
+                Bucket: item.image_url.bucket,
+                Key: item.image_url.key,
+            });
+            const image = await getSignedUrl(s3, imageCommand, { expiresIn: 60 * 60 });
+
+            const trackCommand = new GetObjectCommand({
+                Bucket: item.track.bucket,
+                Key: item.track.key,
+            });
+            const url = await getSignedUrl(s3, trackCommand, { expiresIn: 60 * 60 });
+            tracks.push({ artist: item.track.artist_name, album: item.track.album_name, title: item.track.name, image_url: image, track_url: url });
         }
         return tracks
     } catch (err) {
@@ -75,20 +71,22 @@ const randomBandcampTable = async () => {
     }
 };
 
-const fetchAlbums = async (tableName) => {
+const fetchTracks = async (tableName) => {
     try {
         const params = { TableName: tableName, Limit: 100 };
         const result = await documentClient.scan(params);
         const shuffledAlbums = shuffleArray(result.Items);
-        const populateAlbums = []
+        const populareTracks = []
         for (const album of shuffledAlbums) {
-            console.log(album);
-
-            // for (const track of album.tracks) {
-            // console.log(track);
-            // }
+            for (const track of album.tracks) {
+                if (track.spotify?.popularity) {
+                    if (track.spotify.popularity > 5) {
+                        populareTracks.push({ track, image_url: album.image_url });
+                    }
+                }
+            }
         }
-        return shuffledAlbums;
+        return populareTracks;
     } catch (err) {
         console.error(`Error fetching albums: ${err}`);
         return [];
