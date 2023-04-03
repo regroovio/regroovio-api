@@ -38,7 +38,7 @@ const app = async () => {
                 Key: item.track.key,
             });
             const url = await getSignedUrl(s3, trackCommand, { expiresIn: 60 * 60 });
-            tracks.push({ artist: item.track.artist_name, album: item.track.album_name, title: item.track.name, image_url: image, track_url: url });
+            tracks.push({ artist: item.track.spotify.artists[0].name, album: item.track.spotify.album, title: item.track.name, image_url: image, track_url: url });
         }
         return tracks
     } catch (err) {
@@ -80,7 +80,7 @@ const fetchTracks = async (tableName) => {
         for (const album of shuffledAlbums) {
             for (const track of album.tracks) {
                 if (track.spotify?.popularity) {
-                    if (track.spotify.popularity > 5) {
+                    if (track.spotify.popularity > 20) {
                         populareTracks.push({ track, image_url: album.image_url });
                     }
                 }
