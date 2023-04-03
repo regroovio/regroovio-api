@@ -33,15 +33,15 @@ const app = async () => {
                 Key: album.image_url.key,
             };
             const command = new GetObjectCommand(params);
-            const imageUrl = await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
+            const image = await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
             for (const track of album.tracks) {
                 const params = {
                     Bucket: track.bucket,
                     Key: track.key,
                 };
                 const command = new GetObjectCommand(params);
-                const url = await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
-                tracks.push({ album_name: album.album_name, artist_name: album.artist_name, name: track.name, imageUrl, url });
+                const track = await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
+                tracks.push({ album_name: album.album_name, artist_name: album.artist_name, name: track.name, image, track });
             }
         }
         return tracks
