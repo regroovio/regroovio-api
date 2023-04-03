@@ -18,36 +18,26 @@ const documentClient = DynamoDBDocument.from(new DynamoDB({
 
 const app = async () => {
     try {
-        const tableName = await randomBandcampTable();
-        console.log(`Getting ${tableName}...`);
-        console.log(`Retrieving tracks from ${tableName}`);
-        let items = await fetchTracks(tableName);
-        if (!items?.length) {
-            console.log({ message: 'No tracks found.' });
+        const bandcampTables = await fetchAllBandcampTables();
+        let allPopularTracks = [];
+        for (const tableName of bandcampTables) {
+            console.log(`Retrieving tracks from ${tableName}`);
+            let items = await fetchTracks(tableName);
+            if (!items?.length) {
+                console.log({ message: 'No tracks found.' });
+                continue;
+            }
+            const tracks = await processTracks(items);
+            allPopularTracks.push(...tracks);
         }
-        const tracks = [];
-        for (const item of items) {
-            const imageCommand = new GetObjectCommand({
-                Bucket: item.image_url.bucket,
-                Key: item.image_url.key,
-            });
-            const image = await getSignedUrl(s3, imageCommand, { expiresIn: 60 * 60 });
-
-            const trackCommand = new GetObjectCommand({
-                Bucket: item.track.bucket,
-                Key: item.track.key,
-            });
-            const url = await getSignedUrl(s3, trackCommand, { expiresIn: 60 * 60 });
-            tracks.push({ artist: item.track.spotify.artists[0].name, album: item.track.spotify.album, title: item.track.name, image_url: image, track_url: url });
-        }
-        return tracks
+        return allPopularTracks;
     } catch (err) {
         console.error('Error processing albums:', err);
         return { message: 'Failed to process albums', err };
     }
 };
 
-const randomBandcampTable = async () => {
+const fetchAllBandcampTables = async () => {
     const dynamoDB = new DynamoDB({
         region: process.env.REGION,
         accessKeyId: process.env.ACCESS_KEY,
@@ -62,8 +52,7 @@ const randomBandcampTable = async () => {
             bandcampTables.push(...result.TableNames.filter(name => name.includes('bandcamp') && name.includes(process.env.STAGE)));
             params.ExclusiveStartTableName = result.LastEvaluatedTableName;
         } while (result.LastEvaluatedTableName);
-        const randomTable = bandcampTables[Math.floor(Math.random() * bandcampTables.length)];
-        return randomTable;
+        return bandcampTables;
     } catch (err) {
         console.error(`Error listing Bandcamp tables: ${err}`);
         return [];
@@ -98,6 +87,25 @@ const shuffleArray = (array) => {
         [array[i], array[j]] = [array[j], array[i]];
     }
     return array;
+};
+
+const processTracks = async (items) => {
+    const tracks = [];
+    for (const item of items) {
+        const imageCommand = new GetObjectCommand({
+            Bucket: item.image_url.bucket,
+            Key: item.image_url.key,
+        });
+        const image = await getSignedUrl(s3, imageCommand, { expiresIn: 60 * 60 });
+
+        const trackCommand = new GetObjectCommand({
+            Bucket: item.track.bucket,
+            Key: item.track.key,
+        });
+        const url = await getSignedUrl(s3, trackCommand, { expiresIn: 60 * 60 });
+        tracks.push({ artist: item.track.spotify.artists[0].name, album: item.track.spotify.album, title: item.track.name, image_url: image, track_url: url });
+    }
+    return tracks;
 };
 
 export { app }
