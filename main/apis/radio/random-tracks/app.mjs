@@ -40,7 +40,8 @@ const app = async () => {
             const url = await getSignedUrl(s3, trackCommand, { expiresIn: 60 * 60 });
             tracks.push({ artist: item.track.spotify.artists[0].name, album: item.track.spotify.album, title: item.track.name, image_url: image, track_url: url });
         }
-        return tracks
+        console.log(tracks.length);
+        // return tracks
     } catch (err) {
         console.error('Error processing albums:', err);
         return { message: 'Failed to process albums', err };
@@ -73,7 +74,7 @@ const randomBandcampTable = async () => {
 
 const fetchTracks = async (tableName) => {
     try {
-        const params = { TableName: tableName, Limit: 100 };
+        const params = { TableName: tableName };
         const result = await documentClient.scan(params);
         const shuffledAlbums = shuffleArray(result.Items);
         const populareTracks = []
