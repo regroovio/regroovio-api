@@ -34,12 +34,12 @@ const app = async (event, context) => {
             console.log(`Found ${unsavedAlbums.length} unsaved albums.`);
             await invokeLambdasInChunks(`bandcamp-downloader-worker-${process.env.STAGE}`, unsavedAlbums, tableName);
 
-            // console.log(`Retrieving unprocessed albums from ${tableName}`);
-            // let unprocessedAlbums = await fetchUnprocessedAlbums(tableName);
-            // if (!unprocessedAlbums?.length) {
-            //     console.log({ message: 'No unprocessed albums found.' });
-            //     return
-            // }
+            console.log(`Retrieving unprocessed albums from ${tableName}`);
+            let unprocessedAlbums = await fetchUnprocessedAlbums(tableName);
+            if (!unprocessedAlbums?.length) {
+                console.log({ message: 'No unprocessed albums found.' });
+                return
+            }
             // const admin_id = process.env.ADMIN_ID;
             // let admin = await getUserById(admin_id);
             // if (!admin) {
@@ -62,9 +62,8 @@ const app = async (event, context) => {
             //     token = tokens.access_token;
             // }
 
-            // console.log(`Found ${unprocessedAlbums.length} unprocessed albums.`);
-
-            // await invokeLambdasInChunks(`bandcamp-processor-worker-${process.env.STAGE}`, unprocessedAlbums, tableName, token);
+            console.log(`Found ${unprocessedAlbums.length} unprocessed albums.`);
+            await invokeLambdasInChunks(`bandcamp-processor-worker-${process.env.STAGE}`, unprocessedAlbums, tableName, "token");
         }
         return { message: 'All albums are saved.' };
     } catch (err) {
