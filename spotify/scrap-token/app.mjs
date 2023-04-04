@@ -1,6 +1,5 @@
 // app.mjs
 
-import { AUTH_LAMBDA } from './common/config.mjs';
 import { saveTokens } from "./common/saveTokens.mjs";
 import { saveCookies } from "./common/saveCookies.mjs";
 import { getUserById } from './common/getUserById.mjs';
@@ -38,10 +37,10 @@ const app = async (event, context) => {
 };
 
 const handleAuthentication = async (page, user) => {
-    let endpoint = `${AUTH_LAMBDA}/login`;
+    let endpoint = `${process.env.AUTH_LAMBDA}/login`;
     if (user.refresh_token_spotify) {
         console.log('Refreshing token');
-        endpoint = `${AUTH_LAMBDA}/refresh?refresh_token=${user.refresh_token_spotify}`
+        endpoint = `${process.env.AUTH_LAMBDA}/refresh?refresh_token=${user.refresh_token_spotify}`
     } else if (!user.cookies_spotify?.length) {
         console.log('Logging in using credentials');
     } else {

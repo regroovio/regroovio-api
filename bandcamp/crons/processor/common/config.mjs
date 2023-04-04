@@ -8,5 +8,3 @@ export const AWS_DYNAMO = {
     accessKeyId: process.env.ACCESS_KEY,
     secretAccessKey: process.env.SECRET_ACCESS_KEY,
 };
-
-export const AUTH_LAMBDA = process.env.AUTH_LAMBDA
