@@ -18,28 +18,29 @@ jobs:
       matrix:
         function:
           # Main Functions
-          - name: "application-radio"
-            path: "./main/apis/radio/random-tracks"
+          - name: "regroovio-random-tracks"
+            path: "./main/api/radio/random-tracks"
 
           # Bandcamp Workers
-          - name: "bandcamp-downloader-worker"
-            path: "./bandcamp/downloader-worker"
-          - name: "bandcamp-processor-worker"
-            path: "./bandcamp/processor-worker"
+          - name: "bandcamp-worker-downloader"
+            path: "./bandcamp/workers/downloader"
+          - name: "bandcamp-worker-processor"
+            path: "./bandcamp/workers/processor"
 
           # Bandcamp Crons
           - name: "bandcamp-cron-processor"
-            path: "./bandcamp/cron-processor"
+            path: "./bandcamp/crons/processor"
           - name: "bandcamp-cron-daily"
-            path: "./bandcamp/cron-scrapers/daily"
+            path: "./bandcamp/crons/scrapers/daily"
           - name: "bandcamp-cron-custom"
-            path: "./bandcamp/cron-scrapers/custom"
+            path: "./bandcamp/crons/scrapers/custom"
+
           - name: "bandcamp-cron-wishlist"
-            path: "./bandcamp/cron-users/wishlist"
+            path: "./bandcamp/crons/users/wishlist"
           - name: "bandcamp-cron-collection"
-            path: "./bandcamp/cron-users/collection"
+            path: "./bandcamp/crons/users/collection"
           - name: "bandcamp-cron-feed"
-            path: "./bandcamp/cron-users/feed"
+            path: "./bandcamp/crons/users/feed"
 
           # Sporify Token Scraper
           - name: "spotify-token"
@@ -47,25 +48,25 @@ jobs:
 
           # Sporify Tracks API
           - name: "spotify-get-top"
-            path: "./spotify/tracks-api/get-top"
+            path: "./spotify/api/tracks/get-top"
           - name: "spotify-get-likes"
-            path: "./spotify/tracks-api/get-likes"
+            path: "./spotify/api/tracks/get-likes"
           - name: "spotify-add-tracks"
-            path: "./spotify/tracks-api/add-tracks"
+            path: "./spotify/api/tracks/add-tracks"
           - name: "spotify-get-playlist"
-            path: "./spotify/tracks-api/get-playlist"
+            path: "./spotify/api/tracks/get-playlist"
           - name: "spotify-get-audio-features"
-            path: "./spotify/tracks-api/get-audio-features"
+            path: "./spotify/api/tracks/get-audio-features"
           - name: "spotify-get-audio-analysis"
-            path: "./spotify/tracks-api/get-audio-analysis"
+            path: "./spotify/api/tracks/get-audio-analysis"
 
           # Sporify Auth API
           - name: "spotify-login"
-            path: "./spotify/auth-api/login"
+            path: "./spotify/api/auth/login"
           - name: "spotify-callback"
-            path: "./spotify/auth-api/callback"
+            path: "./spotify/api/auth/callback"
           - name: "spotify-refresh"
-            path: "./spotify/auth-api/refresh"
+            path: "./spotify/api/auth/refresh"
     steps:
       - uses: actions/checkout@v3
 
