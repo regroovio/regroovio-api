@@ -72,11 +72,14 @@ const app = async (event) => {
         await page.close();
         await browser.close();
         await addAlbumsToDb(table, albumLinks);
-        return { message: 'done' };
+        const response = { status: 'Success', message: `added ${albumLinks.length} albums to ${table}` }
+        await slackBot(response);
+        return response;
     } catch (error) {
+        const response = { status: 'Error', message: error }
+        await slackBot(response);
         throw new Error(`Error app: ${error}`);
     }
-};
-
+}
 
 export { app };

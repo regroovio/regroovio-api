@@ -13,3 +13,6 @@ export const DAILY = {
     SELECTOR: `.item-title a`,
 };
 
+export const SLACK_ENDPOINT = {
+    SELECTOR: process.env.SLACK_ENDPOINT,
+};

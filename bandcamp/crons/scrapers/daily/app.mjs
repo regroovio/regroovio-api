@@ -6,6 +6,7 @@ import { initializePuppeteer } from './common/browser.mjs';
 import { getAlbumLinks } from './common/getAlbumLinks.mjs';
 import { addAlbumsToDb } from './common/addAlbumsToDb.mjs';
 import dotenv from "dotenv";
+import { slackBot } from './common/slackBot.mjs';
 dotenv.config();
 
 const collectAlbumLinks = async (page) => {
@@ -65,8 +66,12 @@ const app = async (event) => {
         await page.close();
         await browser.close();
         await addAlbumsToDb(table, albumLinks);
-        return { message: 'done' };
+        const response = { status: 'Success', message: `Items: [${albumLinks.length}]. Function: ${table}` }
+        await slackBot(response);
+        return response;
     } catch (error) {
+        const response = { status: 'Error', message: error.message }
+        await slackBot(response);
         throw new Error(`Error app: ${error}`);
     }
 };
