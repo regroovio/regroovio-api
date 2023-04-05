@@ -19,6 +19,7 @@ const documentClient = DynamoDBDocument.from(new DynamoDB({
 const app = async () => {
     try {
         const bandcampTables = await fetchAllBandcampTables();
+        console.log(bandcampTables);
         let allPopularTracks = [];
         for (const tableName of bandcampTables) {
             console.log(`Retrieving tracks from ${tableName}`);
@@ -49,6 +50,7 @@ const fetchAllBandcampTables = async () => {
         let params = {};
         do {
             result = await dynamoDB.listTables(params);
+            console.log(result);
             bandcampTables.push(...result.TableNames.filter(name => name.includes('bandcamp') && name.includes(process.env.STAGE)));
             params.ExclusiveStartTableName = result.LastEvaluatedTableName;
         } while (result.LastEvaluatedTableName);

@@ -2,7 +2,7 @@
 
 import axios from 'axios';
 import dotenv from 'dotenv';
-import { CUSTOM } from './config.mjs';
+import { PROCESSOR } from './config.mjs';
 
 dotenv.config();
 
@@ -24,7 +24,7 @@ const slackBot = async (event) => {
             }
         }]
 
-        await axios.post(CUSTOM.SLACK_ENDPOINT, { blocks });
+        await axios.post(PROCESSOR.SLACK_ENDPOINT, { blocks });
     } catch (error) {
         console.error('Error sending notification to Slack:', error);
     }

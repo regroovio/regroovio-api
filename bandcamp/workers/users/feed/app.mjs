@@ -3,7 +3,7 @@
 import { authenticateUser } from './common/auth.mjs';
 import { getUserById } from './common/getUserById.mjs';
 import { createTable } from './common/createTable.mjs';
-import { AWS_DYNAMO, FEED } from './common/config.mjs';
+import { FEED } from './common/config.mjs';
 import { initializePuppeteer } from './common/browser.mjs';
 import { getAlbumLinks } from './common/getAlbumLinks.mjs';
 import { addAlbumsToDb } from './common/addAlbumsToDb.mjs';
@@ -72,7 +72,7 @@ const app = async (event) => {
         if (!user) {
             throw new Error(`User not found with id ${user_id}`);
         }
-        const table = `bandcamp-feed-${process.env.STAGE}`;
+        const table = `bandcamp-feed-${user_id}`;
         await createTable(table);
         const { browser, page } = await initializePuppeteer(event);
 

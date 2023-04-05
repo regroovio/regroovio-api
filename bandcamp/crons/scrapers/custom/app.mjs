@@ -1,11 +1,11 @@
 // custom.mjs
 
-import { createTable } from './common/createTable.mjs';
 import { CUSTOM } from './common/config.mjs';
 import { initializePuppeteer } from './common/browser.mjs';
 import { getAlbumLinks } from './common/getAlbumLinks.mjs';
 import { addAlbumsToDb } from './common/addAlbumsToDb.mjs';
 import dotenv from "dotenv";
+import { slackBot } from './common/slackBot.mjs';
 dotenv.config();
 
 const collectAlbumLinks = async (page, genre) => {
@@ -60,25 +60,24 @@ const isValidLink = (link) => {
 };
 
 const app = async (event) => {
+    const { genre } = event
+    if (!genre) {
+        throw new Error('Missing required parameters');
+    }
+    const table = `bandcamp-${genre}-${process.env.STAGE}`;
     try {
-        const { genre } = event
-        if (!genre) {
-            throw new Error('Missing required parameters');
-        }
-        const table = `bandcamp-${genre}-${process.env.STAGE}`;
-        await createTable(table);
         const { browser, page } = await initializePuppeteer(event);
         const albumLinks = await collectAlbumLinks(page, genre);
         await page.close();
         await browser.close();
         await addAlbumsToDb(table, albumLinks);
-        const response = { status: 'Success', message: `added ${albumLinks.length} albums to ${table}` }
+        const response = { functionName: `bandcamp-cron-${genre}-${process.env.STAGE}`, message: `Success. Scanned ${albumLinks.length} items.` }
         await slackBot(response);
         return response;
     } catch (error) {
-        const response = { status: 'Error', message: error }
+        const response = { functionName: `bandcamp-cron-${genre}-${process.env.STAGE}`, message: error.message }
         await slackBot(response);
-        throw new Error(`Error app: ${error}`);
+        throw new Error(`Error: ${error}`);
     }
 }
 

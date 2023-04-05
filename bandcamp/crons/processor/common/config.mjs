@@ -8,3 +8,7 @@ export const AWS_DYNAMO = {
     accessKeyId: process.env.ACCESS_KEY,
     secretAccessKey: process.env.SECRET_ACCESS_KEY,
 };
+
+export const PROCESSOR = {
+    SLACK_ENDPOINT: process.env.SLACK_ENDPOINT,
+};
