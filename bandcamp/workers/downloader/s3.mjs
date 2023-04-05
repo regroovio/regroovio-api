@@ -18,7 +18,7 @@ const saveAlbumToS3 = async (item) => {
             ContentType: response.headers['content-type']
         };
         await s3.send(new PutObjectCommand(params));
-        return { bucket: params.Bucket, key: params.Key, name };
+        return { key: params.Key, name };
     } catch (err) {
         console.error(`Error saving album to S3: ${err}`);
         return null;
@@ -40,7 +40,7 @@ const saveImageToS3 = async (item) => {
             ContentType: response.headers['content-type']
         };
         await s3.send(new PutObjectCommand(params));
-        return { bucket: params.Bucket, key: params.Key };
+        return { key: params.Key };
     } catch (err) {
         console.error(`Error saving image to S3: ${err}`);
         return null;

@@ -4,8 +4,8 @@ import { CUSTOM } from './common/config.mjs';
 import { initializePuppeteer } from './common/browser.mjs';
 import { getAlbumLinks } from './common/getAlbumLinks.mjs';
 import { addAlbumsToDb } from './common/addAlbumsToDb.mjs';
-import dotenv from "dotenv";
 import { slackBot } from './common/slackBot.mjs';
+import dotenv from "dotenv";
 dotenv.config();
 
 const collectAlbumLinks = async (page, genre) => {
