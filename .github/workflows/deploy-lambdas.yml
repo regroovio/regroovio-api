@@ -126,7 +126,6 @@ jobs:
           --function-name ${{ matrix.function.name }}-${{ inputs.stage }} \
           --region us-east-1 \
           --environment "Variables={
-          AUTH_LAMBDA=\"https://${{ inputs.stage }}.spotify.regroovio.com\",
           STAGE=\"${{ inputs.stage }}\",
           ${{ secrets.LAMBDAS_ENV }}
           }"
