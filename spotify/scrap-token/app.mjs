@@ -37,10 +37,10 @@ const app = async (event, context) => {
 };
 
 const handleAuthentication = async (page, user) => {
-    let endpoint = `https://${process.env.STAGE}.${process.env.SPOTIFY_API}/login`;
+    let endpoint = `https://${process.env.STAGE == 'dev' ? `${process.env.STAGE}.` : ``}${process.env.SPOTIFY_API}/login`;
     if (user.refresh_token_spotify) {
         console.log('Refreshing token');
-        endpoint = `https://${process.env.STAGE}.${process.env.SPOTIFY_API}/refresh?refresh_token=${user.refresh_token_spotify}`
+        endpoint = `https://${process.env.STAGE == 'dev' ? `${process.env.STAGE}.` : ``}${process.env.SPOTIFY_API}/refresh?refresh_token=${user.refresh_token_spotify}`
     } else if (!user.cookies_spotify?.length) {
         console.log('Logging in using credentials');
     } else {
