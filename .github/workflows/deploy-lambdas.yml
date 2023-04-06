@@ -4,11 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       stage:
-        description: "The stage to deploy to (dev or prod)"
+        description: "The stage to deploy to (prod or dev)"
         type: choice
         options:
-          - dev
           - prod
+          - dev
         required: true
 
 jobs:
