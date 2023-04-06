@@ -1,5 +1,5 @@
 {
-  "name": "auth",
+  "name": "signup",
   "version": "1.0.0",
   "type": "module",
   "main": "index.mjs",
@@ -12,6 +12,7 @@
   "description": "",
   "dependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.306.0",
+    "@aws-sdk/client-ssm": "^3.306.0",
     "dotenv": "^16.0.3"
   }
 }

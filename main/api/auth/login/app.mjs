@@ -32,9 +32,8 @@ const initiateAuth = async (email, password) => {
     }
 };
 
-const app = async () => {
-    const email = "nethanielmaoz@gmail.com";
-    const password = "testTest!123123";
+const app = async (event) => {
+    const { email, password } = event
     try {
         const authData = await initiateAuth(email, password);
         if (authData.$metadata.httpStatusCode !== 200) {

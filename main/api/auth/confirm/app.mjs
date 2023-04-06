@@ -28,9 +28,8 @@ const confirmSignUp = async (email, confirmationCode) => {
     }
 };
 
-const app = async () => {
-    const email = "nethanielmaoz@gmail.com";
-    const confirmationCode = "658430"; // Replace with actual confirmation code
+const app = async (event) => {
+    const { email, confirmationCode } = event
     try {
         const confirmData = await confirmSignUp(email, confirmationCode);
         if (confirmData.$metadata.httpStatusCode !== 200) {

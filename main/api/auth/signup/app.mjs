@@ -35,9 +35,8 @@ const signUp = async (email, password) => {
     }
 };
 
-const app = async () => {
-    const email = "nethanielmaoz@gmail.com";
-    const password = "testTest!123123";
+const app = async (event) => {
+    const { email, password } = event
     try {
         const data = await signUp(email, password);
         if (data.$metadata.httpStatusCode !== 200) {
