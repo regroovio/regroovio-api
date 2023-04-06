@@ -1,13 +1,11 @@
 import serverless from 'serverless-http';
 import express from 'express';
 import querystring from 'querystring';
+import { setEnvironmentVariables } from './setEnvironmentVariables.mjs';
 
 const app = express();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-
-const clientId = process.env.CLIENT_ID_V2;
-const redirectUri = `https://${process.env.STAGE == 'dev' ? `${process.env.STAGE}.` : ``}${process.env.SPOTIFY_API}/callback`;
 
 const scopes = [
   'ugc-image-upload',
@@ -40,7 +38,10 @@ const generateRandomString = (length) => {
   return text;
 }
 
-app.get('/login', (req, res) => {
+app.get('/login', async (req, res) => {
+  await setEnvironmentVariables();
+  const clientId = process.env.CLIENT_ID_V2;
+  const redirectUri = `https://${process.env.STAGE == 'dev' ? `${process.env.STAGE}.` : ``}${process.env.SPOTIFY_API}/callback`;
   const state = generateRandomString(16);
   const scope = scopes.join(' ');
   res.redirect('https://accounts.spotify.com/authorize?' +

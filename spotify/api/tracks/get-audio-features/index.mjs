@@ -1,7 +1,9 @@
 // index.mjs
 
+import { setEnvironmentVariables } from "./common/setEnvironmentVariables.mjs";
 import { app } from "./app.mjs";
 
+await setEnvironmentVariables();
 const handler = async (event, context) => {
     try {
         const startTime = process.hrtime();

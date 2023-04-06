@@ -2,15 +2,16 @@ import axios from 'axios';
 import serverless from 'serverless-http';
 import express from 'express';
 import querystring from 'querystring';
+import { setEnvironmentVariables } from './setEnvironmentVariables.mjs';
 
 const app = express();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-const clientId = process.env.CLIENT_ID_V2;
-const clientSecret = process.env.CLIENT_SECRET_V2;
-
 app.get('/refresh', async (req, res) => {
+  await setEnvironmentVariables();
+  const clientId = process.env.CLIENT_ID_V2;
+  const clientSecret = process.env.CLIENT_SECRET_V2;
   const old_refresh_token = req.query.refresh_token
   try {
     const response = await axios.post('https://accounts.spotify.com/api/token', querystring.stringify({
