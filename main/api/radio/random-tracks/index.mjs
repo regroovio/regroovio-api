@@ -13,13 +13,11 @@ const handler = async (event, context) => {
     console.log(`App runtime: ${minutes}m ${seconds.toFixed(2)}s`);
 
     return {
-      statusCode: 200,
       body: JSON.stringify(result),
     };
   } catch (error) {
     console.error(`Error handler: ${error}`);
     return {
-      statusCode: 500,
       body: JSON.stringify({ error: error }),
       exitCode: process.exit(1),
     };
