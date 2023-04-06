@@ -36,10 +36,10 @@ const app = async (event) => {
             throw new Error(confirmData.message);
         }
         console.log("Confirmed sign up:", confirmData);
-        return { message: "Confirmed", data: confirmData };
+        return { message: "Confirmed", data: confirmData, statusCode: 200 };
     } catch (err) {
         console.error(err);
-        return { message: err.message };
+        return { message: err.message, statusCode: 400 };
     }
 };
 

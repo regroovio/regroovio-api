@@ -35,15 +35,15 @@ const initiateAuth = async (email, password) => {
 const app = async (event) => {
     const { email, password } = event
     try {
-        const authData = await initiateAuth(email, password);
-        if (authData.$metadata.httpStatusCode !== 200) {
-            throw new Error(authData.message);
+        const loginData = await initiateAuth(email, password);
+        if (loginData.$metadata.httpStatusCode !== 200) {
+            throw new Error(loginData.message);
         }
-        console.log("Authenticated user:", authData);
-        return { message: "Authenticated", data: authData };
+        console.log("Authenticated user:", loginData);
+        return { message: "Authenticated", data: loginData, statusCode: 200 };
     } catch (err) {
         console.error(err);
-        return { message: err.message };
+        return { message: err.message, statusCode: 400 };
     }
 };
 

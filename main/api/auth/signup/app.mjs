@@ -38,15 +38,15 @@ const signUp = async (email, password) => {
 const app = async (event) => {
     const { email, password } = event
     try {
-        const data = await signUp(email, password);
-        if (data.$metadata.httpStatusCode !== 200) {
-            throw new Error(data.message);
+        const signupData = await signUp(email, password);
+        if (signupData.$metadata.httpStatusCode !== 200) {
+            throw new Error(signupData.message);
         }
-        console.log("Signed up:", data);
-        return { message: "Signed up", data };
+        console.log("Signed up:", signupData);
+        return { message: "Signed up", signupData, statusCode: 400 };
     } catch (err) {
         console.error(err);
-        return { message: err.message };
+        return { message: err.message, statusCode: 400 };
     }
 };
 
