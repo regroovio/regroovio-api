@@ -36,7 +36,10 @@ jobs:
           aws ssm put-parameter \
             --name "parameters-${{ inputs.stage }}" \
             --type "String" \
-            --value "COGNITO_USER_POOL_ID=${COGNITO_USER_POOL_ID},\nCOGNITO_CLIENT_ID=${COGNITO_CLIENT_ID},\nCOGNITO_CLIENT_SECRET=${COGNITO_CLIENT_SECRET},\nSTAGE=${{ inputs.stage }},\n${{ secrets.LAMBDAS_ENV }}" \
+            --value "COGNITO_USER_POOL_ID=${COGNITO_USER_POOL_ID},\nCOGNITO_CLIENT_ID=${COGNITO_CLIENT_ID},
+            COGNITO_CLIENT_SECRET=${COGNITO_CLIENT_SECRET},
+            STAGE=${{ inputs.stage }},
+            ${{ secrets.LAMBDAS_ENV }}" \
             --overwrite
 
   deploy_lambdas:
