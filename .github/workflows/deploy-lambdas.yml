@@ -136,16 +136,25 @@ jobs:
         # COGNITO_CLIENT_ID="######"
         # COGNITO_CLIENT_SECRET="######"
         run: |
+
+
           COGNITO_USER_POOL_ID=$(aws cognito-idp list-user-pools --max-results 20 | jq -r '.UserPools[] | select(.Name | contains("${{ inputs.stage }}")).Id')
           COGNITO_CLIENT_ID=$(aws cognito-idp list-user-pool-clients --user-pool-id ${COGNITO_USER_POOL_ID} --max-results 20 | jq -r '.UserPoolClients[] | select(.ClientName | contains("${{ inputs.stage }}")) | .ClientId')
-          COGNITO_CLIENT_SECRET=$(aws cognito-idp describe-user-pool-client --user-pool-id ${COGNITO_USER_POOL_ID} --client-id ${COGNITO_CLIENT_ID} | jq -r '.UserPoolClients[] | select(.ClientName | contains("${{ inputs.stage }}")) | .ClientSecret')
+          COGNITO_CLIENT_SECRET=$(aws cognito-idp describe-user-pool-client --user-pool-id ${COGNITO_USER_POOL_ID} --client-id ${COGNITO_CLIENT_ID} | jq -r '.UserPoolClient.ClientSecret')
+
+          aws ssm put-parameter \
+            --name "parameters-${{ inputs.stage }}" \
+            --type "String" \
+            --value "
+            COGNITO_USER_POOL_ID=\"${COGNITO_USER_POOL_ID}\",
+            COGNITO_CLIENT_ID=\"${COGNITO_CLIENT_ID}\",
+            COGNITO_CLIENT_SECRET=\"${COGNITO_CLIENT_SECRET}\"" \
+            STAGE=\"${{ inputs.stage }}\",
+            ${{ secrets.LAMBDAS_ENV }}"
+            --overwrite
+
           aws lambda update-function-configuration \
-          --function-name ${{ matrix.function.name }}-${{ inputs.stage }} \
-          --region us-east-1 \
-          --environment "Variables={
-          COGNITO_USER_POOL_ID=\"${COGNITO_USER_POOL_ID}\",
-          COGNITO_CLIENT_ID=\"${COGNITO_CLIENT_ID}\",
-          COGNITO_CLIENT_SECRET=\"${COGNITO_CLIENT_SECRET}\",
-          STAGE=\"${{ inputs.stage }}\",
-          ${{ secrets.LAMBDAS_ENV }}
-          }"
+            --function-name ${{ matrix.function.name }}-${{ inputs.stage }} \
+            --region us-east-1 \
+            --environment "Variables={
+            STAGE=\"${{ inputs.stage }}\",

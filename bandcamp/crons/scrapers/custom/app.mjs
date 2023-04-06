@@ -4,6 +4,8 @@ import { CUSTOM } from './common/config.mjs';
 import { initializePuppeteer } from './common/browser.mjs';
 import { getAlbumLinks } from './common/getAlbumLinks.mjs';
 import { addAlbumsToDb } from './common/addAlbumsToDb.mjs';
+import { setEnvironmentVariables } from './common/setEnvironmentVariables.mjs';
+
 import { slackBot } from './common/slackBot.mjs';
 import dotenv from "dotenv";
 dotenv.config();
@@ -64,7 +66,10 @@ const app = async (event) => {
     if (!genre) {
         throw new Error('Missing required parameters');
     }
-    const table = `bandcamp-${genre}-${process.env.STAGE}`;
+    await setEnvironmentVariables();
+    const table = `bandcamp-${genre}-${process.env.COGNITO_USER_POOL_ID}`;
+    console.log(table);
+    return
     try {
         const { browser, page } = await initializePuppeteer(event);
         const albumLinks = await collectAlbumLinks(page, genre);
