@@ -11,6 +11,9 @@ on:
           - dev
         required: true
 
+env:
+  AWS_REGION: us-east-1
+
 jobs:
   before_deploy:
     name: Before Deploy
