@@ -158,3 +158,17 @@ jobs:
             --function-name ${{ matrix.function.name }}-${{ inputs.stage }} \
             --s3-bucket lambdas-regroovio-${{ inputs.stage }} \
             --s3-key ${{ matrix.function.name }}-${{ inputs.stage }}.zip
+
+      - name: Wait for Lambda update
+        run: |
+          aws lambda wait function-updated --function-name ${{ matrix.function.name }}-${{ inputs.stage }}
+
+      - name: Update Lambda function configuration
+        run: |
+          aws lambda update-function-configuration \
+          --function-name ${{ matrix.function.name }}-${{ inputs.stage }} \
+          --region us-east-1 \
+          --environment "Variables={
+          STAGE=\"${{ inputs.stage }}\",
+          ${{ secrets.LAMBDAS_ENV }}
+          }"

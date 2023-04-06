@@ -1,10 +1,11 @@
 // index.mjs
 
-import { setEnvironmentVariables } from "./common/setEnvironmentVariables.mjs";
+import dotenv from "dotenv";
+dotenv.config();
+
 import { app } from "./app.mjs";
 
 const handler = async (event, context) => {
-    await setEnvironmentVariables();
     try {
         const startTime = process.hrtime();
         const result = await app(event);

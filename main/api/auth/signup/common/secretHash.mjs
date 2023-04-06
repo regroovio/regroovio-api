@@ -1,4 +1,4 @@
-// secretHash.js
+// secretHash.mjs
 
 import crypto from "crypto";
 
