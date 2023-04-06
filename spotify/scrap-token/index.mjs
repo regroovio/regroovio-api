@@ -3,8 +3,8 @@
 import { setEnvironmentVariables } from "./common/setEnvironmentVariables.mjs";
 import { app } from "./app.mjs";
 
-await setEnvironmentVariables();
 const handler = async (event, context) => {
+    await setEnvironmentVariables();
     try {
         const startTime = process.hrtime();
         const result = await app(event);
