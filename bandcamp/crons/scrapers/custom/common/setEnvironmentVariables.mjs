@@ -10,7 +10,9 @@ const parseEnvironmentVariables = (envString) => {
 
     keyValuePairs.forEach(pair => {
         const [key, value] = pair.split('=');
-        envObject[key.trim()] = value.trim();
+        if (key && value) {
+            envObject[key.trim()] = value.trim();
+        }
     });
 
     return envObject;

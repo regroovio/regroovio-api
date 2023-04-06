@@ -67,7 +67,7 @@ const app = async (event) => {
         throw new Error('Missing required parameters');
     }
     await setEnvironmentVariables();
-    const table = `bandcamp-${genre}-${process.env.COGNITO_USER_POOL_ID}`;
+    const table = `bandcamp-${genre}-${process.env.STAGE}`;
     console.log(table);
     return
     try {
