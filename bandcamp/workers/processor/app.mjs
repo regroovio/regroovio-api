@@ -64,10 +64,9 @@ const getTrackFeatures = async (track, token) => {
         FunctionName: `spotify-get-audio-features-${process.env.STAGE}`,
         Payload: payload,
     });
-    const resultBody = rawResult.body;
 
-    if (resultBody) {
-        const trackFeatures = JSON.parse(resultBody);
+    if (rawResult && rawResult.body) {
+        const trackFeatures = JSON.parse(rawResult.body);
         return trackFeatures;
     } else {
         console.error("getTrackFeatures: Received undefined body in the response");
