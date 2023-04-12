@@ -28,7 +28,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Updtade Parameter Store
+      - name: Update Parameter Store
         run: |
           COGNITO_USER_POOL_ID=$(aws cognito-idp list-user-pools --max-results 20 | jq -r '.UserPools[] | select(.Name | contains("${{ inputs.stage }}")).Id')
           COGNITO_CLIENT_ID=$(aws cognito-idp list-user-pool-clients --user-pool-id ${COGNITO_USER_POOL_ID} --max-results 20 | jq -r '.UserPoolClients[] | select(.ClientName | contains("${{ inputs.stage }}")) | .ClientId')
