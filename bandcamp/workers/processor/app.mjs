@@ -50,8 +50,9 @@ const app = async (event, context) => {
             }
         }));
 
-        await saveTracksWithFeatures(tableName, album);
+        // await saveTracksWithFeatures(tableName, album);
 
+        console.log('adding:', tableName, album);
         return { message: 'Done.' };
     } catch (err) {
         return { message: 'Failed', err };
@@ -107,7 +108,7 @@ const invokeLambda = async (params) => {
 
 const saveTracksWithFeatures = async (tableName, album) => {
     try {
-        // album.processed = true;
+        album.processed = true;
         const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
         await documentClient.put({ TableName: tableName, Item: album });
     } catch (err) {
