@@ -100,7 +100,7 @@ const listBandcampTables = async (section) => {
 };
 
 const invokeLambdasInChunks = async (functionName, albums, tableName, token) => {
-    let chunkSize = 5;
+    let chunkSize = 2;
 
     if (albums.length < chunkSize) {
         chunkSize = albums.length;
@@ -175,7 +175,7 @@ const updateUserTokens = async (user, tokens) => {
         if (tokens?.refresh_token) {
             user.refresh_token_spotify = tokens.refresh_token;
         }
-        await documentClient.put({ TableName: "users", Item: user });
+        await documentClient.put({ TableName: `users-${process.env.STAGE}`, Item: user });
     } catch (err) {
         console.error(`Error updateUserTokens: ${err}`);
         throw err;

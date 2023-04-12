@@ -30,7 +30,7 @@ const saveCookies = async (page, user) => {
         const cookies = await page.cookies();
         const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
         user.bandcamp_cookies = cookies;
-        await documentClient.put({ TableName: "users", Item: user });
+        await documentClient.put({ TableName: `users-${process.env.STAGE}`, Item: user });
     } catch (err) {
         console.error(`Error saveCookies: ${err}`);
         throw err;

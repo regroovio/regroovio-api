@@ -61,12 +61,19 @@ const app = async (event, context) => {
 
 const getTrackFeatures = async (track, token) => {
     const payload = JSON.stringify({ token, id: track.id });
-    const trackFeatures = JSON.parse(await invokeLambda({
+    const rawResult = await invokeLambda({
         FunctionName: `spotify-get-audio-features-${process.env.STAGE}`,
         Payload: payload,
-    })).body;
+    });
+    const resultBody = rawResult.body;
 
-    return trackFeatures;
+    if (resultBody) {
+        const trackFeatures = JSON.parse(resultBody);
+        return trackFeatures;
+    } else {
+        console.error("getTrackFeatures: Received undefined body in the response");
+        return null;
+    }
 };
 
 const getTrackInfo = async (track) => {
