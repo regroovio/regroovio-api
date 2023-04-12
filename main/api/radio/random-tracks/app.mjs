@@ -69,9 +69,8 @@ const fetchTracks = async (tableName) => {
         for (const album of shuffledAlbums) {
             for (const track of album.tracks || []) {
                 if (track.spotify?.popularity) {
-                    console.log(track.spotify);
-                    if (track.spotify.popularity > 20) {
-                        populareTracks.push({ track, image_url: album.image_url });
+                    if (track.spotify.popularity > 1) {
+                        populareTracks.push({ track, image_key: album.image_key.key });
                     }
                 }
             }
@@ -92,17 +91,15 @@ const shuffleArray = (array) => {
 };
 
 const processTracks = async (items) => {
-
     const tracks = [];
     for (const item of items) {
         const imageCommand = new GetObjectCommand({
-            Bucket: item.image_url.bucket,
-            Key: item.image_url.key,
+            Bucket: 'albums-regroovio',
+            Key: item.image_key,
         });
         const image = await getSignedUrl(s3, imageCommand, { expiresIn: 60 * 60 });
-
         const trackCommand = new GetObjectCommand({
-            Bucket: item.track.bucket,
+            Bucket: 'albums-regroovio',
             Key: item.track.key,
         });
         const url = await getSignedUrl(s3, trackCommand, { expiresIn: 60 * 60 });
