@@ -50,9 +50,8 @@ const app = async (event, context) => {
             }
         }));
 
-        // await saveTracksWithFeatures(tableName, album);
+        await saveTracksWithFeatures(tableName, album);
 
-        console.log('adding:', tableName, album);
         return { message: 'Done.' };
     } catch (err) {
         return { message: 'Failed', err };

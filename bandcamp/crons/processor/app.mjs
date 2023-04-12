@@ -62,7 +62,13 @@ const app = async (event, context) => {
             }
 
             console.log(`Found ${unprocessedAlbums.length} unprocessed albums.`);
-            await invokeLambdasInChunks(`bandcamp-worker-processor-${process.env.STAGE}`, unprocessedAlbums, tableName, "token");
+            for (let i = 0; i < unprocessedAlbums.length; i++) {
+                console.log(`Processing ${i + 1} of ${unprocessedAlbums.length}`);
+                await invokeLambda({
+                    FunctionName: `bandcamp-worker-processor-${process.env.STAGE}`,
+                    Payload: JSON.stringify({ tableName, album: unprocessedAlbums[i], token })
+                });
+            }
         }
         const response = { functionName: `bandcamp-cron-processor-${process.env.STAGE}`, message: `Success. All ${section} albums are saved.` }
         await slackBot(response);
@@ -100,7 +106,7 @@ const listBandcampTables = async (section) => {
 };
 
 const invokeLambdasInChunks = async (functionName, albums, tableName, token) => {
-    let chunkSize = 2;
+    let chunkSize = 5;
 
     if (albums.length < chunkSize) {
         chunkSize = albums.length;
