@@ -16,6 +16,8 @@ const documentClient = DynamoDBDocument.from(new DynamoDB({
     secretAccessKey: process.env.SECRET_ACCESS_KEY
 }));
 
+const popularity = 30
+
 const app = async () => {
     try {
         const bandcampTables = await fetchAllBandcampTables();
@@ -69,7 +71,7 @@ const fetchTracks = async (tableName) => {
         for (const album of shuffledAlbums) {
             for (const track of album.tracks || []) {
                 if (track.spotify?.popularity) {
-                    if (track.spotify.popularity > 1) {
+                    if (track.spotify.popularity > popularity) {
                         populareTracks.push({ track, image_key: album.image_key.key });
                     }
                 }
