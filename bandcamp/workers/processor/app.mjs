@@ -72,7 +72,7 @@ const getTrackFeatures = async (track, token) => {
 const getTrackInfo = async (track) => {
     try {
         const params = {
-            Bucket: track.bucket,
+            Bucket: 'albums-regroovio',
             Key: track.key,
         };
         const command = new GetObjectCommand(params);

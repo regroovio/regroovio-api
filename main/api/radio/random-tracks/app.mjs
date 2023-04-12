@@ -50,7 +50,6 @@ const fetchAllBandcampTables = async () => {
         let params = {};
         do {
             result = await dynamoDB.listTables(params);
-            console.log(result);
             bandcampTables.push(...result.TableNames.filter(name => name.includes('bandcamp') && name.includes(process.env.STAGE)));
             params.ExclusiveStartTableName = result.LastEvaluatedTableName;
         } while (result.LastEvaluatedTableName);
@@ -70,6 +69,7 @@ const fetchTracks = async (tableName) => {
         for (const album of shuffledAlbums) {
             for (const track of album.tracks || []) {
                 if (track.spotify?.popularity) {
+                    console.log(track.spotify);
                     if (track.spotify.popularity > 20) {
                         populareTracks.push({ track, image_url: album.image_url });
                     }
