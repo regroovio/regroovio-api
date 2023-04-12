@@ -7,7 +7,6 @@ import { initializePuppeteer } from "./common/browser.mjs";
 
 const app = async (event, context) => {
     const user_id = event.user_id
-    const { browser, page } = await initializePuppeteer(event);
     let user;
 
     try {
@@ -18,6 +17,8 @@ const app = async (event, context) => {
     } catch (err) {
         throw new Error(`Error retrieving user from DynamoDB: ${err}`);
     }
+
+    const { browser, page } = await initializePuppeteer(event);
 
     try {
         const tokens = await handleAuthentication(page, user);

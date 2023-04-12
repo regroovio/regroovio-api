@@ -1,11 +1,6 @@
 import { handler } from './index.mjs'
 const start = async () => {
-    const response = await handler(
-        {
-            album: { album_id: 'https://dilushselva.bandcamp.com/track/touch-it-bring-it' },
-            executablePath: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-        }
-    )
+    const response = await handler()
     console.log(response)
 }
 start()

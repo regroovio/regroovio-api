@@ -20,7 +20,6 @@ const app = async (event, context) => {
         await Promise.all(album.tracks.map(async (track) => {
             try {
                 const trackInfo = await getTrackInfo(track);
-                console.log(trackInfo);
                 const trackResult = trackInfo.data.result;
                 let key_words = [];
 

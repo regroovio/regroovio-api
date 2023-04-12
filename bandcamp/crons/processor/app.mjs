@@ -33,36 +33,36 @@ const app = async (event, context) => {
             console.log(`Found ${unsavedAlbums.length} unsaved albums.`);
             await invokeLambdasInChunks(`bandcamp-worker-downloader-${process.env.STAGE}`, unsavedAlbums, tableName);
 
-            console.log(`Retrieving unprocessed albums from ${tableName}`);
-            let unprocessedAlbums = await fetchUnprocessedAlbums(tableName);
-            if (!unprocessedAlbums?.length) {
-                console.log({ message: 'No unprocessed albums found.' });
-                return
-            }
-            const admin_id = process.env.ADMIN_ID;
-            let admin = await getUserById(admin_id);
-            if (!admin) {
-                console.error('User not found');
-                return;
-            }
+            // console.log(`Retrieving unprocessed albums from ${tableName}`);
+            // let unprocessedAlbums = await fetchUnprocessedAlbums(tableName);
+            // if (!unprocessedAlbums?.length) {
+            //     console.log({ message: 'No unprocessed albums found.' });
+            //     return
+            // }
+            // const admin_id = process.env.ADMIN_ID;
+            // let admin = await getUserById(admin_id);
+            // if (!admin) {
+            //     console.error('User not found');
+            //     return;
+            // }
 
-            let token = admin.access_token_spotify || null;
-            const remainingTimeInMinutes = (admin.expiration_timestamp_spotify - Date.now()) / 1000 / 60;
-            console.log(`Token expires in: ${remainingTimeInMinutes.toFixed(0)} minutes`);
+            // let token = admin.access_token_spotify || null;
+            // const remainingTimeInMinutes = (admin.expiration_timestamp_spotify - Date.now()) / 1000 / 60;
+            // console.log(`Token expires in: ${remainingTimeInMinutes.toFixed(0)} minutes`);
 
-            if (remainingTimeInMinutes <= 15) {
-                console.log('Token is expiring soon or already expired, refreshing...');
-                const rawTokens = await invokeLambda({
-                    FunctionName: `spotify-token-${process.env.STAGE}`,
-                    Payload: JSON.stringify({ user_id: admin_id })
-                });
-                const tokens = JSON.parse(rawTokens);
-                await updateUserTokens(admin, tokens);
-                token = tokens.access_token;
-            }
+            // if (remainingTimeInMinutes <= 15) {
+            //     console.log('Token is expiring soon or already expired, refreshing...');
+            //     const rawTokens = await invokeLambda({
+            //         FunctionName: `spotify-token-${process.env.STAGE}`,
+            //         Payload: JSON.stringify({ user_id: admin_id })
+            //     });
+            //     const tokens = JSON.parse(rawTokens);
+            //     await updateUserTokens(admin, tokens);
+            //     token = tokens.access_token;
+            // }
 
-            console.log(`Found ${unprocessedAlbums.length} unprocessed albums.`);
-            await invokeLambdasInChunks(`bandcamp-worker-processor-${process.env.STAGE}`, unprocessedAlbums, tableName, "token");
+            // console.log(`Found ${unprocessedAlbums.length} unprocessed albums.`);
+            // await invokeLambdasInChunks(`bandcamp-worker-processor-${process.env.STAGE}`, unprocessedAlbums, tableName, "token");
         }
         const response = { functionName: `bandcamp-cron-processor-${process.env.STAGE}`, message: `Success. All ${section} albums are saved.` }
         await slackBot(response);

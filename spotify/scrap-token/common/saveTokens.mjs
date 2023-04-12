@@ -12,7 +12,7 @@ const saveTokens = async (user, tokens) => {
         if (tokens?.refresh_token) {
             user.refresh_token_spotify = tokens.refresh_token;
         }
-        await documentClient.put({ TableName: "users", Item: user });
+        await documentClient.put({ TableName: `users-${process.env.STAGE}`, Item: user });
     } catch (err) {
         console.error(`Error saveTokens: ${err}`);
         throw err;
