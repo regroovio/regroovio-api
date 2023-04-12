@@ -77,6 +77,7 @@ const getTrackInfo = async (track) => {
         };
         const command = new GetObjectCommand(params);
         const url = await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
+        console.log('fetching from audd.io: ', url);
         const response = await axios.post('https://api.audd.io/', {
             url: url,
             return: 'apple_music,spotify',
