@@ -37,7 +37,7 @@ const signUp = async (email, password) => {
 
 const app = async (event) => {
     const { email, password } = event
-    console.log(event);
+    console.log({ email, password });
     try {
         const signupData = await signUp(email, password);
         if (signupData.$metadata.httpStatusCode !== 200) {
