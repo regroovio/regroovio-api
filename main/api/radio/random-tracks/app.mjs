@@ -64,37 +64,46 @@ const fetchAllBandcampTables = async () => {
 
 const fetchTracks = async (tableName) => {
     try {
-        const params = { TableName: tableName };
-        const result = await documentClient.scan(params);
-        const shuffledAlbums = shuffleArray(result.Items);
-        const popularTracks = [];
-        const selectedAlbums = new Set(); // Keep track of albums that have a track selected
+        let popularTracks = [];
+        let selectedAlbums = new Set(); // Keep track of albums that have a track selected
 
-        for (const album of shuffledAlbums) {
-            if (selectedAlbums.has(album.album_id)) {
-                continue; // Skip this album if we already have a track from it
-            }
-            let mostPopularTrack = null;
-            let highestPopularity = 0;
+        let result;
+        let params = { TableName: tableName };
 
-            for (const track of album.tracks || []) {
-                if (track.spotify?.popularity && track.spotify.popularity > highestPopularity) {
-                    highestPopularity = track.spotify.popularity;
-                    mostPopularTrack = track;
+        do {
+            result = await documentClient.scan(params);
+            const shuffledAlbums = shuffleArray(result.Items);
+
+            for (const album of shuffledAlbums) {
+                if (selectedAlbums.has(album.album_id)) {
+                    continue; // Skip this album if we already have a track from it
+                }
+                let mostPopularTrack = null;
+                let highestPopularity = 0;
+
+                for (const track of album.tracks || []) {
+                    if (track.spotify?.popularity && track.spotify.popularity > highestPopularity) {
+                        highestPopularity = track.spotify.popularity;
+                        mostPopularTrack = track;
+                    }
+                }
+
+                if (mostPopularTrack && highestPopularity > popularity) {
+                    popularTracks.push({ track: mostPopularTrack, image_key: album.image_key.key });
+                    selectedAlbums.add(album.album_id); // Add the album to the selectedAlbums set
                 }
             }
 
-            if (mostPopularTrack && highestPopularity > popularity) {
-                popularTracks.push({ track: mostPopularTrack, image_key: album.image_key.key });
-                selectedAlbums.add(album.album_id); // Add the album to the selectedAlbums set
-            }
-        }
+            params.ExclusiveStartKey = result.LastEvaluatedKey;
+        } while (result.LastEvaluatedKey);
+
         return popularTracks;
     } catch (err) {
         console.error(`Error fetching albums: ${err}`);
         return [];
     }
 };
+
 
 const shuffleArray = (array) => {
     for (let i = array.length - 1; i > 0; i--) {
