@@ -67,24 +67,29 @@ const fetchTracks = async (tableName) => {
         const params = { TableName: tableName };
         const result = await documentClient.scan(params);
         const shuffledAlbums = shuffleArray(result.Items);
-        const populareTracks = [];
+        const popularTracks = [];
         const selectedAlbums = new Set(); // Keep track of albums that have a track selected
 
         for (const album of shuffledAlbums) {
             if (selectedAlbums.has(album.album_id)) {
                 continue; // Skip this album if we already have a track from it
             }
+            let mostPopularTrack = null;
+            let highestPopularity = 0;
+
             for (const track of album.tracks || []) {
-                if (track.spotify?.popularity) {
-                    if (track.spotify.popularity > popularity) {
-                        populareTracks.push({ track, image_key: album.image_key.key });
-                        selectedAlbums.add(album.album_id); // Add the album to the selectedAlbums set
-                        break; // Break the inner loop to avoid adding more tracks from the same album
-                    }
+                if (track.spotify?.popularity && track.spotify.popularity > highestPopularity) {
+                    highestPopularity = track.spotify.popularity;
+                    mostPopularTrack = track;
                 }
             }
+
+            if (mostPopularTrack && highestPopularity > popularity) {
+                popularTracks.push({ track: mostPopularTrack, image_key: album.image_key.key });
+                selectedAlbums.add(album.album_id); // Add the album to the selectedAlbums set
+            }
         }
-        return populareTracks;
+        return popularTracks;
     } catch (err) {
         console.error(`Error fetching albums: ${err}`);
         return [];
