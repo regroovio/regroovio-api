@@ -52,7 +52,7 @@ const fetchAllBandcampTables = async () => {
         let params = {};
         do {
             result = await dynamoDB.listTables(params);
-            bandcampTables.push(...result.TableNames.filter(name => name.includes('bandcamp') && name.includes(process.env.STAGE)));
+            bandcampTables.push(...result.TableNames.filter(name => name.includes('bandcamp')));
             params.ExclusiveStartTableName = result.LastEvaluatedTableName;
         } while (result.LastEvaluatedTableName);
         return bandcampTables;
