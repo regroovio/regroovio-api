@@ -16,7 +16,7 @@ const documentClient = DynamoDBDocument.from(new DynamoDB({
     secretAccessKey: process.env.SECRET_ACCESS_KEY
 }));
 
-const popularity = 30
+const popularity = 50
 
 const app = async () => {
     try {

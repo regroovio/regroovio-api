@@ -4,7 +4,7 @@ import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
 import { DynamoDB } from "@aws-sdk/client-dynamodb";
 import { AWS_DYNAMO } from "./config.mjs";
 
-const checkCredentials = async (page, username) => {
+const checkCredentials = async (page) => {
     try {
         await page.goto("https://bandcamp.com/login", {
             waitUntil: "load",
@@ -70,11 +70,11 @@ const login = async (page, username_bandcamp, password_bandcamp) => {
 };
 
 const authenticateUser = async (page, user) => {
-    const { bandcamp_cookies, username, username_bandcamp, password_bandcamp } = user;
+    const { bandcamp_cookies, username_bandcamp, password_bandcamp } = user;
 
     if (bandcamp_cookies?.length) await page.setCookie(...bandcamp_cookies);
 
-    let isAuth = await checkCredentials(page, username);
+    let isAuth = await checkCredentials(page);
 
     if (!isAuth) {
         isAuth = await login(page, username_bandcamp, password_bandcamp);

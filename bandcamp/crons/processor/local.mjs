@@ -1,27 +1,7 @@
 import { handler } from './index.mjs'
 const start = async () => {
     const response = await
-        handler({ section: 'trap' })
+        handler({ table: 'X9gHk7zL' })
     console.log(response)
 }
 start()
-
-// GENRES:
-
-// 'brooklyn'
-// 'london'
-// 'montreal'
-// 'tel-aviv'
-
-// 'alternative'
-// 'electro-pop'
-// 'synth pop'
-// 'hardcore'
-// 'hip-hop'
-// 'house'
-// 'daily'
-// 'trap'
-// 'pop'
-
-// 'daily'
-// 'feed'

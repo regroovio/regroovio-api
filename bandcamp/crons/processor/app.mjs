@@ -19,10 +19,10 @@ const documentClient = DynamoDBDocument.from(new DynamoDB({
 }));
 
 const app = async (event, context) => {
-    const section = event.section
+    const { table } = event
     try {
-        console.log(`Getting ${section}...`);
-        const bandcampTables = await listBandcampTables(section);
+        console.log(`Getting ${table}...`);
+        const bandcampTables = await listBandcampTables(table);
         for (const tableName of bandcampTables) {
             console.log(`Retrieving unsaved albums from ${tableName}`);
 
@@ -70,17 +70,17 @@ const app = async (event, context) => {
                 });
             }
         }
-        const response = { functionName: `bandcamp-cron-processor-${process.env.STAGE}`, message: `Success. All ${section} albums are saved.` }
+        const response = { functionName: `bandcamp-cron-processor-${process.env.STAGE}`, message: `Success. Table ${table} saved.` }
         await slackBot(response);
         return response;
     } catch (error) {
-        const response = { functionName: `bandcamp-${section}-${process.env.STAGE}`, message: error.message }
+        const response = { functionName: table, message: error.message }
         await slackBot(response);
         throw new Error(`Failed to process albums: ${error}`);
     }
 };
 
-const listBandcampTables = async (section) => {
+const listBandcampTables = async (table) => {
     const dynamoDB = new DynamoDB({
         region: process.env.REGION,
         accessKeyId: process.env.ACCESS_KEY,
@@ -94,7 +94,7 @@ const listBandcampTables = async (section) => {
 
         do {
             result = await dynamoDB.listTables(params);
-            bandcampTables.push(...result.TableNames.filter(name => name.includes('bandcamp') && name.includes(section) && name.includes(process.env.STAGE)));
+            bandcampTables.push(...result.TableNames.filter(name => name.includes(table)));
             params.ExclusiveStartTableName = result.LastEvaluatedTableName;
         } while (result.LastEvaluatedTableName);
 

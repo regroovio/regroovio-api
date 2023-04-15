@@ -11,6 +11,7 @@
   "author": "",
   "description": "",
   "dependencies": {
+    "@aws-sdk/client-ssm": "^3.312.0",
     "@aws-sdk/lib-dynamodb": "^3.301.0",
     "chrome-aws-lambda": "^9.1.0",
     "dotenv": "^16.0.3",

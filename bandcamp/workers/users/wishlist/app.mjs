@@ -3,7 +3,7 @@
 import { authenticateUser } from './common/auth.mjs';
 import { getUserById } from './common/getUserById.mjs';
 import { createTable } from './common/createTable.mjs';
-import { AWS_DYNAMO, WISHLIST } from './common/config.mjs';
+import { WISHLIST } from './common/config.mjs';
 import { initializePuppeteer } from './common/browser.mjs';
 import { getAlbumLinks } from './common/getAlbumLinks.mjs';
 import { addAlbumsToDb } from './common/addAlbumsToDb.mjs';
