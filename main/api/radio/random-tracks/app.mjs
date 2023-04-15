@@ -16,7 +16,7 @@ const documentClient = DynamoDBDocument.from(new DynamoDB({
     secretAccessKey: process.env.SECRET_ACCESS_KEY
 }));
 
-const minPopularity = 20
+const minPopularity = 50
 
 const app = async () => {
     try {
@@ -65,7 +65,7 @@ const fetchAllBandcampTables = async () => {
 const fetchTracks = async (tableName) => {
     try {
         let popularTracks = [];
-        let selectedAlbums = new Set(); // Keep track of albums that have a track selected
+        let selectedAlbums = new Set();
 
         let result;
         let params = { TableName: tableName };
@@ -76,7 +76,7 @@ const fetchTracks = async (tableName) => {
 
             for (const album of shuffledAlbums) {
                 if (selectedAlbums.has(album.album_id)) {
-                    continue; // Skip this album if we already have a track from it
+                    continue;
                 }
                 let mostPopularTrack = null;
                 let highestPopularity = 0;
@@ -90,7 +90,7 @@ const fetchTracks = async (tableName) => {
 
                 if (mostPopularTrack && highestPopularity >= minPopularity) {
                     popularTracks.push({ track: mostPopularTrack, image_key: album.image_key.key });
-                    selectedAlbums.add(album.album_id); // Add the album to the selectedAlbums set
+                    selectedAlbums.add(album.album_id);
                 }
             }
 
