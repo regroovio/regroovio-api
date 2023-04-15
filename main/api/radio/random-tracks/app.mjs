@@ -16,7 +16,7 @@ const documentClient = DynamoDBDocument.from(new DynamoDB({
     secretAccessKey: process.env.SECRET_ACCESS_KEY
 }));
 
-const minPopularity = 50
+const minPopularity = 20
 
 const app = async () => {
     try {
@@ -88,7 +88,7 @@ const fetchTracks = async (tableName) => {
                     }
                 }
 
-                if (mostPopularTrack && highestPopularity > minPopularity) {
+                if (mostPopularTrack && highestPopularity >= minPopularity) {
                     popularTracks.push({ track: mostPopularTrack, image_key: album.image_key.key });
                     selectedAlbums.add(album.album_id); // Add the album to the selectedAlbums set
                 }
