@@ -54,7 +54,7 @@ const findTrackInAlbum = async (token, albumId, trackName) => {
     for (const track of tracks) {
       let target = trackName.toLowerCase()
       let source = track.name.toLowerCase()
-      if (source.includes(target) || target.includes(source)) {
+      if (source.includes(target) || target.includes(source) || source.includes(target.replace(/[^a-zA-Z0-9]/g, '')) || target.includes(source.replace(/[^a-zA-Z0-9]/g, ''))) {
         track_found = track;
         break;
       }

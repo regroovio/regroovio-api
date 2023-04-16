@@ -62,7 +62,7 @@ const app = async (event, context) => {
             }
 
             console.log(`Found ${unprocessedAlbums.length} unprocessed albums.`);
-            const targetTrack = []
+            const compareTracks = []
 
             let i = 0;
             for (const album of unprocessedAlbums) {
@@ -74,23 +74,37 @@ const app = async (event, context) => {
                     };
                     const command = new GetObjectCommand(params);
                     const sourceTrackUrl = await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
-                    console.log(album.release_date);
-                    console.log(sourceTrack);
-                    console.log(sourceTrackUrl);
-                    return
+                    sourceTrack.release_year = album.release_date.split(' ')[2];
+                    sourceTrack.sourceTrackUrl = sourceTrackUrl;
                     const targetTrack = await invokeLambda({
                         FunctionName: `spotify-search-track-${process.env.STAGE}`,
                         Payload: JSON.stringify({
                             token,
-                            trackName: "El Layali",
-                            albumName: "Amor Fati",
-                            year: "2021",
+                            trackName: sourceTrack.name,
+                            albumName: sourceTrack.album,
+                            year: sourceTrack.release_year,
                         })
                     });
-                    targetTrack.push(targetTrack);
+                    const parsedTargetTrack = JSON.parse(targetTrack);
+                    if (parsedTargetTrack.statusCode === 404) {
+                        console.log(`Track not found: ${sourceTrack.name} | ${sourceTrack.album} by ${album.artist_name}`);
+                        continue;
+                    }
+                    compareTracks.push({ targetTrack: parsedTargetTrack, sourceTrack });
                 }
                 i++;
             }
+            console.log(compareTracks);
+            i = 0;
+            for (const track of compareTracks) {
+                console.log(`Comparing ${i + 1} of ${compareTracks.length}`);
+                // await invokeLambda({
+                //     FunctionName: `bandcamp-worker-processor-${process.env.STAGE}`,
+                //     Payload: JSON.stringify({ tableName, album: unprocessedAlbums[i], token })
+                // });
+                i++;
+            }
+
             // for (let i = 0; i < unprocessedAlbums.length; i++) {
             //     console.log(`Processing ${i + 1} of ${unprocessedAlbums.length}`);
             //     await invokeLambda({
@@ -135,7 +149,7 @@ const listBandcampTables = async (table) => {
 };
 
 const invokeLambdasInChunks = async (functionName, albums, tableName, token) => {
-    let chunkSize = 5;
+    let chunkSize = 10;
 
     if (albums.length < chunkSize) {
         chunkSize = albums.length;
