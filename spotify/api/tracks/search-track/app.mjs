@@ -1,4 +1,5 @@
 import axios from "axios";
+import { jaroWinkler } from "jaro-winkler";
 
 const app = async (event) => {
   try {
@@ -118,19 +119,8 @@ const findTrack = (tracks, trackName) => {
 const compareStrings = (str1, str2) => {
   const cleanedStr1 = cleanString(str1);
   const cleanedStr2 = cleanString(str2);
-  const words1 = cleanedStr1.split(" ");
-  const words2 = cleanedStr2.split(" ");
-  let matches = 0;
-
-  for (const word of words1) {
-    if (word === words2[0]) {
-      return 100;
-    }
-    if (words2.includes(word)) {
-      matches++;
-    }
-  }
-  return (matches / words1.length) * 100;
+  const similarity = jaroWinkler(cleanedStr1, cleanedStr2);
+  return similarity * 100;
 };
 
 const cleanString = (str) => {
