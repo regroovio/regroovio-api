@@ -16,7 +16,7 @@ const documentClient = DynamoDBDocument.from(new DynamoDB({
     secretAccessKey: process.env.SECRET_ACCESS_KEY
 }));
 
-const minPopularity = 0
+const minPopularity = 50
 
 const app = async () => {
     try {
@@ -52,7 +52,7 @@ const fetchAllBandcampTables = async () => {
         let params = {};
         do {
             result = await dynamoDB.listTables(params);
-            bandcampTables.push(...result.TableNames.filter(name => name.includes('bandcamp')));
+            bandcampTables.push(...result.TableNames.filter(name => name.includes('bandcamp') && name.includes(process.env.STAGE) || name.includes('X9gHk7zL')));
             params.ExclusiveStartTableName = result.LastEvaluatedTableName;
         } while (result.LastEvaluatedTableName);
         return bandcampTables;
@@ -120,12 +120,12 @@ const processTracks = async (items) => {
             Bucket: 'albums-regroovio',
             Key: item.image_key,
         });
-        const image = await getSignedUrl(s3, imageCommand, { expiresIn: 60 * 60 });
+        const image = await getSignedUrl(s3, imageCommand, { expiresIn: 604800 });
         const trackCommand = new GetObjectCommand({
             Bucket: 'albums-regroovio',
             Key: item.track.key,
         });
-        const url = await getSignedUrl(s3, trackCommand, { expiresIn: 60 * 60 });
+        const url = await getSignedUrl(s3, trackCommand, { expiresIn: 604800 });
         tracks.push({ artist: item.track.spotify.artists[0].name, album: item.track.spotify.album, title: item.track.name, image_url: image, track_url: url, popularity: item.track.spotify.popularity });
     }
     return tracks;
