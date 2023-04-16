@@ -75,7 +75,7 @@ const app = async (event, context) => {
                     };
                     const command = new GetObjectCommand(params);
                     const sourceTrackUrl = await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
-                    sourceTrack.release_year = album.release_date.split(' ')[2];
+                    sourceTrack.release_year = album.release_date?.split(' ')[2] || null;
                     sourceTrack.sourceTrackUrl = sourceTrackUrl;
                     const targetTrack = await invokeLambda({
                         FunctionName: `spotify-search-track-${process.env.STAGE}`,
@@ -97,17 +97,24 @@ const app = async (event, context) => {
                 }
                 i++;
             }
-            console.log(compareTracks);
-            i = 0;
-            for (const track of compareTracks) {
-                console.log(`Comparing ${i + 1} of ${compareTracks.length}`);
-                // await invokeLambda({
-                //     FunctionName: `bandcamp-worker-processor-${process.env.STAGE}`,
-                //     Payload: JSON.stringify({ tableName, album: unprocessedAlbums[i], token })
-                // });
-                i++;
-            }
 
+            console.log("compareTracks", compareTracks.length);
+            console.log("recognizeTracks", recognizeTracks.length);
+
+            if (compareTracks.length) {
+                i = 0;
+                for (const track of compareTracks) {
+                    console.log(`Comparing ${i + 1} of ${compareTracks.length}`);
+                    console.log(track);
+                    const score = await invokeLambda({
+                        FunctionName: `spotify-compare-tracks-${process.env.STAGE}`,
+                        Payload: JSON.stringify({ sourceTrack: track.sourceTrack, targetTrack: track.targetTrack })
+                    });
+                    console.log(score);
+                    i++;
+                    return
+                }
+            }
             // for (let i = 0; i < unprocessedAlbums.length; i++) {
             //     console.log(`Processing ${i + 1} of ${unprocessedAlbums.length}`);
             //     await invokeLambda({
