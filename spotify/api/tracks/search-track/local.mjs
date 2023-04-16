@@ -4,7 +4,7 @@ import { handler } from './index.mjs';
 
 const start = async () => {
     const event = {
-        token: 'BQDv-mGAEKAv6AUQ1jmGTwM2mgnoiYIFpZpcR-lMdpaOWhojw1T2QRybZWwDrrECFOxKVpu4DN49LfbovnfVfkiWa50n-uDnH97SYo2zVogI0FSVUPaaogZIPk3dXYcysBsyXVtoW_zZuN-yQ9tkOd-BLzWKEZEAffeWtGfXOxd1eFy4IJ4ih5aeqkKKzQxN4YVuVDrE81mS275KfarJP1R4KhcCMPWMRscmJm_HZlaHJ3UdkjKT4KYjKcopbrhecc0TmuWDJJ0cZ0NSw4xztx3Y90mYqfRRbjNhnhfjhzM1TqqgsodoiT2hWS1mfAOopKIwxkf1yczZB_eHmaTAcw',
+        token: 'BQAoDQVSZKdU_YUdJ_M5GdLKwoYG3ehrB3P3hlMoGlQulWRSSXlpSo--EShD1IPY2vfGFAOux9HBWg1aPWZAPXJmY7rua-62SADcxeM8mXzNWWHBQ-fpB9Z7HpCtPj_wz8zufxY0nWFSdk06uanf1lEivnHeHzy7Esdn_do78Fnp9EWc_r1kEIvvBY5LIIzvDTsglCIGDYcpnsjz5yMfGuWlwZXhvEaOOfXPvbGTQysUz-G9gsLtFYFbZfR2L0i5yVHsXXPunFvvnhrSO5FbZmuz7u47ZnB1GwPVo84ss8WhukFAUYKjQXs4i91IHZ5Gfl-NctNZB0Zl-xwYlamfrQ',
         trackName: 'Do Re Mi',
         albumName: 'TOY CITY',
         artistName: 'Toy City',
