@@ -63,6 +63,7 @@ const app = async (event, context) => {
 
             console.log(`Found ${unprocessedAlbums.length} unprocessed albums.`);
             const compareTracks = []
+            const recognizeTracks = []
 
             let i = 0;
             for (const album of unprocessedAlbums) {
@@ -89,6 +90,7 @@ const app = async (event, context) => {
                     const parsedTargetTrack = JSON.parse(targetTrack);
                     if (parsedTargetTrack.statusCode === 404) {
                         console.log(`Track not found: ${sourceTrack.name} | ${sourceTrack.album} by ${album.artist_name}`);
+                        recognizeTracks.push(sourceTrack);
                         continue;
                     }
                     compareTracks.push({ targetTrack: parsedTargetTrack, sourceTrack });

@@ -109,7 +109,7 @@ const buildHeaders = (token) => {
 
 const findTrack = (tracks, trackName) => {
   for (const track of tracks) {
-    if (compareStrings(track.name, trackName) >= 80) {
+    if (compareStrings(track.name, trackName) >= 0.8) {
       return track;
     }
   }
