@@ -4,10 +4,12 @@ import { handler } from './index.mjs';
 
 const start = async () => {
     const event = {
-        token: "BQCsCNyhdK-YrEdOuNo1q7eWLYpqkQfjMkp2vnP78hL2kKByX0-3BwBGg54sucf26zistJkI_VB0R60xIR9nQgTXQ-Oe5UfSeOMdSkeWen1eqXjfzxmCd8dNmV0IzQ4uGuolF1Zz6sZgQYSxuHxPitpkSnU8qXwLthfbtvKApS3K5NIg0ABWLKhExJMS-fGViouG5eLaBn4EMRb7GwmnqELB447GQZsmO-IP_Pzn6bQwxDTEcP3GiRQvVkcb4UXUpwuMk4OU0VAw-OinjABCdtO84Yip6NyhtKP7c5LGCMFH0jtA1by7RUXPurewdN4xvhz74ZqztDYz1lJbqwVzeA",
-        trackName: "El Layali",
-        albumName: "Amor Fati",
-        year: "2021",
+        token: 'BQDv-mGAEKAv6AUQ1jmGTwM2mgnoiYIFpZpcR-lMdpaOWhojw1T2QRybZWwDrrECFOxKVpu4DN49LfbovnfVfkiWa50n-uDnH97SYo2zVogI0FSVUPaaogZIPk3dXYcysBsyXVtoW_zZuN-yQ9tkOd-BLzWKEZEAffeWtGfXOxd1eFy4IJ4ih5aeqkKKzQxN4YVuVDrE81mS275KfarJP1R4KhcCMPWMRscmJm_HZlaHJ3UdkjKT4KYjKcopbrhecc0TmuWDJJ0cZ0NSw4xztx3Y90mYqfRRbjNhnhfjhzM1TqqgsodoiT2hWS1mfAOopKIwxkf1yczZB_eHmaTAcw',
+        // trackName: 'Susak and Us',
+        trackName: 'Always Chasin',
+        albumName: 'Spaces VIII',
+        artistName: 'Rok Zalokar',
+        year: '2021'
     };
     const response = await handler(event);
     console.log(response);
