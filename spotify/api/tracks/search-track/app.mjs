@@ -51,7 +51,8 @@ const findTrackInArtistAlbums = async (token, artistData, trackName, albumName) 
       });
 
       for (const album of artistAlbumsResponse.data.items) {
-        if (compareStrings(album.name, albumName) >= 80) {
+        // if (compareStrings(album.name, albumName) >= 80) {
+        if (compareStrings(album.name, albumName) >= 0.7) {
           const albumTracksResponse = await axios.get(`https://api.spotify.com/v1/albums/${album.id}/tracks`, {
             headers: buildHeaders(token),
           });
@@ -90,7 +91,8 @@ const findTrackInAlbum = async (token, albumData, trackName, artistName) => {
 
       if (track) {
         const trackArtistName = track.artists[0]?.name;
-        if (compareStrings(trackArtistName, artistName) >= 80) {
+        // if (compareStrings(trackArtistName, artistName) >= 80) {
+        if (compareStrings(trackArtistName, artistName) >= 0.7) {
           return track;
         }
       }
