@@ -4,7 +4,6 @@ const app = async (event) => {
   try {
     const { token, trackName, year, albumName } = event;
     const searchData = await search(token, year, albumName);
-    console.log("albums: ", searchData.albums.items.length);
     if (searchData.albums && searchData.albums.items) {
       for (const album of searchData.albums.items) {
         const track = await findTrackInAlbum(token, album.id, trackName);
@@ -35,7 +34,7 @@ const search = async (token, year, albumName) => {
     });
     return response.data;
   } catch (error) {
-    return error.data;
+    return error;
   }
 };
 
@@ -54,10 +53,7 @@ const findTrackInAlbum = async (token, albumId, trackName) => {
     for (const track of tracks) {
       let target = trackName.toLowerCase()
       let source = track.name.toLowerCase()
-      console.log("target", target);
-      console.log("source", source);
-      if (source.includes(target)) {
-        console.log("found track");
+      if (source.includes(target) || target.includes(source)) {
         track_found = track;
         break;
       }

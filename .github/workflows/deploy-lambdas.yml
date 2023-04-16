@@ -113,6 +113,12 @@ jobs:
           - name: "spotify-get-audio-analysis"
             path: "./spotify/api/tracks/get-audio-analysis"
 
+          - name: "spotify-search-track"
+            path: "./spotify/api/tracks/search-track"
+
+          - name: "spotify-compare-track"
+            path: "./spotify/api/tracks/compare-track"
+
           # Sporify Auth API
           - name: "spotify-login"
             path: "./spotify/api/auth/login"
