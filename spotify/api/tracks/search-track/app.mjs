@@ -1,6 +1,5 @@
 import axios from "axios";
-import pkg from 'jaro-winkler';
-const { jaroWinkler } = pkg;
+import jaroWinkler from 'jaro-winkler';
 
 const app = async (event) => {
   try {
