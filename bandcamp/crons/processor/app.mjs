@@ -76,13 +76,6 @@ const app = async (event, context) => {
                     const sourceTrackUrl = await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
                     sourceTrack.release_year = album.release_date.split(' ')[2];
                     sourceTrack.sourceTrackUrl = sourceTrackUrl;
-                    console.log({
-                        token,
-                        trackName: sourceTrack.name,
-                        albumName: sourceTrack.album,
-                        artistName: album.artist_name,
-                        year: sourceTrack.release_year
-                    });
                     const targetTrack = await invokeLambda({
                         FunctionName: `spotify-search-track-${process.env.STAGE}`,
                         Payload: JSON.stringify({

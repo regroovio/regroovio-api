@@ -5,68 +5,65 @@ const app = async (event) => {
     const { token, trackName, year, albumName, artistName } = event;
     console.log(event);
 
-    const searchData = await search(token, year, albumName);
-    if (searchData.albums?.items) {
-      for (const album of searchData.albums.items) {
-        const track = await findTrackInAlbum(token, album.id, trackName, artistName, albumName);
+    const artistData = await findArtist(token, artistName);
+
+    if (artistData.artists?.items) {
+      for (const artist of artistData.artists.items) {
+        const artistId = artist.id;
+        const track = await findTrackInArtistAlbums(token, artistId, trackName, albumName);
         if (track) {
           return { statusCode: 200, body: track };
         }
       }
     }
+
+    const albumData = await search(token, year, albumName);
+    if (albumData.albums?.items) {
+      for (const album of albumData.albums.items) {
+        const track = await findTrackInAlbum(token, album.id, trackName, artistName);
+        if (track) {
+          return { statusCode: 200, body: track };
+        }
+      }
+    }
+
     return { statusCode: 404, body: 'Track not found.' };
   } catch (err) {
     console.error("Error searching:", err);
   }
 };
 
-const search = async (token, year, albumName) => {
+const findArtist = async (token, artistName) => {
   try {
     const response = await axios.get("https://api.spotify.com/v1/search", {
       headers: buildHeaders(token),
       params: {
-        q: `album:${albumName} year:${year}`,
-        type: 'album',
+        q: artistName,
+        type: 'artist',
       },
     });
     return response.data;
   } catch (error) {
-    console.error("Error in search function:", error);
+    console.error("Error in findArtist function:", error);
     return error;
   }
 };
 
-const findTrackInAlbum = async (token, albumId, trackName, artistName, albumName) => {
+const findTrackInArtistAlbums = async (token, artistId, trackName, albumName) => {
   try {
-    const tracksResponse = await axios.get(`https://api.spotify.com/v1/albums/${albumId}/tracks`, {
+    const artistAlbumsResponse = await axios.get(`https://api.spotify.com/v1/artists/${artistId}/albums`, {
       headers: buildHeaders(token),
     });
 
-    const tracks = tracksResponse.data.items;
-    let foundTrack = findTrack(tracks, trackName);
-
-    if (!foundTrack) {
-      for (const track of tracks) {
-        const artistId = track.artists[0].id;
-        const artistAlbumsResponse = await axios.get(`https://api.spotify.com/v1/artists/${artistId}/albums`, {
-          headers: buildHeaders(token),
-        });
-
-        for (const album of artistAlbumsResponse.data.items) {
-          if (compareStrings(album.name, artistName) >= 80) {
-            const albumTracksResponse = await axios.get(`https://api.spotify.com/v1/albums/${album.id}/tracks`, {
-              headers: buildHeaders(token),
-            });
-            foundTrack = findTrack(albumTracksResponse.data.items, trackName);
-            if (foundTrack) break;
-          }
-        }
-        if (foundTrack) break;
+    for (const album of artistAlbumsResponse.data.items) {
+      if (compareStrings(album.name, albumName) >= 80) {
+        const track = await findTrackInAlbum(token, album.id, trackName);
+        if (track) return track;
       }
     }
-    return foundTrack;
+    return null;
   } catch (error) {
-    console.error("Error finding track in album:", error);
+    console.error("Error in findTrackInArtistAlbums function:", error);
     return null;
   }
 };
@@ -77,16 +74,6 @@ const buildHeaders = (token) => {
     "Content-Type": "application/json",
     Authorization: `Bearer ${token}`,
   };
-};
-
-const findTrack = (tracks, trackName) => {
-  for (const track of tracks) {
-    if (compareStrings(track.name, trackName) >= 80) {
-      console.log('Found track');
-      return track;
-    }
-  }
-  return null;
 };
 
 const compareStrings = (str1, str2) => {
