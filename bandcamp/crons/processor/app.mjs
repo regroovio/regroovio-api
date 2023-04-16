@@ -98,17 +98,14 @@ const app = async (event, context) => {
                 i++;
             }
 
-            console.log("compareTracks", compareTracks.length);
-            console.log("recognizeTracks", recognizeTracks.length);
-
             if (compareTracks.length) {
                 i = 0;
                 for (const track of compareTracks) {
                     console.log(`Comparing ${i + 1} of ${compareTracks.length}`);
-                    console.log(track);
+                    console.log({ sourceTrack: track.sourceTrack.sourceTrackUrl, targetTrack: track.targetTrack.body.preview_url });
                     const score = await invokeLambda({
                         FunctionName: `spotify-compare-tracks-${process.env.STAGE}`,
-                        Payload: JSON.stringify({ sourceTrack: track.sourceTrack, targetTrack: track.targetTrack })
+                        Payload: JSON.stringify({ sourceTrack: track.sourceTrack.sourceTrackUrl, targetTrack: track.targetTrack.body.preview_url })
                     });
                     console.log(score);
                     i++;

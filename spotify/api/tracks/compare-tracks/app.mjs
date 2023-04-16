@@ -48,7 +48,8 @@ const audioToVector = async (audioData, isTarget = false) => {
 
 const app = async (event) => {
   try {
-    const { sourceTrack, targetTrack } = event;
+    const { sourceTrack, targetTrack } = event
+    console.log(event);;
     const sourceAudio = await downloadAudio(sourceTrack);
     const targetAudio = await downloadAudio(targetTrack);
     const sourceVector = await audioToVector(sourceAudio);
