@@ -75,6 +75,8 @@ const downloadTrack = async (stream, linkInfo) => {
     if (stream.stream) {
         console.log(`Downloading track:`, stream.name);
         const track = await saveAlbumToS3({ ...stream, album: linkInfo.name, artist: linkInfo.artist.name });
+        track.name = stream.name
+        track.album = linkInfo.name
         return track;
     } else {
         console.log(`Undefined track:`, stream);

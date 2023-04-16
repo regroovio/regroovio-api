@@ -7,9 +7,12 @@ import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { getUserById } from './common/getUserById.mjs';
 import { AWS_DYNAMO } from './common/config.mjs';
 import { slackBot } from './common/slackBot.mjs';
+import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 dotenv.config();
 
+const s3 = new S3Client({ region: 'us-east-1' });;
 const lambdaClient = new LambdaClient({ region: 'us-east-1' });
 
 const documentClient = DynamoDBDocument.from(new DynamoDB({
@@ -24,12 +27,10 @@ const app = async (event, context) => {
         console.log(`Getting ${table}...`);
         const bandcampTables = await listBandcampTables(table);
         for (const tableName of bandcampTables) {
-            console.log(`Retrieving unsaved albums from ${tableName}`);
 
+            console.log(`Retrieving unsaved albums from ${tableName}`);
             let unsavedAlbums = await fetchUnsavedAlbums(tableName);
-            if (!unsavedAlbums?.length) {
-                console.log({ message: 'No unsaved albums found.' });
-            }
+            if (!unsavedAlbums?.length) { console.log({ message: 'No unsaved albums found.' }) }
             console.log(`Found ${unsavedAlbums.length} unsaved albums.`);
             await invokeLambdasInChunks(`bandcamp-worker-downloader-${process.env.STAGE}`, unsavedAlbums, tableName);
 
@@ -45,13 +46,12 @@ const app = async (event, context) => {
                 console.error('User not found');
                 return;
             }
-
             let token = admin.access_token_spotify || null;
             const remainingTimeInMinutes = (admin.expiration_timestamp_spotify - Date.now()) / 1000 / 60;
-            console.log(`Token expires in: ${remainingTimeInMinutes.toFixed(0)} minutes`);
-
-            if (remainingTimeInMinutes <= 15) {
-                console.log('Token is expiring soon or already expired, refreshing...');
+            const minutes = remainingTimeInMinutes.toFixed(0)
+            console.log(minutes == 'NaN' ? 'Token is expired' : `Token expires in: ${minutes} minutes`);
+            if (remainingTimeInMinutes <= 15 || minutes == 'NaN') {
+                console.log('refreshing token...');
                 const rawTokens = await invokeLambda({
                     FunctionName: `spotify-token-${process.env.STAGE}`,
                     Payload: JSON.stringify({ user_id: admin_id })
@@ -62,16 +62,34 @@ const app = async (event, context) => {
             }
 
             console.log(`Found ${unprocessedAlbums.length} unprocessed albums.`);
-            for (let i = 0; i < unprocessedAlbums.length; i++) {
+            const targetTrack = []
+
+            let i = 0;
+            for (const album of unprocessedAlbums) {
                 console.log(`Searching ${i + 1} of ${unprocessedAlbums.length}`);
-                await invokeLambda({
-                    FunctionName: `spotify-search-track-${process.env.STAGE}`,
-                    Payload: JSON.stringify({
-                        token, trackName: "El Layali",
-                        albumName: "Amor Fati",
-                        year: "2021",
-                    })
-                });
+                for (const sourceTrack of album.tracks) {
+                    const params = {
+                        Bucket: 'albums-regroovio',
+                        Key: sourceTrack.key,
+                    };
+                    const command = new GetObjectCommand(params);
+                    const sourceTrackUrl = await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
+                    console.log(album.release_date);
+                    console.log(sourceTrack);
+                    console.log(sourceTrackUrl);
+                    return
+                    const targetTrack = await invokeLambda({
+                        FunctionName: `spotify-search-track-${process.env.STAGE}`,
+                        Payload: JSON.stringify({
+                            token,
+                            trackName: "El Layali",
+                            albumName: "Amor Fati",
+                            year: "2021",
+                        })
+                    });
+                    targetTrack.push(targetTrack);
+                }
+                i++;
             }
             // for (let i = 0; i < unprocessedAlbums.length; i++) {
             //     console.log(`Processing ${i + 1} of ${unprocessedAlbums.length}`);
