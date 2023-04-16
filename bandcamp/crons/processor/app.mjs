@@ -65,10 +65,21 @@ const app = async (event, context) => {
             for (let i = 0; i < unprocessedAlbums.length; i++) {
                 console.log(`Processing ${i + 1} of ${unprocessedAlbums.length}`);
                 await invokeLambda({
-                    FunctionName: `bandcamp-worker-processor-${process.env.STAGE}`,
-                    Payload: JSON.stringify({ tableName, album: unprocessedAlbums[i], token })
+                    FunctionName: `spotify-search-track-${process.env.STAGE}`,
+                    Payload: JSON.stringify({
+                        token, trackName: "El Layali",
+                        albumName: "Amor Fati",
+                        year: "2021",
+                    })
                 });
             }
+            // for (let i = 0; i < unprocessedAlbums.length; i++) {
+            //     console.log(`Processing ${i + 1} of ${unprocessedAlbums.length}`);
+            //     await invokeLambda({
+            //         FunctionName: `bandcamp-worker-processor-${process.env.STAGE}`,
+            //         Payload: JSON.stringify({ tableName, album: unprocessedAlbums[i], token })
+            //     });
+            // }
         }
         const response = { functionName: `bandcamp-cron-processor-${process.env.STAGE}`, message: `Success. Table ${table} saved.` }
         await slackBot(response);
