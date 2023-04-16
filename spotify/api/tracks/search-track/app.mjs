@@ -6,24 +6,16 @@ const app = async (event) => {
     console.log(event);
 
     const artistData = await findArtist(token, artistName);
+    const track = await findTrackInArtistAlbums(token, artistData, trackName, albumName);
 
-    if (artistData.artists?.items) {
-      for (const artist of artistData.artists.items) {
-        const artistId = artist.id;
-        const track = await findTrackInArtistAlbums(token, artistId, trackName, albumName);
-        if (track) {
-          return { statusCode: 200, body: track };
-        }
-      }
-    }
+    if (track) {
+      return { statusCode: 200, body: track };
+    } else {
+      const albumData = await search(token, year, albumName);
+      const trackInAlbum = await findTrackInAlbum(token, albumData, trackName, artistName);
 
-    const albumData = await search(token, year, albumName);
-    if (albumData.albums?.items) {
-      for (const album of albumData.albums.items) {
-        const track = await findTrackInAlbum(token, album.id, trackName, artistName);
-        if (track) {
-          return { statusCode: 200, body: track };
-        }
+      if (trackInAlbum) {
+        return { statusCode: 200, body: trackInAlbum };
       }
     }
 
@@ -49,23 +41,61 @@ const findArtist = async (token, artistName) => {
   }
 };
 
-const findTrackInArtistAlbums = async (token, artistId, trackName, albumName) => {
-  try {
-    const artistAlbumsResponse = await axios.get(`https://api.spotify.com/v1/artists/${artistId}/albums`, {
-      headers: buildHeaders(token),
-    });
+const findTrackInArtistAlbums = async (token, artistData, trackName, albumName) => {
+  if (artistData.artists?.items) {
+    for (const artist of artistData.artists.items) {
+      const artistId = artist.id;
+      const artistAlbumsResponse = await axios.get(`https://api.spotify.com/v1/artists/${artistId}/albums`, {
+        headers: buildHeaders(token),
+      });
 
-    for (const album of artistAlbumsResponse.data.items) {
-      if (compareStrings(album.name, albumName) >= 80) {
-        const track = await findTrackInAlbum(token, album.id, trackName);
-        if (track) return track;
+      for (const album of artistAlbumsResponse.data.items) {
+        if (compareStrings(album.name, albumName) >= 80) {
+          const albumTracksResponse = await axios.get(`https://api.spotify.com/v1/albums/${album.id}/tracks`, {
+            headers: buildHeaders(token),
+          });
+          const track = findTrack(albumTracksResponse.data.items, trackName);
+          if (track) return track;
+        }
       }
     }
-    return null;
-  } catch (error) {
-    console.error("Error in findTrackInArtistAlbums function:", error);
-    return null;
   }
+  return null;
+};
+
+const search = async (token, year, albumName) => {
+  try {
+    const response = await axios.get("https://api.spotify.com/v1/search", {
+      headers: buildHeaders(token),
+      params: {
+        q: `album:${albumName} year:${year}`,
+        type: 'album',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error in search function:", error);
+    return error;
+  }
+};
+
+const findTrackInAlbum = async (token, albumData, trackName, artistName) => {
+  if (albumData.albums?.items) {
+    for (const album of albumData.albums.items) {
+      const albumTracksResponse = await axios.get(`https://api.spotify.com/v1/albums/${album.id}/tracks`, {
+        headers: buildHeaders(token),
+      });
+      const track = findTrack(albumTracksResponse.data.items, trackName);
+
+      if (track) {
+        const trackArtistName = track.artists[0]?.name;
+        if (compareStrings(trackArtistName, artistName) >= 80) {
+          return track;
+        }
+      }
+    }
+  }
+  return null;
 };
 
 const buildHeaders = (token) => {
@@ -74,6 +104,15 @@ const buildHeaders = (token) => {
     "Content-Type": "application/json",
     Authorization: `Bearer ${token}`,
   };
+};
+
+const findTrack = (tracks, trackName) => {
+  for (const track of tracks) {
+    if (compareStrings(track.name, trackName) >= 80) {
+      return track;
+    }
+  }
+  return null;
 };
 
 const compareStrings = (str1, str2) => {
