@@ -82,6 +82,7 @@ const app = async (event, context) => {
                             token,
                             trackName: sourceTrack.name,
                             albumName: sourceTrack.album,
+                            artistName: album.artist_name,
                             year: sourceTrack.release_year,
                         })
                     });

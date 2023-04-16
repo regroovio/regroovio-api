@@ -2,12 +2,12 @@ import axios from "axios";
 
 const app = async (event) => {
   try {
-    const { token, trackName, year, albumName } = event;
+    const { token, trackName, year, albumName, artistName } = event;
     console.log(event);
     const searchData = await search(token, year, albumName);
     if (searchData.albums && searchData.albums.items) {
       for (const album of searchData.albums.items) {
-        const track = await findTrackInAlbum(token, album.id, trackName);
+        const track = await findTrackInAlbum(token, album.id, trackName, artistName);
         if (track) {
           return { statusCode: 200, body: track };
         }
@@ -39,8 +39,7 @@ const search = async (token, year, albumName) => {
   }
 };
 
-const findTrackInAlbum = async (token, albumId, trackName) => {
-  console.log(albumId);
+const findTrackInAlbum = async (token, albumId, trackName, artistName) => {
   try {
     const response = await axios.get(`https://api.spotify.com/v1/albums/${albumId}/tracks`, {
       headers: {
@@ -53,8 +52,10 @@ const findTrackInAlbum = async (token, albumId, trackName) => {
     let track_found = null
     for (const track of tracks) {
       let target = trackName.toLowerCase()
+      let targetArtist = artistName.toLowerCase()
       let source = track.name.toLowerCase()
-      if (source.includes(target) || target.includes(source) || source.includes(target.replace(/[^a-zA-Z0-9]/g, '')) || target.includes(source.replace(/[^a-zA-Z0-9]/g, ''))) {
+      let sourceArtist = track.artists[0].name.toLowerCase()
+      if (source.includes(target) || target.includes(source) && sourceArtist.includes(targetArtist) || targetArtist.includes(sourceArtist)) {
         track_found = track;
         break;
       }
