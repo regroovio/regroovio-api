@@ -3,6 +3,7 @@ import axios from "axios";
 const app = async (event) => {
   try {
     const { token, trackName, year, albumName } = event;
+    console.log(event);
     const searchData = await search(token, year, albumName);
     if (searchData.albums && searchData.albums.items) {
       for (const album of searchData.albums.items) {

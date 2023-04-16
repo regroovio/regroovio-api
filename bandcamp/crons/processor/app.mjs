@@ -63,7 +63,7 @@ const app = async (event, context) => {
 
             console.log(`Found ${unprocessedAlbums.length} unprocessed albums.`);
             for (let i = 0; i < unprocessedAlbums.length; i++) {
-                console.log(`Processing ${i + 1} of ${unprocessedAlbums.length}`);
+                console.log(`Searching ${i + 1} of ${unprocessedAlbums.length}`);
                 await invokeLambda({
                     FunctionName: `spotify-search-track-${process.env.STAGE}`,
                     Payload: JSON.stringify({
@@ -125,7 +125,7 @@ const invokeLambdasInChunks = async (functionName, albums, tableName, token) => 
 
     for (let i = 0; i < albums.length; i += chunkSize) {
         const chunk = albums.slice(i, i + chunkSize);
-        console.log(`Processing chunk ${i / chunkSize + 1} of ${Math.ceil(albums.length / chunkSize)}`);
+        console.log(`Downloading chunk ${i / chunkSize + 1} of ${Math.ceil(albums.length / chunkSize)}`);
 
         await Promise.all(chunk.map(async (album) => {
             await invokeLambda({
