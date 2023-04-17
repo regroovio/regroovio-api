@@ -100,26 +100,26 @@ const app = async (event, context) => {
                         delete parsedTargetTrack.body.duration_ms
                         delete parsedTargetTrack.body.track_number
                         const targetTrack = parsedTargetTrack.body
-
                         const score = await invokeLambda({
                             FunctionName: `spotify-compare-tracks-${process.env.STAGE}`,
                             Payload: JSON.stringify({ sourceTrack: track.sourceTrackUrl, targetTrack: targetTrack.preview_url })
                         });
                         if (score < 0.8) {
-                            console.log(``);
+                            console.log(`Track Not Found`);
                             console.log({ score });
                             console.log({ target: { name: targetTrack.name, track: track.sourceTrackUrl } });
                             console.log({ source: { name: track.name, track: targetTrack.preview_url } });
                             console.log(``);
+                            recognizeTracks.push(track);
                             continue
                         }
                         foundTracks.push({ targetTrack: parsedTargetTrack, sourceTrack: track });
                     }
-
                 }
                 i++;
             }
-            console.log(foundTracks);
+            console.log(foundTracks.length);
+            console.log(recognizeTracks.length);
             // for (let i = 0; i < unprocessedAlbums.length; i++) {
             //     console.log(`Processing ${i + 1} of ${unprocessedAlbums.length}`);
             //     await invokeLambda({
@@ -164,7 +164,7 @@ const listBandcampTables = async (table) => {
 };
 
 const invokeLambdasInChunks = async (functionName, albums, tableName, token) => {
-    let chunkSize = 10;
+    let chunkSize = 5;
 
     if (albums.length < chunkSize) {
         chunkSize = albums.length;
