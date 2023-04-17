@@ -13,5 +13,4 @@ export const AWS_DYNAMO = {
 
 export const CUSTOM = {
     SELECTOR: `.item  > div > a`,
-    SLACK_ENDPOINT: process.env.SLACK_ENDPOINT,
 };

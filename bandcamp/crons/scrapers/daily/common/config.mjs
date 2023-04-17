@@ -13,5 +13,4 @@ export const AWS_DYNAMO = {
 
 export const DAILY = {
     SELECTOR: `.item-title a`,
-    SLACK_ENDPOINT: process.env.SLACK_ENDPOINT,
 };
