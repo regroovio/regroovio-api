@@ -127,11 +127,11 @@ const app = async (event, context) => {
             //     });
             // }
         }
-        const response = { functionName: `bandcamp-cron-processor-${process.env.STAGE}`, message: `Success. Table ${table} saved.` }
+        const response = { functionName: `bandcamp-cron-processor-${process.env.STAGE}`, status: 'Success', message: `Table ${table} saved.` }
         await slackBot(response);
         return response;
     } catch (error) {
-        const response = { functionName: table, message: error.message }
+        const response = { functionName: table, status: 'Error', message: error.message }
         await slackBot(response);
         throw new Error(`Failed to process albums: ${error}`);
     }
