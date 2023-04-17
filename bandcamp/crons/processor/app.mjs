@@ -1,4 +1,4 @@
-// app.mjs
+// processor/app.mjs
 
 import dotenv from 'dotenv';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
@@ -68,49 +68,58 @@ const app = async (event, context) => {
             let i = 0;
             for (const album of unprocessedAlbums) {
                 console.log(`Searching ${i + 1} of ${unprocessedAlbums.length}`);
-                for (const sourceTrack of album.tracks) {
+                for (const track of album.tracks) {
                     const params = {
                         Bucket: 'albums-regroovio',
-                        Key: sourceTrack.key,
+                        Key: track.key,
                     };
                     const command = new GetObjectCommand(params);
                     const sourceTrackUrl = await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
-                    sourceTrack.release_year = album.release_date?.split(' ')[2] || null;
-                    sourceTrack.sourceTrackUrl = sourceTrackUrl;
+                    track.release_year = album.release_date?.split(' ')[2] || null;
+                    track.sourceTrackUrl = sourceTrackUrl;
+                    console.log({
+                        token,
+                        trackName: track.name,
+                        albumName: track.album,
+                        artistName: album.artist_name,
+                        year: track.release_year,
+                    });
                     const targetTrack = await invokeLambda({
                         FunctionName: `spotify-search-track-${process.env.STAGE}`,
                         Payload: JSON.stringify({
                             token,
-                            trackName: sourceTrack.name,
-                            albumName: sourceTrack.album,
+                            trackName: track.name,
+                            albumName: track.album,
                             artistName: album.artist_name,
-                            year: sourceTrack.release_year,
+                            year: track.release_year,
                         })
                     });
                     const parsedTargetTrack = JSON.parse(targetTrack);
                     if (parsedTargetTrack.statusCode === 404) {
-                        console.log(`Track not found: ${sourceTrack.name} | ${sourceTrack.album} by ${album.artist_name}`);
-                        recognizeTracks.push(sourceTrack);
-                        continue;
+                        console.log(`Track not found: ${track.name} | ${track.album} by ${album.artist_name}`);
+                        recognizeTracks.push(track);
+                    } else {
+                        console.log(`Comparing`);
+                        delete parsedTargetTrack.body.available_markets
+                        delete parsedTargetTrack.body.disc_number
+                        delete parsedTargetTrack.body.explicit
+                        delete parsedTargetTrack.body.external_urls
+                        delete parsedTargetTrack.body.is_local
+                        delete parsedTargetTrack.body.duration_ms
+                        delete parsedTargetTrack.body.track_number
+                        console.log({ body: parsedTargetTrack.body });
+                        // console.log({ targetTrack: parsedTargetTrack.body, sourceTrack: track });
+                        // const score = await invokeLambda({
+                        //     FunctionName: `spotify-compare-tracks-${process.env.STAGE}`,
+                        //     Payload: JSON.stringify({ sourceTrack: track.sourceTrackUrl, targetTrack: parsedTargetTrack.body.preview_url })
+                        // });
+                        // console.log(score);
+
+                        // compareTracks.push({ targetTrack: parsedTargetTrack, sourceTrack: track });
                     }
-                    compareTracks.push({ targetTrack: parsedTargetTrack, sourceTrack });
+
                 }
                 i++;
-            }
-
-            if (compareTracks.length) {
-                i = 0;
-                for (const track of compareTracks) {
-                    console.log(`Comparing ${i + 1} of ${compareTracks.length}`);
-                    console.log({ sourceTrack: track.sourceTrack.sourceTrackUrl, targetTrack: track.targetTrack.body.preview_url });
-                    const score = await invokeLambda({
-                        FunctionName: `spotify-compare-tracks-${process.env.STAGE}`,
-                        Payload: JSON.stringify({ sourceTrack: track.sourceTrack.sourceTrackUrl, targetTrack: track.targetTrack.body.preview_url })
-                    });
-                    console.log(score);
-                    i++;
-                    return
-                }
             }
             // for (let i = 0; i < unprocessedAlbums.length; i++) {
             //     console.log(`Processing ${i + 1} of ${unprocessedAlbums.length}`);

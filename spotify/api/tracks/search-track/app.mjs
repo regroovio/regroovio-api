@@ -1,43 +1,80 @@
 import axios from "axios";
-import jaroWinkler from 'jaro-winkler';
+import jaroWinkler from "jaro-winkler";
+
+const isVariousArtist = (artistName) => {
+  const lowerCaseArtistName = artistName.toLowerCase();
+  return ['various artists', 'v/a', 'va'].includes(lowerCaseArtistName) || / [&+]/.test(artistName);
+};
+
+const splitArtists = (artistName) => {
+  if (artistName.includes("&")) {
+    return artistName.split(" & ");
+  }
+  return [artistName];
+};
 
 const app = async (event) => {
   try {
     const { token, trackName, year, albumName, artistName } = event;
     console.log(event);
 
-    const artistData = await findArtist(token, artistName);
-    const track = await findTrackInArtistAlbums(token, artistData, trackName, albumName);
+    const isVA = isVariousArtist(artistName);
+    const individualArtists = splitArtists(artistName);
+
+    let track = null;
+    for (const individualArtist of individualArtists) {
+      if (isVA) {
+        const albumData = await search(token, year, albumName, individualArtist);
+        const trackInAlbum = await findTrackInAlbum(token, albumData, trackName, isVA);
+
+        if (trackInAlbum) {
+          track = trackInAlbum;
+          break;
+        }
+      }
+
+      const artistData = await findArtist(token, individualArtist);
+      const trackInArtistAlbums = await findTrackInArtistAlbums(token, artistData, trackName, albumName);
+
+      if (trackInArtistAlbums) {
+        track = trackInArtistAlbums;
+        break;
+      }
+    }
 
     if (track) {
       return { statusCode: 200, body: track };
     } else {
-      const albumData = await search(token, year, albumName);
-      const trackInAlbum = await findTrackInAlbum(token, albumData, trackName, artistName);
-
-      if (trackInAlbum) {
-        return { statusCode: 200, body: trackInAlbum };
-      }
+      return { statusCode: 404, body: "Track not found." };
     }
-
-    return { statusCode: 404, body: 'Track not found.' };
-  } catch (err) {
-    console.error("Error searching:", err);
+  } catch (error) {
+    handleError(error, "searching");
+    return error.response.data.error;
   }
 };
 
+const handleError = (error, context) => {
+  console.error(`Error ${context}:`);
+  console.log(error.message);
+  console.log(error.response.data.error);
+};
+
+const extractArtistsFromTrackName = (trackName) => {
+  const [artist1, artist2] = trackName.split(" - ")[0].split(" & ");
+  return [artist1, artist2];
+};
 const findArtist = async (token, artistName) => {
   try {
     const response = await axios.get("https://api.spotify.com/v1/search", {
       headers: buildHeaders(token),
       params: {
         q: artistName,
-        type: 'artist',
+        type: "artist",
       },
     });
     return response.data;
   } catch (error) {
-    console.error("Error in findArtist function:", error);
+    handleError(error, "findArtist");
     return error;
   }
 };
@@ -51,7 +88,9 @@ const findTrackInArtistAlbums = async (token, artistData, trackName, albumName) 
       });
 
       for (const album of artistAlbumsResponse.data.items) {
-        if (compareStrings(album.name, albumName) >= 0.8) {
+        const albumNameSimilarity = compareStrings(album.name, albumName);
+        const albumNameIncludes = album.name.toLowerCase().includes(albumName.toLowerCase());
+        if (albumNameSimilarity >= 0.8 || albumNameIncludes) {
           const albumTracksResponse = await axios.get(`https://api.spotify.com/v1/albums/${album.id}/tracks`, {
             headers: buildHeaders(token),
           });
@@ -64,52 +103,53 @@ const findTrackInArtistAlbums = async (token, artistData, trackName, albumName) 
   return null;
 };
 
-const search = async (token, year, albumName) => {
+const search = async (token, year, albumName, artistName) => {
   try {
     const response = await axios.get("https://api.spotify.com/v1/search", {
       headers: buildHeaders(token),
       params: {
-        q: `album:${albumName} year:${year}`,
-        type: 'album',
+        q: `album:${albumName} artist:${artistName}`,
+        type: "album",
       },
     });
-    return response.data;
+    const albums = response.data.albums?.items || [];
+    const filteredAlbums = albums.filter((album) => {
+      const albumYear = album.release_date?.substring(0, 4);
+      const albumNameSimilarity = compareStrings(album.name, albumName);
+      const albumNameIncludes = album.name.toLowerCase().includes(albumName.toLowerCase());
+      const artistNameSimilarity = compareStrings(album.artists[0]?.name, artistName);
+      return (albumYear === year || albumNameSimilarity >= 0.8 || albumNameIncludes) && artistNameSimilarity >= 0.8;
+    });
+    return filteredAlbums;
   } catch (error) {
-    console.error("Error in search function:", error);
+    handleError(error, "search");
     return error;
   }
 };
 
-const findTrackInAlbum = async (token, albumData, trackName, artistName) => {
-  if (albumData.albums?.items) {
-    for (const album of albumData.albums.items) {
-      const albumTracksResponse = await axios.get(`https://api.spotify.com/v1/albums/${album.id}/tracks`, {
-        headers: buildHeaders(token),
-      });
-      const track = findTrack(albumTracksResponse.data.items, trackName);
-
-      if (track) {
-        const trackArtistName = track.artists[0]?.name;
-        if (compareStrings(trackArtistName, artistName) >= 0.8) {
-          return track;
-        }
-      }
-    }
+const findTrackInAlbum = async (token, albumData, trackName) => {
+  for (const album of albumData) {
+    const albumTracksResponse = await axios.get(`https://api.spotify.com/v1/albums/${album.id}/tracks`, {
+      headers: buildHeaders(token),
+    });
+    const track = findTrack(albumTracksResponse.data.items, trackName);
+    if (track) return track;
   }
   return null;
 };
 
-const buildHeaders = (token) => {
-  return {
-    Accept: "application/json",
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  };
-};
+const findTrack = (tracks, fullTrackName) => {
+  let trackNameToFind = fullTrackName;
 
-const findTrack = (tracks, trackName) => {
+  if (isVariousArtist) {
+    const splitTrackName = fullTrackName.split(" - ");
+    trackNameToFind = splitTrackName.length > 1 ? splitTrackName[1] : splitTrackName[0];
+  }
+
   for (const track of tracks) {
-    if (compareStrings(track.name, trackName) >= 0.8) {
+    console.log(`comparing track: '${track.name}' with '${trackNameToFind}'`);
+    const trackNameSimilarity = compareStrings(track.name, trackNameToFind);
+    if (trackNameSimilarity >= 0.8) {
       return track;
     }
   }
@@ -117,14 +157,14 @@ const findTrack = (tracks, trackName) => {
 };
 
 const compareStrings = (str1, str2) => {
-  const cleanedStr1 = cleanString(str1);
-  const cleanedStr2 = cleanString(str2);
-  const similarity = jaroWinkler(cleanedStr1, cleanedStr2);
-  return similarity * 100;
+  return jaroWinkler(str1, str2, { caseSensitive: false });
 };
 
-const cleanString = (str) => {
-  return str.replace(/[^a-zA-Z0-9 ]/g, "").toLowerCase();
+const buildHeaders = (token) => {
+  return {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  };
 };
 
 export { app };

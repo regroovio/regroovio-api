@@ -4,10 +4,10 @@ import { handler } from './index.mjs';
 
 const start = async () => {
     const event = {
-        token: 'BQAoDQVSZKdU_YUdJ_M5GdLKwoYG3ehrB3P3hlMoGlQulWRSSXlpSo--EShD1IPY2vfGFAOux9HBWg1aPWZAPXJmY7rua-62SADcxeM8mXzNWWHBQ-fpB9Z7HpCtPj_wz8zufxY0nWFSdk06uanf1lEivnHeHzy7Esdn_do78Fnp9EWc_r1kEIvvBY5LIIzvDTsglCIGDYcpnsjz5yMfGuWlwZXhvEaOOfXPvbGTQysUz-G9gsLtFYFbZfR2L0i5yVHsXXPunFvvnhrSO5FbZmuz7u47ZnB1GwPVo84ss8WhukFAUYKjQXs4i91IHZ5Gfl-NctNZB0Zl-xwYlamfrQ',
-        trackName: 'Oye',
-        albumName: 'Kukulkan',
-        artistName: 'UAY',
+        token: 'BQDyMcPou75M0CNTgBdjD3Q97A6Ahmjpj4DKndAv_U_piYx3SeNYn95jHk7odVXtMQb8WnIiniAmWsk0qPtOAIcVSRRejG1IlGOThPcOyUdFWA55Nzy3QkI6hjFe2xof46JNHcuSMkpYQa_J-reHBnL5ZGnffS5zdZnqZRLz4NDIB-tkHQdJwTUVtcZWwpunEt235rqS0p0DKlQG5stSX-tjxhmpNv5z4Z4cNXXcOrRtjhENYjrNf1TSswxtNxcFGdYbbdjFUzgbpOdwuNHX-qsVtLsFdqsqn6Q6coqm8yRxO9GLIM6UcTJHb-rXoPC8ePY_-nTd1VRMr8br7mJTvw',
+        trackName: 'Hammer & YSANNE - Synco',
+        albumName: 'Remmah Rundown',
+        artistName: 'Various Artists',
         year: '2023'
     };
     const response = await handler(event);
