@@ -163,7 +163,7 @@ const listBandcampTables = async (table) => {
 };
 
 const invokeLambdasInChunks = async (functionName, albums, tableName, token) => {
-    let chunkSize = 5;
+    let chunkSize = 10;
 
     if (albums.length < chunkSize) {
         chunkSize = albums.length;

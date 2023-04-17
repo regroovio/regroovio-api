@@ -14,7 +14,6 @@ const app = async (event) => {
   try {
     const { sourceTrack, targetTrack } = event
     console.log(event);
-    console.log({ bufferSizeFraction });
     const sourceAudio = await downloadAudio(sourceTrack);
     const targetAudio = await downloadAudio(targetTrack);
     const sourceVector = await audioToVector(sourceAudio, bufferSizeFraction);
@@ -137,7 +136,3 @@ const cosineSimilarity = (vector1, vector2) => {
 }
 
 export { app };
-
-
-
-
