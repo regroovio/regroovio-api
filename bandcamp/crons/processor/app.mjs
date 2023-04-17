@@ -62,7 +62,7 @@ const app = async (event, context) => {
             }
 
             console.log(`Found ${unprocessedAlbums.length} unprocessed albums.`);
-            const compareTracks = []
+            const foundTracks = []
             const recognizeTracks = []
 
             let i = 0;
@@ -77,13 +77,6 @@ const app = async (event, context) => {
                     const sourceTrackUrl = await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
                     track.release_year = album.release_date?.split(' ')[2] || null;
                     track.sourceTrackUrl = sourceTrackUrl;
-                    console.log({
-                        token,
-                        trackName: track.name,
-                        albumName: track.album,
-                        artistName: album.artist_name,
-                        year: track.release_year,
-                    });
                     const targetTrack = await invokeLambda({
                         FunctionName: `spotify-search-track-${process.env.STAGE}`,
                         Payload: JSON.stringify({
@@ -99,7 +92,6 @@ const app = async (event, context) => {
                         console.log(`Track not found: ${track.name} | ${track.album} by ${album.artist_name}`);
                         recognizeTracks.push(track);
                     } else {
-                        console.log(`Comparing`);
                         delete parsedTargetTrack.body.available_markets
                         delete parsedTargetTrack.body.disc_number
                         delete parsedTargetTrack.body.explicit
@@ -107,20 +99,27 @@ const app = async (event, context) => {
                         delete parsedTargetTrack.body.is_local
                         delete parsedTargetTrack.body.duration_ms
                         delete parsedTargetTrack.body.track_number
-                        console.log({ body: parsedTargetTrack.body });
-                        // console.log({ targetTrack: parsedTargetTrack.body, sourceTrack: track });
-                        // const score = await invokeLambda({
-                        //     FunctionName: `spotify-compare-tracks-${process.env.STAGE}`,
-                        //     Payload: JSON.stringify({ sourceTrack: track.sourceTrackUrl, targetTrack: parsedTargetTrack.body.preview_url })
-                        // });
-                        // console.log(score);
+                        const targetTrack = parsedTargetTrack.body
 
-                        // compareTracks.push({ targetTrack: parsedTargetTrack, sourceTrack: track });
+                        const score = await invokeLambda({
+                            FunctionName: `spotify-compare-tracks-${process.env.STAGE}`,
+                            Payload: JSON.stringify({ sourceTrack: track.sourceTrackUrl, targetTrack: targetTrack.preview_url })
+                        });
+                        if (score < 0.8) {
+                            console.log(``);
+                            console.log({ score });
+                            console.log({ target: { name: targetTrack.name, track: track.sourceTrackUrl } });
+                            console.log({ source: { name: track.name, track: targetTrack.preview_url } });
+                            console.log(``);
+                            continue
+                        }
+                        foundTracks.push({ targetTrack: parsedTargetTrack, sourceTrack: track });
                     }
 
                 }
                 i++;
             }
+            console.log(foundTracks);
             // for (let i = 0; i < unprocessedAlbums.length; i++) {
             //     console.log(`Processing ${i + 1} of ${unprocessedAlbums.length}`);
             //     await invokeLambda({
