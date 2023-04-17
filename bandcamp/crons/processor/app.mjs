@@ -89,7 +89,8 @@ const app = async (event, context) => {
                     });
                     const parsedTargetTrack = JSON.parse(targetTrack);
                     if (parsedTargetTrack.statusCode === 404) {
-                        console.log(`Track not found: ${track.name} | ${track.album} by ${album.artist_name}`);
+                        console.log(`Track not found: ${track.name}`);
+                        console.log({ track });
                         recognizeTracks.push(track);
                     } else {
                         delete parsedTargetTrack.body.available_markets
@@ -104,11 +105,9 @@ const app = async (event, context) => {
                             FunctionName: `spotify-compare-tracks-${process.env.STAGE}`,
                             Payload: JSON.stringify({ sourceTrack: track.sourceTrackUrl, targetTrack: targetTrack.preview_url })
                         });
-                        if (score < 0.8) {
-                            console.log(`Track Not Found`);
-                            console.log({ score });
-                            console.log({ target: { name: targetTrack.name, track: track.sourceTrackUrl } });
-                            console.log({ source: { name: track.name, track: targetTrack.preview_url } });
+                        if (score < 0.85) {
+                            console.log(`Target track score is too low: ${score}`);
+                            console.log({ target: { name: targetTrack.name, track: track.sourceTrackUrl }, source: { name: track.name, track: targetTrack.preview_url } });
                             console.log(``);
                             recognizeTracks.push(track);
                             continue
