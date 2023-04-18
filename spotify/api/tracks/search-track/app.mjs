@@ -128,6 +128,22 @@ const findTrack = (tracks, fullTrackName) => {
   return null;
 };
 
+const findArtist = async (token, artistName) => {
+  try {
+    const response = await axios.get("https://api.spotify.com/v1/search", {
+      headers: buildHeaders(token),
+      params: {
+        q: artistName,
+        type: "artist",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    handleError(error, "findArtist");
+    return error;
+  }
+};
+
 const compareStrings = (str1, str2) => {
   return jaroWinkler(str1, str2, { caseSensitive: false });
 };

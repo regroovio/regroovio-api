@@ -108,12 +108,12 @@ def app(table):
                         print(track['sourceTrackUrl'])
                         print(target_track_info['preview_url'])
         i += 1
-        response = {
-            "functionName": f"bandcamp-processor-{os.getenv('STAGE')}",
-            "status": "Success",
-            "message": f"Table {table} saved.",
-        }
-        return response
+        # response = {
+        #     "functionName": f"bandcamp-processor-{os.getenv('STAGE')}",
+        #     "status": "Success",
+        #     "message": f"Table {table} saved.",
+        # }
+        # return response
     except Exception as error:
         response = {"functionName": table,
                     "status": "Error", "message": str(error)}
@@ -167,6 +167,8 @@ def invoke_lambda(params):
     try:
         response = lambda_client.invoke(**params)
         payload = response["Payload"].read().decode("utf-8")
+        print(payload)
+        return
         cleaned_payload = json.loads(payload.strip('"'))
         return cleaned_payload["body"]
     except ClientError as error:
@@ -308,9 +310,9 @@ def normalize_audio_features(features):
 
 
 # For testing the compare_audio_files funciton
-source_track_url = "https://albums-regroovio.s3.amazonaws.com/bandcamp/Napoleon%20Da%20Legend/Le%20Dernier%20Glacier/Hypothermie%20ft.%20DJ%20Djel.mp3?AWSAccessKeyId=AKIATFEQG44VPLHDH73Z&Signature=sHv5Wpj1NzHg18jWfePrBwPAiyw%3D&Expires=1681837244"
-target_track_url = "https://albums-regroovio.s3.amazonaws.com/bandcamp/Napoleon%20Da%20Legend/Le%20Dernier%20Glacier/Bureau%20des%20L%C3%A9gendes%20ft.%20Dany%20Dan%20%26%20Tiwony.mp3?AWSAccessKeyId=AKIATFEQG44VPLHDH73Z&Signature=mS348PPWSQDTdM%2BQW%2FlGu%2BE7%2Bjc%3D&Expires=1681837253"
-similarity = compare_audio_files(source_track_url, target_track_url)
-print(similarity)
+# source_track_url = "https://albums-regroovio.s3.amazonaws.com/bandcamp/Napoleon%20Da%20Legend/Le%20Dernier%20Glacier/Hypothermie%20ft.%20DJ%20Djel.mp3?AWSAccessKeyId=AKIATFEQG44VPLHDH73Z&Signature=sHv5Wpj1NzHg18jWfePrBwPAiyw%3D&Expires=1681837244"
+# target_track_url = "https://albums-regroovio.s3.amazonaws.com/bandcamp/Napoleon%20Da%20Legend/Le%20Dernier%20Glacier/Bureau%20des%20L%C3%A9gendes%20ft.%20Dany%20Dan%20%26%20Tiwony.mp3?AWSAccessKeyId=AKIATFEQG44VPLHDH73Z&Signature=mS348PPWSQDTdM%2BQW%2FlGu%2BE7%2Bjc%3D&Expires=1681837253"
+# similarity = compare_audio_files(source_track_url, target_track_url)
+# print(similarity)
 
-# app('daily')
+app('daily')
