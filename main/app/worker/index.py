@@ -109,7 +109,7 @@ def app(table):
                         print(target_track_info['preview_url'])
         i += 1
         response = {
-            "functionName": f"bandcamp-cron-processor-{os.getenv('STAGE')}",
+            "functionName": f"bandcamp-processor-{os.getenv('STAGE')}",
             "status": "Success",
             "message": f"Table {table} saved.",
         }

@@ -64,11 +64,11 @@ const app = async (event) => {
         await page.close();
         await browser.close();
         await addAlbumsToDb(table, albumLinks);
-        const response = { functionName: `bandcamp-cron-daily-${process.env.STAGE}`, status: 'Success', message: `Scanned ${albumLinks.length} items.` }
+        const response = { functionName: `bandcamp-daily-${process.env.STAGE}`, status: 'Success', message: `Scanned ${albumLinks.length} items.` }
         await slackBot(response);
         return response;
     } catch (error) {
-        const response = { functionName: `bandcamp-cron-daily-${process.env.STAGE}`, status: 'Error', message: error.message }
+        const response = { functionName: `bandcamp-daily-${process.env.STAGE}`, status: 'Error', message: error.message }
         await slackBot(response);
         throw new Error(`Error: ${error}`);
     }

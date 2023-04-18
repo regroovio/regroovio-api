@@ -82,10 +82,10 @@ jobs:
           - name: "bandcamp-feed"
             path: "./bandcamp/feed"
 
-          - name: "bandcamp-cron-daily"
+          - name: "bandcamp-daily"
             path: "./bandcamp/daily"
 
-          - name: "bandcamp-cron-custom"
+          - name: "bandcamp-custom"
             path: "./bandcamp/custom"
 
           # Sporify
