@@ -1,15 +1,16 @@
-from scipy.spatial.distance import cosine
-from io import BytesIO
-import requests
-import numpy as np
-import librosa
-from datetime import datetime, timedelta
 import os
 import json
-from decimal import Decimal
 import boto3
-from botocore.exceptions import ClientError
+import librosa
+import requests
+import numpy as np
+import librosa.display
+from io import BytesIO
+from datetime import datetime
 from dotenv import load_dotenv
+from scipy.spatial.distance import cosine
+from botocore.exceptions import ClientError
+from sklearn.preprocessing import StandardScaler
 load_dotenv()
 
 AWS_DYNAMO = {
@@ -53,7 +54,7 @@ def app(table):
                 float(admin['expiration_timestamp_spotify'] / 1000) - datetime.now().timestamp()) / 60
             minutes = str(int(remaining_time_in_minutes))
             print(
-                f"Token expires in: {minutes} minutes" if minutes != "NaN" else "Token is expired")
+                f"Token expires in: {minutes} minutes" if minutes != "NaN" or -15 else "Token is expired")
             if remaining_time_in_minutes <= 15 or minutes == "NaN":
                 print("refreshing token...")
                 raw_tokens = invoke_lambda({
@@ -104,6 +105,8 @@ def app(table):
                         print('')
                         print(f"Track found: {track['name']}")
                         print(f"Score: {similarity_percentage:.2f}%")
+                        print(track['sourceTrackUrl'])
+                        print(target_track_info['preview_url'])
         i += 1
         response = {
             "functionName": f"bandcamp-cron-processor-{os.getenv('STAGE')}",
@@ -250,10 +253,9 @@ def update_user_tokens(user, tokens):
         table = dynamodb.Table(f"users-{os.getenv('STAGE')}")
         table.update_item(
             Key={"user_id": user["user_id"]},
-            UpdateExpression="set access_token_spotify = :at, refresh_token_spotify = :rt, expiration_timestamp_spotify = :et",
+            UpdateExpression="set access_token_spotify = :at, expiration_timestamp_spotify = :et",
             ExpressionAttributeValues={
                 ":at": tokens["access_token"],
-                ":rt": tokens["refresh_token"],
                 ":et": tokens["expiration_timestamp"],
             },
             ReturnValues="UPDATED_NEW",
@@ -271,14 +273,44 @@ def load_audio_file(url):
 def compare_audio_files(source_track_url, target_track_url):
     source_audio_data = load_audio_file(source_track_url)
     target_audio_data = load_audio_file(target_track_url)
-    source_audio, sr1 = librosa.load(source_audio_data, sr=None, mono=True)
-    target_audio, sr2 = librosa.load(target_audio_data, sr=None, mono=True)
-    source_mfcc = librosa.feature.mfcc(y=source_audio, sr=sr1, n_mfcc=13)
-    target_mfcc = librosa.feature.mfcc(y=target_audio, sr=sr2, n_mfcc=13)
-    source_mfcc_mean = np.mean(source_mfcc, axis=1)
-    target_mfcc_mean = np.mean(target_mfcc, axis=1)
-    similarity = 1 - cosine(source_mfcc_mean, target_mfcc_mean)
+    source_audio, source_sr = librosa.load(
+        source_audio_data, sr=None, mono=True)
+    target_audio, target_sr = librosa.load(
+        target_audio_data, sr=None, mono=True)
+    if source_sr != target_sr:
+        target_sr = max(source_sr, target_sr)
+        source_audio = librosa.resample(source_audio, source_sr, target_sr)
+        target_audio = librosa.resample(target_audio, target_sr, target_sr)
+    min_len = min(source_audio.shape[0], target_audio.shape[0])
+    source_audio = source_audio[:min_len]
+    target_audio = target_audio[:min_len]
+
+    source_features = extract_audio_features(source_audio, target_sr)
+    target_features = extract_audio_features(target_audio, target_sr)
+    source_features_norm = normalize_audio_features(source_features)
+    target_features_norm = normalize_audio_features(target_features)
+    similarity = 1 - cosine(source_features_norm.T.flatten(),
+                            target_features_norm.T.flatten())
     return similarity * 100
 
 
-app('daily')
+def extract_audio_features(audio, sr):
+    mfcc = librosa.feature.mfcc(y=audio, sr=sr, n_mfcc=20)
+    chroma = librosa.feature.chroma_stft(y=audio, sr=sr)
+    spectral_contrast = librosa.feature.spectral_contrast(y=audio, sr=sr)
+    tonnetz = librosa.feature.tonnetz(y=librosa.effects.harmonic(audio), sr=sr)
+    return np.concatenate((mfcc, chroma, spectral_contrast, tonnetz))
+
+
+def normalize_audio_features(features):
+    scaler = StandardScaler()
+    return scaler.fit_transform(features)
+
+
+# For testing the compare_audio_files funciton
+source_track_url = "https://albums-regroovio.s3.amazonaws.com/bandcamp/Napoleon%20Da%20Legend/Le%20Dernier%20Glacier/Hypothermie%20ft.%20DJ%20Djel.mp3?AWSAccessKeyId=AKIATFEQG44VPLHDH73Z&Signature=sHv5Wpj1NzHg18jWfePrBwPAiyw%3D&Expires=1681837244"
+target_track_url = "https://albums-regroovio.s3.amazonaws.com/bandcamp/Napoleon%20Da%20Legend/Le%20Dernier%20Glacier/Bureau%20des%20L%C3%A9gendes%20ft.%20Dany%20Dan%20%26%20Tiwony.mp3?AWSAccessKeyId=AKIATFEQG44VPLHDH73Z&Signature=mS348PPWSQDTdM%2BQW%2FlGu%2BE7%2Bjc%3D&Expires=1681837253"
+similarity = compare_audio_files(source_track_url, target_track_url)
+print(similarity)
+
+# app('daily')

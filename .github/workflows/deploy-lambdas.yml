@@ -50,11 +50,7 @@ jobs:
     strategy:
       matrix:
         function:
-          # Main Functions
-          - name: "regroovio-random-tracks"
-            path: "./main/api/radio/random-tracks"
-
-          # Main API
+          # Main
           - name: "regroovio-signup"
             path: "./main/api/auth/signup"
 
@@ -64,33 +60,29 @@ jobs:
           - name: "regroovio-login"
             path: "./main/api/auth/login"
 
-          # Bandcamp Workers
-          - name: "bandcamp-worker-downloader"
-            path: "./bandcamp/workers/downloader"
+          - name: "regroovio-random-tracks"
+            path: "./main/api/radio/random-tracks"
 
-          - name: "bandcamp-worker-processor"
-            path: "./bandcamp/workers/processor"
+          - name: "regroovio-downloader"
+            path: "./main/app/downloader"
 
-          - name: "bandcamp-worker-wishlist"
-            path: "./bandcamp/workers/users/wishlist"
+          # Bandcamp
+          - name: "bandcamp-wishlist"
+            path: "./bandcamp/wishlist"
 
-          - name: "bandcamp-worker-collection"
-            path: "./bandcamp/workers/users/collection"
+          - name: "bandcamp-collection"
+            path: "./bandcamp/collection"
 
-          - name: "bandcamp-worker-feed"
-            path: "./bandcamp/workers/users/feed"
-
-          # Bandcamp Crons
-          - name: "bandcamp-cron-processor"
-            path: "./bandcamp/crons/processor"
+          - name: "bandcamp-feed"
+            path: "./bandcamp/feed"
 
           - name: "bandcamp-cron-daily"
-            path: "./bandcamp/crons/scrapers/daily"
+            path: "./bandcamp/daily"
 
           - name: "bandcamp-cron-custom"
-            path: "./bandcamp/crons/scrapers/custom"
+            path: "./bandcamp/custom"
 
-          # Sporify Token Scraper
+          # Sporify
           - name: "spotify-token"
             path: "./spotify/scrap-token"
 
@@ -115,9 +107,6 @@ jobs:
 
           - name: "spotify-search-track"
             path: "./spotify/api/tracks/search-track"
-
-          - name: "spotify-compare-tracks"
-            path: "./spotify/api/tracks/compare-tracks"
 
           # Sporify Auth API
           - name: "spotify-login"
