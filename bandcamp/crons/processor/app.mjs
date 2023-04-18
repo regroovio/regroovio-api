@@ -4,17 +4,18 @@ import dotenv from 'dotenv';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
-import { getUserById } from './common/getUserById.mjs';
-import { AWS_DYNAMO } from './common/config.mjs';
-import { slackBot } from './common/slackBot.mjs';
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-
 dotenv.config();
+
+export const AWS_DYNAMO = {
+    region: process.env.REGION,
+    accessKeyId: process.env.ACCESS_KEY,
+    secretAccessKey: process.env.SECRET_ACCESS_KEY,
+};
 
 const s3 = new S3Client({ region: 'us-east-1' });;
 const lambdaClient = new LambdaClient({ region: 'us-east-1' });
-
 const documentClient = DynamoDBDocument.from(new DynamoDB({
     region: process.env.REGION,
     accessKeyId: process.env.ACCESS_KEY,
@@ -27,13 +28,11 @@ const app = async (event, context) => {
         console.log(`Getting ${table}...`);
         const bandcampTables = await listBandcampTables(table);
         for (const tableName of bandcampTables) {
-
             console.log(`Retrieving unsaved albums from ${tableName}`);
             let unsavedAlbums = await fetchUnsavedAlbums(tableName);
             if (!unsavedAlbums?.length) { console.log({ message: 'No unsaved albums found.' }) }
             console.log(`Found ${unsavedAlbums.length} unsaved albums.`);
             await invokeLambdasInChunks(`bandcamp-worker-downloader-${process.env.STAGE}`, unsavedAlbums, tableName);
-
             console.log(`Retrieving unprocessed albums from ${tableName}`);
             let unprocessedAlbums = await fetchUnprocessedAlbums(tableName);
             if (!unprocessedAlbums?.length) {
@@ -60,11 +59,8 @@ const app = async (event, context) => {
                 await updateUserTokens(admin, tokens);
                 token = tokens.access_token;
             }
-
             console.log(`Found ${unprocessedAlbums.length} unprocessed albums.`);
-            const foundTracks = []
             const recognizeTracks = []
-
             let i = 0;
             for (const album of unprocessedAlbums) {
                 console.log(`Searching ${i + 1} of ${unprocessedAlbums.length}`);
@@ -93,47 +89,19 @@ const app = async (event, context) => {
                         console.log({ track });
                         recognizeTracks.push(track);
                     } else {
-                        delete parsedTargetTrack.body.available_markets
-                        delete parsedTargetTrack.body.disc_number
-                        delete parsedTargetTrack.body.explicit
-                        delete parsedTargetTrack.body.external_urls
-                        delete parsedTargetTrack.body.is_local
-                        delete parsedTargetTrack.body.duration_ms
-                        delete parsedTargetTrack.body.track_number
                         const targetTrack = parsedTargetTrack.body
-                        const score = await invokeLambda({
-                            FunctionName: `spotify-compare-tracks-${process.env.STAGE}`,
-                            Payload: JSON.stringify({ sourceTrack: track.sourceTrackUrl, targetTrack: targetTrack.preview_url })
-                        });
-                        if (score < 0.85) {
-                            console.log(`Target track score is too low: ${score}`);
-                            console.log({ target: { name: targetTrack.name, track: track.sourceTrackUrl }, source: { name: track.name, track: targetTrack.preview_url } });
-                            console.log(``);
-                            recognizeTracks.push(track);
-                            continue
-                        }
-                        foundTracks.push({ targetTrack: parsedTargetTrack, sourceTrack: track });
+                        console.log(`Track found: ${track.name}`);
+                        console.log({ target: { name: targetTrack.name, track: track.sourceTrackUrl }, source: { name: track.name, track: targetTrack.preview_url } });
                     }
                 }
                 i++;
             }
-            console.log(foundTracks.length);
-            console.log(recognizeTracks.length);
-            // for (let i = 0; i < unprocessedAlbums.length; i++) {
-            //     console.log(`Processing ${i + 1} of ${unprocessedAlbums.length}`);
-            //     await invokeLambda({
-            //         FunctionName: `bandcamp-worker-processor-${process.env.STAGE}`,
-            //         Payload: JSON.stringify({ tableName, album: unprocessedAlbums[i], token })
-            //     });
-            // }
         }
         const response = { functionName: `bandcamp-cron-processor-${process.env.STAGE}`, status: 'Success', message: `Table ${table} saved.` }
-        await slackBot(response);
         return response;
     } catch (error) {
         const response = { functionName: table, status: 'Error', message: error.message }
-        await slackBot(response);
-        throw new Error(`Failed to process albums: ${error}`);
+        throw new Error(`Failed to process albums: ${response}`);
     }
 };
 
@@ -143,18 +111,15 @@ const listBandcampTables = async (table) => {
         accessKeyId: process.env.ACCESS_KEY,
         secretAccessKey: process.env.SECRET_ACCESS_KEY
     });
-
     try {
         let result;
         let bandcampTables = [];
         let params = {};
-
         do {
             result = await dynamoDB.listTables(params);
             bandcampTables.push(...result.TableNames.filter(name => name.includes(table)));
             params.ExclusiveStartTableName = result.LastEvaluatedTableName;
         } while (result.LastEvaluatedTableName);
-
         return bandcampTables;
     } catch (err) {
         console.error(`Error listing Bandcamp tables: ${err}`);
@@ -164,11 +129,9 @@ const listBandcampTables = async (table) => {
 
 const invokeLambdasInChunks = async (functionName, albums, tableName, token) => {
     let chunkSize = 10;
-
     if (albums.length < chunkSize) {
         chunkSize = albums.length;
     }
-
     for (let i = 0; i < albums.length; i += chunkSize) {
         const chunk = albums.slice(i, i + chunkSize);
         console.log(`Downloading chunk ${i / chunkSize + 1} of ${Math.ceil(albums.length / chunkSize)}`);
@@ -241,6 +204,26 @@ const updateUserTokens = async (user, tokens) => {
         await documentClient.put({ TableName: `users-${process.env.STAGE}`, Item: user });
     } catch (err) {
         console.error(`Error updateUserTokens: ${err}`);
+        throw err;
+    }
+};
+
+const getUserById = async (user_id) => {
+    try {
+        const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
+        const params = {
+            TableName: `users-${process.env.STAGE}`,
+            Key: {
+                user_id: user_id,
+            },
+        };
+        const users = await documentClient.scan(params);
+        if (users.Items.length === 0) {
+            throw new Error(`No user with id ${user_id} found`);
+        }
+        return users.Items.find(item => item.user_id === user_id);
+    } catch (err) {
+        console.log(`Error getUserById: ${err}`);
         throw err;
     }
 };
