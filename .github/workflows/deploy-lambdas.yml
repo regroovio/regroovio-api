@@ -63,14 +63,11 @@ jobs:
           - name: "regroovio-random-tracks"
             path: "./main/api/radio/random-tracks"
 
-          # - name: "regroovio-worker"
-          #   path: "./main/app/worker"
-
           - name: "regroovio-downloader"
             path: "./main/app/downloader"
 
-          - name: "regroovio-processor"
-            path: "./main/app/processor"
+          - name: "regroovio-recognizer"
+            path: "./main/app/recognizer"
 
           # Bandcamp
           - name: "bandcamp-wishlist"

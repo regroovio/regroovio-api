@@ -1,5 +1,5 @@
 {
-  "name": "processor-worker",
+  "name": "recognizer",
   "version": "1.0.0",
   "type": "module",
   "main": "index.mjs",
