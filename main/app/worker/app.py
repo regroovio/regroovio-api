@@ -11,6 +11,7 @@ import update_user_tokens
 import os
 import json
 import boto3
+import requests
 from datetime import datetime
 from dotenv import load_dotenv
 load_dotenv()
@@ -30,6 +31,7 @@ def app(table):
             if not unsaved_albums:
                 print({"message": "No unsaved albums found."})
             else:
+                print('')
                 print(f"Found {len(unsaved_albums)} unsaved albums.")
                 invoke_lambdas_in_chunks.invoke_lambdas_in_chunks(
                     f"regroovio-downloader-{os.getenv('STAGE')}", unsaved_albums, table_name
@@ -60,8 +62,10 @@ def app(table):
                 tokens = json.loads(raw_tokens)
                 update_user_tokens.update_user_tokens(admin, tokens)
                 token = tokens['access_token']
+            print('')
             print(f"Found {len(unprocessed_albums)} unprocessed albums.")
             recognize_tracks = []
+            found_tracks = []
             for i, album in enumerate(unprocessed_albums):
                 print(f"Searching {i + 1} of {len(unprocessed_albums)}")
                 for track in album['tracks']:
@@ -91,19 +95,47 @@ def app(table):
                     )
                     parsed_target_track = json.loads(target_track)
                     if parsed_target_track.get("statusCode") == 404:
+                        print('')
                         print(f"Track not found: {track['name']}")
                         print({"track": track})
                         recognize_tracks.append(track)
                     else:
                         target_track_info = parsed_target_track["body"]
-                        similarity_percentage = compare_audio_files.compare_audio_files(
-                            track["sourceTrackUrl"], target_track_info["preview_url"])
+                        # similarity_percentage = compare_audio_files.compare_audio_files(
+                        #     track["sourceTrackUrl"], target_track_info["preview_url"])
+
+                        print(track["sourceTrackUrl"])
+                        print(target_track_info["preview_url"])
+
+                        response1 = requests.get(track["sourceTrackUrl"])
+                        with open(f"data/{track['name']}.mp3", "wb") as f:
+                            f.write(response1.content)
+
+                        response2 = requests.get(
+                            target_track_info["preview_url"])
+                        with open(f"data/{track['name']}-preview.mp3", "wb") as f:
+                            f.write(response2.content)
+
                         print('')
-                        print(f"Track found: {track['name']}")
-                        print(f"Score: {similarity_percentage:.2f}%")
-                        print(track['sourceTrackUrl'])
-                        print(target_track_info['preview_url'])
+                        # if similarity_percentage > 80:
+                        #     print(f"Track found")
+                        #     found_tracks.append(track)
+                        # else:
+                        #     print(f"Track not found")
+                        #     recognize_tracks.append(track)
+                        # print(track["name"])
+                        # print(f"Score: {similarity_percentage}")
+
+                print(f"Found {len(found_tracks)} tracks")
+                print(album['tracks'])
+                print(found_tracks)
+                # if len(recognize_tracks):
+                # print(f"Found {len(recognize_tracks)} tracks to recognize")
+                # invoke_lambdas_in_chunks.invoke_lambdas_in_chunks(
+                #     f"regroovio-recognizer-{os.getenv('STAGE')}", recognize_tracks, table_name
+                # )
         i += 1
+
     except Exception as error:
         response = {"functionName": table,
                     "status": "Error", "message": str(error)}

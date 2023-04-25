@@ -11,7 +11,7 @@ def invoke_lambdas_in_chunks(function_name, albums, table_name, token=None):
         print(
             f"Downloading chunk {i // chunk_size + 1} of {len(albums) // chunk_size}")
         for album in chunk:
-            invoke_lambda(
+            invoke_lambda.invoke_lambda(
                 {
                     "FunctionName": function_name,
                     "Payload": json.dumps(
