@@ -1,59 +1,33 @@
 // app.mjs
 
 import axios from 'axios';
-import { DynamoDB } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
-import { AWS_DYNAMO } from "./common/config.mjs";
-import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-
-const s3 = new S3Client({ region: 'us-east-1' });;
 
 const lambdaClient = new LambdaClient({ region: 'us-east-1' });
 
 const app = async (event, context) => {
     try {
-        const { tableName, track, token } = event
+        const { track, token } = event
         console.log('Getting track info', track.name);
-        console.log(event);
-        return
-        await Promise.all(album.tracks.map(async (track) => {
-            try {
-                const trackInfo = await getTrackInfo(track);
-                const trackResult = trackInfo.data.result;
-                let key_words = [];
+        const trackInfo = await getTrackInfo(track.sourceTrackUrl);
+        const trackResult = trackInfo.data.result;
 
-                if (trackResult?.apple_music) {
-                    key_words = trackResult.apple_music.genreNames;
-                }
-
-                if (trackResult?.spotify) {
-                    const trackSpotify = trackResult.spotify;
-                    console.log('Track found', trackSpotify.name);
-                    const trackFeatures = await getTrackFeatures(trackSpotify, token);
-                    track.spotify = {
-                        ...trackFeatures,
-                        popularity: trackSpotify.popularity,
-                        release_date: trackSpotify.album.release_date,
-                        artists: trackSpotify.album.artists,
-                        album: trackSpotify.album.name,
-                        name: trackSpotify.name,
-                        key_words: [...key_words, ...album.key_words],
-                    };
-                } else {
-                    console.log('No track info found for', track.name);
-                    track.spotify = trackInfo.data || trackInfo.status;
-                }
-
-            } catch (err) {
-                console.error("Error updateTrackInfo:", err);
-            }
-        }));
-
-        await saveTracksWithFeatures(tableName, album);
-
-        return { message: 'Done.' };
+        if (trackResult?.spotify) {
+            const trackSpotify = trackResult.spotify;
+            console.log('Track found', trackSpotify.name);
+            const trackFeatures = await getTrackFeatures(trackSpotify, token);
+            track.spotify = {
+                ...trackFeatures,
+                popularity: trackSpotify.popularity,
+                release_date: trackSpotify.album.release_date,
+                artists: trackSpotify.album.artists,
+                name: trackSpotify.name,
+            };
+        } else {
+            console.log('No track info found for', track.name);
+            track.spotify = trackInfo.data || trackInfo.status;
+        }
+        return { body: track.spotify };
     } catch (err) {
         return { message: 'Failed', err };
     }
@@ -77,15 +51,9 @@ const getTrackFeatures = async (track, token) => {
 
 const getTrackInfo = async (track) => {
     try {
-        const params = {
-            Bucket: 'albums-regroovio',
-            Key: track.key,
-        };
-        const command = new GetObjectCommand(params);
-        const url = await getSignedUrl(s3, command, { expiresIn: 60 * 60 });
-        console.log('fetching from audd.io: ', url);
+        console.log('fetching from audd.io: ', track);
         const response = await axios.post('https://api.audd.io/', {
-            url: url,
+            url: track,
             return: 'apple_music,spotify',
             api_token: process.env.AUDD_API_KEY,
         }, {
@@ -109,17 +77,6 @@ const invokeLambda = async (params) => {
         return cleanedPayload.body;
     } catch (error) {
         console.error('Error invoking Lambda function:', error);
-    }
-};
-
-const saveTracksWithFeatures = async (tableName, album) => {
-    try {
-        album.processed = true;
-        const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
-        await documentClient.put({ TableName: tableName, Item: album });
-    } catch (err) {
-        console.error(`Error saveTracksWithFeatures: ${err}`);
-        throw err;
     }
 };
 

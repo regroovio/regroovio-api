@@ -49,7 +49,7 @@ def app(table):
                 return
             token = admin.get('access_token_spotify') or None
             remaining_time_in_minutes = (
-                float(admin['expiration_timestamp_spotify'] / 1000) - datetime.now().timestamp()) / 60
+                float(admin['expiration_timestamp_spotify'] / 1000) - datetime.now().timestamp()) / 60 if 'expiration_timestamp_spotify' in admin else -1
             minutes = str(int(remaining_time_in_minutes))
             print(
                 f"Token expires in: {minutes} minutes" if minutes != "NaN" or -15 else "Token is expired")
