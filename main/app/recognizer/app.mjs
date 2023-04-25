@@ -18,10 +18,7 @@ const app = async (event, context) => {
             const trackFeatures = await getTrackFeatures(trackSpotify, token);
             track.spotify = {
                 ...trackFeatures,
-                popularity: trackSpotify.popularity,
-                release_date: trackSpotify.album.release_date,
-                artists: trackSpotify.album.artists,
-                name: trackSpotify.name,
+                ...trackSpotify
             };
         } else {
             console.log('No track info found for', track.name);

@@ -103,7 +103,6 @@ def app(table):
                                     {
                                         "token": token,
                                         "track": track,
-                                        "tableName": table_name,
                                     }
                                 ),
                             }
