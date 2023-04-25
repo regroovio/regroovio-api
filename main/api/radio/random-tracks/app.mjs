@@ -18,7 +18,7 @@ const documentClient = DynamoDBDocument.from(new DynamoDB({
 
 
 const app = async (event) => {
-    const minPopularity = event.queryStringParameters.popularity || 0
+    const minPopularity = event.queryStringParameters?.popularity || 0
     console.log(minPopularity);
 
     try {
@@ -128,7 +128,8 @@ const processTracks = async (items) => {
             Key: item.track.key,
         });
         const url = await getSignedUrl(s3, trackCommand, { expiresIn: 604800 });
-        tracks.push({ artist: item.track.spotify.artists[0].name, album: item.track.spotify.album, title: item.track.name, image_url: image, track_url: url, popularity: item.track.spotify.popularity });
+        console.log(item.track.spotify.artists);
+        tracks.push({ artist: item.track.spotify.artists?.[0]?.name || "Unknown", album: item.track.spotify.album, title: item.track.name, image_url: image, track_url: url, popularity: item.track.spotify.popularity });
     }
     return tracks;
 };

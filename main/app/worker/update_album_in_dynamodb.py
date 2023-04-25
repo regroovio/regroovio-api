@@ -13,20 +13,25 @@ AWS_DYNAMO = {
 dynamodb = boto3.resource('dynamodb', **AWS_DYNAMO)
 
 
-def update_album_in_dynamodb(table_name, album_id, updated_tracks):
+def update_album_in_dynamodb(table_name, album):
     try:
         table = dynamodb.Table(table_name)
+
         response = table.update_item(
             Key={
-                'album_id': album_id
+                'album_id': album['album_id']
             },
-            UpdateExpression="set tracks = :t",
+            UpdateExpression="set tracks=:t, #pr=:p",
             ExpressionAttributeValues={
-                ':t': updated_tracks
+                ':t': album['tracks'],
+                ':p': True
+            },
+            ExpressionAttributeNames={
+                "#pr": "processed"
             },
             ReturnValues="UPDATED_NEW"
         )
         return response
     except ClientError as err:
-        print(f"Error fetching unprocessed albums: {err}")
-        return []
+        print(f"Error updating album in DynamoDB: {err}")
+        return None
