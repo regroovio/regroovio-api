@@ -14,9 +14,10 @@ const lambdaClient = new LambdaClient({ region: 'us-east-1' });
 
 const app = async (event, context) => {
     try {
-        const { tableName, album, token } = event
-        console.log('Getting album info', album.album_id);
-
+        const { tableName, track, token } = event
+        console.log('Getting track info', track.name);
+        console.log(event);
+        return
         await Promise.all(album.tracks.map(async (track) => {
             try {
                 const trackInfo = await getTrackInfo(track);

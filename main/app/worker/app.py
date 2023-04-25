@@ -64,7 +64,6 @@ def app(table):
                 token = tokens['access_token']
             print('')
             print(f"Found {len(unprocessed_albums)} unprocessed albums.")
-            recognize_tracks = []
             for i, album in enumerate(unprocessed_albums):
                 print(f"Searching {i + 1} of {len(unprocessed_albums)}")
                 for track in album['tracks']:
@@ -96,8 +95,21 @@ def app(table):
                     if parsed_target_track.get("statusCode") == 404:
                         print('')
                         print(f"Track not found: {track['name']}")
-                        print({"track": track})
-                        recognize_tracks.append(track)
+                        # use regroovio-recognizer lambda to find the track
+                        recognizer_response = invoke_lambda.invoke_lambda(
+                            {
+                                "FunctionName": f"regroovio-recognizer-{os.getenv('STAGE')}",
+                                "Payload": json.dumps(
+                                    {
+                                        "token": token,
+                                        "track": track,
+                                        "tableName": table_name,
+                                    }
+                                ),
+                            }
+                        )
+                        print(recognizer_response)
+
                     else:
                         target_track_info = parsed_target_track["body"]
                         # similarity_percentage = compare_audio_files.compare_audio_files(
@@ -115,18 +127,12 @@ def app(table):
                         print('')
                         # else:
                         #     print(f"Track not found")
-                        #     recognize_tracks.append(track)
                         # print(track["name"])
                         # print(f"Score: {similarity_percentage}")
 
-                update_album_in_dynamodb.update_album_in_dynamodb(
-                    table_name, album['album_id'], album['tracks'])
+                # update_album_in_dynamodb.update_album_in_dynamodb(
+                #     table_name, album['album_id'], album['tracks'])
 
-                # if len(recognize_tracks):
-                # print(f"Found {len(recognize_tracks)} tracks to recognize")
-                # invoke_lambdas_in_chunks.invoke_lambdas_in_chunks(
-                #     f"regroovio-recognizer-{os.getenv('STAGE')}", recognize_tracks, table_name
-                # )
         i += 1
 
     except Exception as error:
