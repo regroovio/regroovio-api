@@ -107,16 +107,29 @@ def app(table):
                                 ),
                             }
                         )
-                        print(recognizer_response)
+                        parsed_recognizer_response = json.loads(
+                            recognizer_response)
+                        recognizer_response_info = parsed_recognizer_response["body"]
+                        if "result" in recognizer_response_info and recognizer_response_info["result"] is not None:
+                            print(f"Track recognized",
+                                  recognizer_response_info["name"])
+                            del recognizer_response_info["album"]
+                            del recognizer_response_info["is_playable"]
+                            del recognizer_response_info["linked_from"]
+                            del recognizer_response_info["available_markets"]
+                            del recognizer_response_info["disc_number"]
+                            del recognizer_response_info["explicit"]
+                            del recognizer_response_info["external_urls"]
+                            del recognizer_response_info["preview_url"]
+                            del recognizer_response_info["external_ids"]
+                            track["spotify"] = recognizer_response_info
+                            print(track["spotify"])
+                        else:
+                            print("Track not recognized")
+                            track["spotify"] = recognizer_response_info
 
                     else:
                         target_track_info = parsed_target_track["body"]
-                        # similarity_percentage = compare_audio_files.compare_audio_files(
-                        #     track["sourceTrackUrl"], target_track_info["preview_url"])
-                        # print(track["sourceTrackUrl"])
-                        # print(target_track_info["preview_url"])
-                        # print('')
-                        # if similarity_percentage > 80:
                         del target_track_info["album"]
                         del target_track_info["available_markets"]
                         del target_track_info["disc_number"]
@@ -124,10 +137,6 @@ def app(table):
                         print(f"Track found", target_track_info["name"])
                         track["spotify"] = target_track_info
                         print('')
-                        # else:
-                        #     print(f"Track not found")
-                        # print(track["name"])
-                        # print(f"Score: {similarity_percentage}")
 
                 # update_album_in_dynamodb.update_album_in_dynamodb(
                 #     table_name, album['album_id'], album['tracks'])

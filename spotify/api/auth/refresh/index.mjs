@@ -10,7 +10,7 @@ app.use(express.json());
 
 app.get('/refresh', async (req, res) => {
   await setEnvironmentVariables();
-  const clientId = process.env.CLIENT_ID_V2;
+  const clientId = process.env.CLIENT_ID_V1;
   const clientSecret = process.env.CLIENT_SECRET_V2;
   const old_refresh_token = req.query.refresh_token
   try {
