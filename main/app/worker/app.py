@@ -108,10 +108,9 @@ def app(table):
                         # if similarity_percentage > 80:
                         del target_track_info["album"]
                         del target_track_info["available_markets"]
-                        del target_track_info["preview_url"]
                         del target_track_info["disc_number"]
                         del target_track_info["is_local"]
-                        print(f"Track found", target_track_info)
+                        print(f"Track found", target_track_info["name"])
                         track["spotify"] = target_track_info
                         print('')
                         # else:
@@ -120,9 +119,8 @@ def app(table):
                         # print(track["name"])
                         # print(f"Score: {similarity_percentage}")
 
-                # print(album['tracks'])
-                # update_album_in_dynamodb.update_album_in_dynamodb(
-                #     table_name, album['album_id'], album['tracks'])
+                update_album_in_dynamodb.update_album_in_dynamodb(
+                    table_name, album['album_id'], album['tracks'])
 
                 # if len(recognize_tracks):
                 # print(f"Found {len(recognize_tracks)} tracks to recognize")
