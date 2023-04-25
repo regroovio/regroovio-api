@@ -2,3 +2,4 @@
 .env
 node_modules
 main/engine/download/data
+__pycache__

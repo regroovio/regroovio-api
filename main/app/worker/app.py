@@ -6,7 +6,7 @@ import compare_audio_files
 import get_user_by_id
 import invoke_lambdas_in_chunks
 import update_user_tokens
-
+import update_album_in_dynamodb
 
 import os
 import json
@@ -65,7 +65,6 @@ def app(table):
             print('')
             print(f"Found {len(unprocessed_albums)} unprocessed albums.")
             recognize_tracks = []
-            found_tracks = []
             for i, album in enumerate(unprocessed_albums):
                 print(f"Searching {i + 1} of {len(unprocessed_albums)}")
                 for track in album['tracks']:
@@ -103,32 +102,28 @@ def app(table):
                         target_track_info = parsed_target_track["body"]
                         # similarity_percentage = compare_audio_files.compare_audio_files(
                         #     track["sourceTrackUrl"], target_track_info["preview_url"])
-
-                        print(track["sourceTrackUrl"])
-                        print(target_track_info["preview_url"])
-
-                        response1 = requests.get(track["sourceTrackUrl"])
-                        with open(f"data/{track['name']}.mp3", "wb") as f:
-                            f.write(response1.content)
-
-                        response2 = requests.get(
-                            target_track_info["preview_url"])
-                        with open(f"data/{track['name']}-preview.mp3", "wb") as f:
-                            f.write(response2.content)
-
-                        print('')
+                        # print(track["sourceTrackUrl"])
+                        # print(target_track_info["preview_url"])
+                        # print('')
                         # if similarity_percentage > 80:
-                        #     print(f"Track found")
-                        #     found_tracks.append(track)
+                        del target_track_info["available_markets"]
+                        del target_track_info["preview_url"]
+                        del target_track_info["disc_number"]
+                        del target_track_info["is_local"]
+                        del target_track_info["sourceTrackUrl"]
+                        print(f"Track found", target_track_info)
+                        track["spotify"] = target_track_info
+                        print('')
                         # else:
                         #     print(f"Track not found")
                         #     recognize_tracks.append(track)
                         # print(track["name"])
                         # print(f"Score: {similarity_percentage}")
 
-                print(f"Found {len(found_tracks)} tracks")
-                print(album['tracks'])
-                print(found_tracks)
+                # print(album['tracks'])
+                # update_album_in_dynamodb.update_album_in_dynamodb(
+                #     table_name, album['album_id'], album['tracks'])
+
                 # if len(recognize_tracks):
                 # print(f"Found {len(recognize_tracks)} tracks to recognize")
                 # invoke_lambdas_in_chunks.invoke_lambdas_in_chunks(

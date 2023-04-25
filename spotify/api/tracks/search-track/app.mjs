@@ -122,6 +122,7 @@ const findTrack = (tracks, fullTrackName) => {
     console.log(`comparing track: '${track.name}' with '${trackNameToFind}'`);
     const trackNameSimilarity = compareStrings(track.name, trackNameToFind);
     if (trackNameSimilarity >= 0.8) {
+      console.log(track);
       return track;
     }
   }
