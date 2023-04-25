@@ -16,16 +16,18 @@ const documentClient = DynamoDBDocument.from(new DynamoDB({
     secretAccessKey: process.env.SECRET_ACCESS_KEY
 }));
 
-const minPopularity = 5
 
-const app = async () => {
+const app = async (event) => {
+    console.log(event);
+    const minPopularity = event.popularity || 0
+
     try {
         const bandcampTables = await fetchAllBandcampTables();
         console.log(bandcampTables);
         let allPopularTracks = [];
         for (const tableName of bandcampTables) {
             console.log(`Retrieving tracks from ${tableName}`);
-            let items = await fetchTracks(tableName);
+            let items = await fetchTracks(tableName, minPopularity);
             if (!items?.length) {
                 console.log({ message: 'No tracks found.' });
                 continue;
@@ -62,7 +64,7 @@ const fetchAllBandcampTables = async () => {
     }
 };
 
-const fetchTracks = async (tableName) => {
+const fetchTracks = async (tableName, minPopularity) => {
     try {
         let popularTracks = [];
         let selectedAlbums = new Set();
