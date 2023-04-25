@@ -106,11 +106,11 @@ def app(table):
                         # print(target_track_info["preview_url"])
                         # print('')
                         # if similarity_percentage > 80:
-                        # del target_track_info["available_markets"]
-                        # del target_track_info["preview_url"]
-                        # del target_track_info["disc_number"]
-                        # del target_track_info["is_local"]
-                        # del target_track_info["sourceTrackUrl"]
+                        del target_track_info["album"]
+                        del target_track_info["available_markets"]
+                        del target_track_info["preview_url"]
+                        del target_track_info["disc_number"]
+                        del target_track_info["is_local"]
                         print(f"Track found", target_track_info)
                         track["spotify"] = target_track_info
                         print('')

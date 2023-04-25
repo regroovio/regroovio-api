@@ -122,8 +122,9 @@ const findTrack = async (tracks, fullTrackName, token) => {
     console.log(`comparing track: '${track.name}' with '${trackNameToFind}'`);
     const trackNameSimilarity = compareStrings(track.name, trackNameToFind);
     if (trackNameSimilarity >= 0.8) {
-      console.log(track);
       const trackWithPopularity = await getTrackWithPopularity(token, track.id);
+      trackWithPopularity.preview_url = track.preview_url
+      console.log(trackWithPopularity);
       return trackWithPopularity;
     }
   }
