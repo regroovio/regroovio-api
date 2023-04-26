@@ -40,7 +40,7 @@ const generateRandomString = (length) => {
 
 app.get('/login', async (req, res) => {
   await setEnvironmentVariables();
-  const clientId = process.env.CLIENT_ID_V1;
+  const clientId = process.env.CLIENT_ID_V2;
   const redirectUri = `https://${process.env.STAGE == 'dev' ? `${process.env.STAGE}.` : ``}${process.env.SPOTIFY_API}/callback`;
   const state = generateRandomString(16);
   const scope = scopes.join(' ');
