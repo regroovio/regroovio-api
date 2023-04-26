@@ -99,6 +99,9 @@ jobs:
           - name: "spotify-add-track"
             path: "./spotify/api/tracks/add-track"
 
+          - name: "spotify-remove-track"
+            path: "./spotify/api/tracks/remove-track"
+
           - name: "spotify-get-playlist"
             path: "./spotify/api/tracks/get-playlist"
 

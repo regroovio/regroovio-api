@@ -128,7 +128,7 @@ const processTracks = async (items) => {
             Key: item.track.key,
         });
         const url = await getSignedUrl(s3, trackCommand, { expiresIn: 604800 });
-        tracks.push({ artist: item.track.spotify.artists[0].name, album: item.track.spotify.album, title: item.track.name, image_url: image, track_url: url, popularity: item.track.spotify.popularity });
+        tracks.push({ artist: item.track.spotify.artists[0].name, album: item.track.spotify.album, title: item.track.name, image_url: image, track_url: url, id: item.track.spotify.id });
     }
     return tracks;
 };
