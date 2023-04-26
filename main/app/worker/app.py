@@ -37,8 +37,9 @@ def get_token(admin_id, admin):
     return token
 
 
-def process_unprocessed_albums(token, unprocessed_albums, table_name):
+def process_unprocessed_albums(admin_id, admin, unprocessed_albums, table_name):
     for i, album in enumerate(unprocessed_albums):
+        token = get_token(admin_id, admin)
         print(f"Searching {i + 1} of {len(unprocessed_albums)}")
         for track in album['tracks']:
             track = process_track(token, track, album)
@@ -156,15 +157,14 @@ def process_albums_for_table(table_name):
         print("User not found")
         return
 
-    token = get_token(admin_id, admin)
     print('')
     print(f"Found {len(unprocessed_albums)} unprocessed albums.")
-    process_unprocessed_albums(token, unprocessed_albums, table_name)
+    process_unprocessed_albums(admin_id, admin, unprocessed_albums, table_name)
 
 
 def app():
     try:
-        # genres = ['pop', 'trap', 'alternative', 'daily']
+        # genres = ['pop', 'trap', 'alternative', 'daily', 'X9gHk7zL']
         genres = ['daily']
 
         for genre in genres:

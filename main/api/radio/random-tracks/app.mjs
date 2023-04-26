@@ -84,6 +84,12 @@ const fetchTracks = async (tableName, minPopularity) => {
                 let highestPopularity = 0;
 
                 for (const track of album.tracks || []) {
+                    const albumYear = album.release_date?.split(' ')[2] || null
+                    const currentYear = new Date().getFullYear();
+                    if (track.spotify && albumYear >= currentYear - 1) {
+                        highestPopularity = track.spotify.popularity;
+                        mostPopularTrack = track;
+                    }
                     if (track.spotify?.popularity && track.spotify.popularity > highestPopularity) {
                         highestPopularity = track.spotify.popularity;
                         mostPopularTrack = track;
