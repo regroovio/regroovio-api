@@ -10,8 +10,8 @@ app.use(express.json());
 
 app.get('/refresh', async (req, res) => {
   await setEnvironmentVariables();
-  const clientId = process.env.CLIENT_ID_V3;
-  const clientSecret = process.env.CLIENT_SECRET_V3;
+  const clientId = process.env.CLIENT_ID_V4;
+  const clientSecret = process.env.CLIENT_SECRET_V4;
   const old_refresh_token = req.query.refresh_token
   try {
     const response = await axios.post('https://accounts.spotify.com/api/token', querystring.stringify({

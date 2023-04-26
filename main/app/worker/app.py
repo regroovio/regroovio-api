@@ -1,6 +1,7 @@
 import os
 import json
 import boto3
+import time
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -58,7 +59,7 @@ def process_track(token, track, album):
     track["release_year"] = album["release_date"].split(
         " ")[2] if album.get("release_date") else None
     track["sourceTrackUrl"] = source_track_url
-
+    time.sleep(3)
     target_track = invoke_lambda.invoke_lambda(
         {
             "FunctionName": f"spotify-search-track-{os.getenv('STAGE')}",
@@ -83,6 +84,7 @@ def process_track(token, track, album):
 def handle_track_search_response(parsed_target_track, token, track):
     if parsed_target_track.get("statusCode") == 404:
         print(f"\nTrack not found: {track['name']}")
+        time.sleep(3)
         recognizer_response = invoke_lambda.invoke_lambda(
             {
                 "FunctionName": f"regroovio-recognizer-{os.getenv('STAGE')}",
@@ -162,11 +164,13 @@ def process_albums_for_table(table_name):
 
 def app():
     try:
-        genres = ['pop', 'trap', 'daily', 'alternative']
+        # genres = ['pop', 'trap', 'alternative', 'daily']
+        genres = ['daily']
+
         for genre in genres:
             tables = list_tables.list_tables(genre)
             for table_name in tables:
-                if "bandcamp" in table_name and "prod" in table_name:
+                if "bandcamp" in table_name and "prod" or genre in table_name:
                     process_albums_for_table(table_name)
 
     except Exception as error:

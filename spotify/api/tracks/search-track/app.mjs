@@ -60,7 +60,7 @@ const findTrackInArtistAlbums = async (token, artistData, trackName, albumName) 
       const artistAlbumsResponse = await axios.get(`https://api.spotify.com/v1/artists/${artistId}/albums`, {
         headers: buildHeaders(token),
       });
-
+      await sleep(2000);
       for (const album of artistAlbumsResponse.data.items) {
         const albumNameSimilarity = compareStrings(album.name, albumName);
         const albumNameIncludes = album.name.toLowerCase().includes(albumName.toLowerCase());
@@ -68,6 +68,7 @@ const findTrackInArtistAlbums = async (token, artistData, trackName, albumName) 
           const albumTracksResponse = await axios.get(`https://api.spotify.com/v1/albums/${album.id}/tracks`, {
             headers: buildHeaders(token),
           });
+          await sleep(2000);
           const track = await findTrack(albumTracksResponse.data.items, trackName, token);
           if (track) return track;
         }
@@ -169,6 +170,10 @@ const buildHeaders = (token) => {
     Authorization: `Bearer ${token}`,
     "Content-Type": "application/json",
   };
+};
+
+const sleep = (ms) => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
 export { app };

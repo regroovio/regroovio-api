@@ -10,8 +10,8 @@ app.use(express.json());
 
 app.get('/callback', async (req, res) => {
   await setEnvironmentVariables();
-  const clientId = process.env.CLIENT_ID_V3;
-  const clientSecret = process.env.CLIENT_SECRET_V3;
+  const clientId = process.env.CLIENT_ID_V4;
+  const clientSecret = process.env.CLIENT_SECRET_V4;
   const redirectUri = `https://${process.env.STAGE == 'dev' ? `${process.env.STAGE}.` : ``}${process.env.SPOTIFY_API}/callback`;
   const code = req.query.code || null;
   const state = req.query.state || null;
