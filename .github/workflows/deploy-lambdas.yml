@@ -96,8 +96,8 @@ jobs:
           - name: "spotify-get-likes"
             path: "./spotify/api/tracks/get-likes"
 
-          - name: "spotify-add-tracks"
-            path: "./spotify/api/tracks/add-tracks"
+          - name: "spotify-add-track"
+            path: "./spotify/api/tracks/add-track"
 
           - name: "spotify-get-playlist"
             path: "./spotify/api/tracks/get-playlist"

@@ -2,7 +2,7 @@ import axios from "axios";
 
 const app = async (event) => {
   try {
-    const { user, track } = event
+    const { user, track } = event.queryStringParameters;
     console.log(user, track);
 
     return { statusCode: 200, body: 'adding track to playlist' }
