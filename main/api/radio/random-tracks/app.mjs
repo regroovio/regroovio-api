@@ -8,7 +8,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 dotenv.config();
 
-const s3 = new S3Client({ region: 'us-east-1' });;
+const s3 = new S3Client({ region: 'us-east-1' });
 
 const documentClient = DynamoDBDocument.from(new DynamoDB({
     region: process.env.REGION,
@@ -16,17 +16,14 @@ const documentClient = DynamoDBDocument.from(new DynamoDB({
     secretAccessKey: process.env.SECRET_ACCESS_KEY
 }));
 
-
 const app = async (event) => {
-    const minPopularity = event.queryStringParameters?.popularity || 0
-    console.log(minPopularity);
+    const minPopularity = event.queryStringParameters?.popularity || 0;
 
     try {
         const bandcampTables = await fetchAllBandcampTables();
-        console.log(bandcampTables);
         let allPopularTracks = [];
         for (const tableName of bandcampTables) {
-            console.log(`Retrieving tracks from ${tableName}`);
+            console.log(tableName);
             let items = await fetchTracks(tableName, minPopularity);
             if (!items?.length) {
                 console.log({ message: 'No tracks found.' });
@@ -34,6 +31,7 @@ const app = async (event) => {
             }
             const tracks = await processTracks(items);
             allPopularTracks.push(...tracks);
+            console.log(`found ${allPopularTracks.length} tracks`);
         }
         return allPopularTracks;
     } catch (err) {
@@ -83,25 +81,22 @@ const fetchTracks = async (tableName, minPopularity) => {
                 let mostPopularTrack = null;
                 let highestPopularity = 0;
 
+                const albumYear = parseInt(album.release_date?.split(' ')[2]) || null;
+                const currentYear = new Date().getFullYear();
+
                 for (const track of album.tracks || []) {
-                    const albumYear = album.release_date?.split(' ')[2] || null
-                    const currentYear = new Date().getFullYear();
-                    if (track.spotify && albumYear >= currentYear - 1) {
-                        highestPopularity = track.spotify.popularity;
-                        mostPopularTrack = track;
-                    }
-                    if (track.spotify?.popularity && track.spotify.popularity > highestPopularity) {
+
+                    if (track.spotify?.popularity && (track.spotify.popularity > highestPopularity || albumYear === currentYear)) {
                         highestPopularity = track.spotify.popularity;
                         mostPopularTrack = track;
                     }
                 }
 
-                if (mostPopularTrack && highestPopularity >= minPopularity) {
+                if (mostPopularTrack && (highestPopularity >= minPopularity || (albumYear === currentYear))) {
                     popularTracks.push({ track: mostPopularTrack, image_key: album.image_key.key });
                     selectedAlbums.add(album.album_id);
                 }
             }
-
             params.ExclusiveStartKey = result.LastEvaluatedKey;
         } while (result.LastEvaluatedKey);
 
@@ -111,7 +106,6 @@ const fetchTracks = async (tableName, minPopularity) => {
         return [];
     }
 };
-
 
 const shuffleArray = (array) => {
     for (let i = array.length - 1; i > 0; i--) {
