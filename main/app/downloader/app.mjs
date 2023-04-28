@@ -46,13 +46,14 @@ const generateAlbumDetails = async (linkInfo, tracksS3) => {
     if (tracksS3.length) {
         saved = true
     }
-    const d = linkInfo.releaseDate?.split(' ')[0] || null
-    const m = linkInfo.releaseDate?.split(' ')[1] || null
-    const y = linkInfo.releaseDate?.split(' ')[2] || null
+    const d = linkInfo.releaseDate?.split(' ')[0]
+    const m = linkInfo.releaseDate?.split(' ')[1]
+    const y = linkInfo.releaseDate?.split(' ')[2]
+    const release_date = d && m && y ? `${d}-${m}-${y}` : null
     return {
         artist_name: linkInfo.artist.name,
         key_words: linkInfo.keywords,
-        release_date: `${d}-${m}-${y}`,
+        release_date: release_date,
         album_name: linkInfo.name,
         saved: saved,
         image: url,
