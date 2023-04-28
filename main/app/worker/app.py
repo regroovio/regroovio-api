@@ -22,8 +22,8 @@ def get_token(admin_id, admin):
     token = admin.get('access_token_spotify') or None
     remaining_time_in_minutes = (
         float(admin['expiration_timestamp_spotify'] / 1000) - datetime.now().timestamp()) / 60 if 'expiration_timestamp_spotify' in admin else -1
-    minutes = str(int(remaining_time_in_minutes))
-    if minutes <= 15 or minutes == "NaN":
+    minutes = int(remaining_time_in_minutes)
+    if minutes <= 15:
         print("getting token...")
         raw_tokens = invoke_lambda.invoke_lambda({
             "FunctionName": f"spotify-token-{os.getenv('STAGE')}",

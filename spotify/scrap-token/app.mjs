@@ -25,7 +25,7 @@ const app = async (event, context) => {
         await page.close();
         await browser.close();
 
-        if (!tokens.access_token) {
+        if (!tokens?.access_token) {
             throw new Error('No access token found');
         }
 
