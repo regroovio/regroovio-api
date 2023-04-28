@@ -17,6 +17,21 @@ import update_album_in_dynamodb
 load_dotenv()
 s3 = boto3.client('s3', region_name='us-east-1')
 
+tableToProcess = 'r-b'
+
+
+def app():
+    try:
+        tables = list_tables.list_tables()
+        for table_name in tables:
+            if tableToProcess in table_name:
+                process_albums_for_table(table_name)
+
+    except Exception as error:
+        response = {"functionName": "app",
+                    "status": "Error", "message": str(error)}
+        raise Exception(f"Failed to process albums: {response}")
+
 
 def get_token(admin_id, admin):
     token = admin.get('access_token_spotify') or None
@@ -143,6 +158,7 @@ def process_albums_for_table(table_name):
         print({"message": "No unprocessed albums found."})
         return
     admin_id = os.getenv('ADMIN_ID')
+    print(f'admin_id: {admin_id}')
     admin = get_user_by_id.get_user_by_id(admin_id)
     if not admin:
         print("User not found")
@@ -151,19 +167,6 @@ def process_albums_for_table(table_name):
     print('')
     print(f"Found {len(unprocessed_albums)} unprocessed albums.")
     process_unprocessed_albums(admin_id, admin, unprocessed_albums, table_name)
-
-
-def app():
-    try:
-        tables = list_tables.list_tables()
-        for table_name in tables:
-            if "r-b" in table_name:
-                process_albums_for_table(table_name)
-
-    except Exception as error:
-        response = {"functionName": "app",
-                    "status": "Error", "message": str(error)}
-        raise Exception(f"Failed to process albums: {response}")
 
 
 app()
