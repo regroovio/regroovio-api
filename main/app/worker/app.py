@@ -157,7 +157,8 @@ def app():
     try:
         tables = list_tables.list_tables()
         for table_name in tables:
-            process_albums_for_table(table_name)
+            if "r-b" in table_name:
+                process_albums_for_table(table_name)
 
     except Exception as error:
         response = {"functionName": "app",

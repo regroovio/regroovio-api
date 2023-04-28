@@ -78,7 +78,7 @@ const fetchTracks = async (tableName, minPopularity) => {
                 let mostPopularTrack = null;
                 let highestPopularity = 0;
 
-                const albumYear = parseInt(album.release_date?.split(' ')[2]) || null;
+                const albumYear = parseInt(album.release_date?.split('-')[2]) || null;
                 const currentYear = new Date().getFullYear();
 
                 for (const track of album.tracks || []) {

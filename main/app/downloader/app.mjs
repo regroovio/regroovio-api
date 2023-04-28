@@ -46,10 +46,13 @@ const generateAlbumDetails = async (linkInfo, tracksS3) => {
     if (tracksS3.length) {
         saved = true
     }
+    const d = linkInfo.releaseDate?.split(' ')[0] || null
+    const m = linkInfo.releaseDate?.split(' ')[1] || null
+    const y = linkInfo.releaseDate?.split(' ')[2] || null
     return {
         artist_name: linkInfo.artist.name,
         key_words: linkInfo.keywords,
-        release_date: linkInfo.releaseDate,
+        release_date: `${d}-${m}-${y}`,
         album_name: linkInfo.name,
         saved: saved,
         image: url,
@@ -65,7 +68,7 @@ const fetchAlbumData = async (album) => {
         }))];
         return { linkInfo, streams };
     } catch (err) {
-        console.error(`Error fetching album data for ${album.album_id}: ${err}`);
+        console.error(`Error fetching album data for ${album.album_id}: ${err} `);
         return { linkInfo: null, streams: null };
 
     }
@@ -73,13 +76,13 @@ const fetchAlbumData = async (album) => {
 
 const downloadTrack = async (stream, linkInfo) => {
     if (stream.stream) {
-        console.log(`Downloading track:`, stream.name);
+        console.log(`Downloading track: `, stream.name);
         const track = await saveAlbumToS3({ ...stream, album: linkInfo.name, artist: linkInfo.artist.name });
         track.name = stream.name
         track.album = linkInfo.name
         return track;
     } else {
-        console.log(`Undefined track:`, stream);
+        console.log(`Undefined track: `, stream);
     }
 };
 
@@ -91,7 +94,7 @@ const saveAlbumToDatabase = async (tableName, album) => {
             Item: album,
         });
     } catch (err) {
-        console.error(`Error saving album to database: ${err}`);
+        console.error(`Error saving album to database: ${err} `);
         console.log('Table:', tableName);
         console.log('Album:', album);
     }
