@@ -58,6 +58,7 @@ const handleAuthentication = async (page, user) => {
 
 const enterCredentialsAndAcceptAuth = async (page, user) => {
     try {
+        await page.evaluate(() => document.getElementById("login-username").value = "")
         await page.type('#login-username', user.username_spotify);
         await page.type('#login-password', user.password_spotify);
         await page.click('#login-button');
