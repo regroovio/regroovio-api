@@ -164,8 +164,7 @@ def process_albums_for_table(table_name):
 
 def app():
     try:
-        # genres = ['pop', 'trap', 'alternative', 'daily', 'X9gHk7zL']
-        genres = ['daily']
+        genres = ['pop', 'trap', 'alternative', 'daily', 'X9gHk7zL']
 
         for genre in genres:
             tables = list_tables.list_tables(genre)

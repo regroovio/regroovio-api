@@ -2,7 +2,7 @@ import { handler } from './index.mjs'
 const start = async () => {
     const response = await handler(
         {
-            genre: 'alternative',
+            genre: 'r-b',
             executablePath: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
         }
     )

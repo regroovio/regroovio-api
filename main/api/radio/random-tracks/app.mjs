@@ -31,8 +31,8 @@ const app = async (event) => {
             }
             const tracks = await processTracks(items);
             allPopularTracks.push(...tracks);
-            console.log(`found ${allPopularTracks.length} tracks`);
         }
+        console.log(`found ${allPopularTracks.length} tracks`);
         return allPopularTracks;
     } catch (err) {
         console.error('Error processing albums:', err);
@@ -52,7 +52,7 @@ const fetchAllBandcampTables = async () => {
         let params = {};
         do {
             result = await dynamoDB.listTables(params);
-            bandcampTables.push(...result.TableNames.filter(name => name.includes('bandcamp') && name.includes(process.env.STAGE) || name.includes('X9gHk7zL')));
+            bandcampTables.push(...result.TableNames.filter(name => name.includes('bandcamp')));
             params.ExclusiveStartTableName = result.LastEvaluatedTableName;
         } while (result.LastEvaluatedTableName);
         return bandcampTables;
@@ -85,8 +85,8 @@ const fetchTracks = async (tableName, minPopularity) => {
                 const currentYear = new Date().getFullYear();
 
                 for (const track of album.tracks || []) {
-
-                    if (track.spotify?.popularity && (track.spotify.popularity > highestPopularity || albumYear === currentYear)) {
+                    const isCurrentYearAlbum = albumYear === currentYear;
+                    if (track.spotify?.popularity && (track.spotify.popularity > highestPopularity || isCurrentYearAlbum)) {
                         highestPopularity = track.spotify.popularity;
                         mostPopularTrack = track;
                     }
@@ -106,6 +106,7 @@ const fetchTracks = async (tableName, minPopularity) => {
         return [];
     }
 };
+
 
 const shuffleArray = (array) => {
     for (let i = array.length - 1; i > 0; i--) {
