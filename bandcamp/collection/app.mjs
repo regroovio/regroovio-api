@@ -76,7 +76,7 @@ const app = async (event) => {
         if (!user) {
             throw new Error(`User not found with id ${user_id}`);
         }
-        const table = `bandcamp-collection-${user_id}`;
+        const table = `regroovio-collection-${user_id}`;
         await createTable(table);
         const { browser, page } = await initializePuppeteer(event);
         console.log(`Logging in user: ${user.username_bandcamp}`);

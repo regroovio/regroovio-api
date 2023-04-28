@@ -57,7 +57,7 @@ const isValidLink = (link) => {
 };
 
 const app = async (event) => {
-    const table = `bandcamp-daily-${process.env.STAGE}`;
+    const table = `regroovio-daily-${process.env.STAGE}`;
     try {
         const { browser, page } = await initializePuppeteer(event);
         const albumLinks = await collectAlbumLinks(page);

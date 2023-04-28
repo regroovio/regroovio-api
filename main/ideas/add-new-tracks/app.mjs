@@ -13,8 +13,8 @@ const app = async (event) => {
     const { user_id, section } = event;
     const user = await getUserById(user_id);
     if (!user) throw new Error(`User not found with id ${user_id}`);
-    console.log(`bandcamp-${section}-${process.env.STAGE}`);
-    const albums = await getTableItems(`bandcamp-${section}-${process.env.STAGE}`);
+    console.log(`regroovio-${section}-${process.env.STAGE}`);
+    const albums = await getTableItems(`regroovio-${section}-${process.env.STAGE}`);
     const newTracks = extractNewTracks(albums);
 
     const likedTracks = extractLikedTracks(user.liked_tracks);

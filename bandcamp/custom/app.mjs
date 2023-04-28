@@ -66,7 +66,7 @@ const app = async (event) => {
     if (!genre) {
         throw new Error('Missing required parameters');
     }
-    const table = `bandcamp-${genre}-${process.env.STAGE}`;
+    const table = `regroovio-${genre}-${process.env.STAGE}`;
     try {
         const { browser, page } = await initializePuppeteer(event);
         const albumLinks = await collectAlbumLinks(page, genre);
