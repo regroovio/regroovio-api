@@ -117,7 +117,17 @@ const shuffleArray = (array) => {
 const processTracks = async (items) => {
     const tracks = [];
     for (const item of items) {
-        tracks.push({ album_id: item.album_id, url: item.track.url, id: item.track.spotify.id, title: item.track.name, artist: item.track.spotify.artists[0].name, album: item.track.album, image: item.image });
+
+        const popularity = item.track.spotify.popularity;
+        const artist = item.track.spotify.artists[0].name
+        const track_id = item.track.spotify.id
+        const album_id = item.album_id
+        const album = item.track.album
+        const title = item.track.name
+        const url = item.track.url
+        const image = item.image
+
+        tracks.push({ album_id, url, track_id, title, artist, popularity, album, image });
         console.log(tracks[0]);
     }
     return tracks;
