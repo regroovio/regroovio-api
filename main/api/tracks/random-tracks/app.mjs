@@ -90,7 +90,7 @@ const fetchTracks = async (tableName, minPopularity) => {
                 }
 
                 if (mostPopularTrack && (highestPopularity >= minPopularity || (albumYear === currentYear))) {
-                    popularTracks.push({ track: mostPopularTrack, image_key: album.image_key.key });
+                    popularTracks.push({ track: mostPopularTrack, image: album.image });
                     selectedAlbums.add(album.album_id);
                 }
             }
