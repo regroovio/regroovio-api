@@ -26,10 +26,11 @@ const app = async (event) => {
                 console.log({ message: 'No tracks found.' });
                 continue;
             }
+            console.log({ message: `Tracks found. [${items.length}]` });
             const tracks = await processTracks(items);
             allPopularTracks.push(...tracks);
         }
-        console.log(`found ${allPopularTracks.length} tracks`);
+        console.log({ message: `Total tracks found. [${allPopularTracks.length}]` });
         return allPopularTracks;
     } catch (err) {
         console.error('Error processing albums:', err);
