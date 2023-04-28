@@ -92,9 +92,21 @@ const getTotalItemsInTable = async (table) => {
         Select: "COUNT",
     };
 
+    let totalItems = 0;
+    let lastEvaluatedKey = null;
+
     try {
-        const response = await dynamoClient.scan(params);
-        return response.Count;
+        do {
+            if (lastEvaluatedKey) {
+                params.ExclusiveStartKey = lastEvaluatedKey;
+            }
+
+            const response = await dynamoClient.scan(params);
+            totalItems += response.Count;
+            lastEvaluatedKey = response.LastEvaluatedKey;
+        } while (lastEvaluatedKey);
+
+        return totalItems;
     } catch (error) {
         console.log(`Error getting total items in table: ${error}`);
         throw error;
