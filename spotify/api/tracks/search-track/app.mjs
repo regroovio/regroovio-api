@@ -93,7 +93,7 @@ const search = async (token, year, albumName, artistName) => {
       const albumNameSimilarity = compareStrings(album.name, albumName);
       const albumNameIncludes = album.name.toLowerCase().includes(albumName.toLowerCase());
       const artistNameSimilarity = compareStrings(album.artists[0]?.name, artistName);
-      return (albumYear === year || albumNameSimilarity >= 0.8 || albumNameIncludes) && artistNameSimilarity >= 0.8;
+      return (albumYear === year || albumNameSimilarity >= 0.5 || albumNameIncludes) && artistNameSimilarity >= 0.6;
     });
     return filteredAlbums;
   } catch (error) {
