@@ -61,7 +61,7 @@ jobs:
             path: "./main/api/auth/login"
 
           - name: "regroovio-random-tracks"
-            path: "./main/api/radio/random-tracks"
+            path: "./main/api/tracks/random-tracks"
 
           - name: "regroovio-downloader"
             path: "./main/app/downloader"
