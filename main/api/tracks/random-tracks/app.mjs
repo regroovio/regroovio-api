@@ -91,7 +91,7 @@ const fetchTracks = async (tableName, minPopularity) => {
                 }
 
                 if (mostPopularTrack && (highestPopularity >= minPopularity || (albumYear === currentYear))) {
-                    popularTracks.push({ track: mostPopularTrack, image: album.image });
+                    popularTracks.push({ track: mostPopularTrack, image: album.image, album_id: album.album_id });
                     selectedAlbums.add(album.album_id);
                 }
             }
@@ -117,7 +117,8 @@ const shuffleArray = (array) => {
 const processTracks = async (items) => {
     const tracks = [];
     for (const item of items) {
-        tracks.push({ url: item.track.url, id: item.track.spotify.id, title: item.track.name, artist: item.track.spotify.artists[0].name, album: item.track.album, image: item.image });
+        tracks.push({ album_id: item.album_id, url: item.track.url, id: item.track.spotify.id, title: item.track.name, artist: item.track.spotify.artists[0].name, album: item.track.album, image: item.image });
+        console.log(tracks[0]);
     }
     return tracks;
 };
