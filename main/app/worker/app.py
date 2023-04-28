@@ -49,16 +49,8 @@ def process_unprocessed_albums(admin_id, admin, unprocessed_albums, table_name):
 
 
 def process_track(token, track, album):
-    params = {
-        "Bucket": "albums-regroovio",
-        "Key": track['key'],
-    }
-    source_track_url = s3.generate_presigned_url(
-        "get_object", Params=params, ExpiresIn=60 * 60
-    )
     track["release_year"] = album["release_date"].split(
         " ")[2] if album.get("release_date") else None
-    track["sourceTrackUrl"] = source_track_url
     time.sleep(3)
     target_track = invoke_lambda.invoke_lambda(
         {

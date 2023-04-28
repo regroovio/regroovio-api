@@ -28,7 +28,7 @@ const app = async (event, context) => {
 
 const processAndSaveAlbum = async (album, tableName) => {
     try {
-        const data = await fetchAlbumData(album.album_id);
+        const data = await fetchAlbumData(album.url);
         if (!data || !data.linkInfo || !data.streams) return;
         const { linkInfo, streams } = data;
         const tracksS3 = (await Promise.all(streams.map(stream => downloadTrack(stream, linkInfo)))).filter(track => track !== undefined);
