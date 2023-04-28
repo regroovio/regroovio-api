@@ -44,7 +44,7 @@ const saveImageToS3 = async (item) => {
         await s3.send(new PutObjectCommand(params));
         const image = `https://${bucketName}.s3.amazonaws.com/${params.Key}`;
         console.log(`Saved image to S3: ${image}`);
-        return { url: image }
+        return image
     } catch (err) {
         console.error(`Error saving image to S3: ${err}`);
         return null;
