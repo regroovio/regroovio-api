@@ -14,7 +14,7 @@ dynamodb = boto3.resource('dynamodb', **AWS_DYNAMO)
 dynamodb_client = boto3.client('dynamodb', **AWS_DYNAMO)
 
 
-def list_tables(table):
+def list_tables():
     try:
         result = None
         tables = []
@@ -22,7 +22,7 @@ def list_tables(table):
         while True:
             result = dynamodb_client.list_tables(**params)
             tables.extend(
-                [name for name in result["TableNames"] if table in name]
+                [name for name in result["TableNames"] if "bandcamp" in name]
             )
             if "LastEvaluatedTableName" in result:
                 params["ExclusiveStartTableName"] = result["LastEvaluatedTableName"]

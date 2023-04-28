@@ -9,7 +9,7 @@ def invoke_lambdas_in_chunks(function_name, albums, table_name, token=None):
     for i in range(0, len(albums), chunk_size):
         chunk = albums[i: i + chunk_size]
         print(
-            f"Downloading chunk {i // chunk_size + 1} of {len(albums) // chunk_size}")
+            f"Downloading chunk {i // chunk_size + 1} of {len(albums) // chunk_size +1}")
         for album in chunk:
             invoke_lambda.invoke_lambda(
                 {

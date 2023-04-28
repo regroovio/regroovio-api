@@ -23,9 +23,8 @@ def get_token(admin_id, admin):
     remaining_time_in_minutes = (
         float(admin['expiration_timestamp_spotify'] / 1000) - datetime.now().timestamp()) / 60 if 'expiration_timestamp_spotify' in admin else -1
     minutes = str(int(remaining_time_in_minutes))
-
-    if remaining_time_in_minutes <= 15 or minutes == "NaN":
-        print("refreshing token...")
+    if minutes <= 15 or minutes == "NaN":
+        print("getting token...")
         raw_tokens = invoke_lambda.invoke_lambda({
             "FunctionName": f"spotify-token-{os.getenv('STAGE')}",
             "Payload": json.dumps({"user_id": admin_id}),
@@ -164,13 +163,9 @@ def process_albums_for_table(table_name):
 
 def app():
     try:
-        genres = ['pop', 'trap', 'alternative', 'daily', 'X9gHk7zL']
-
-        for genre in genres:
-            tables = list_tables.list_tables(genre)
-            for table_name in tables:
-                if "bandcamp" in table_name and "prod" or genre in table_name:
-                    process_albums_for_table(table_name)
+        tables = list_tables.list_tables()
+        for table_name in tables:
+            process_albums_for_table(table_name)
 
     except Exception as error:
         response = {"functionName": "app",
