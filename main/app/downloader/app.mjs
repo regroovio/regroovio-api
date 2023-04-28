@@ -85,6 +85,7 @@ const downloadTrack = async (stream, linkInfo) => {
 
 const saveAlbumToDatabase = async (tableName, album) => {
     try {
+        delete album.url;
         await documentClient.put({
             TableName: tableName,
             Item: album,
