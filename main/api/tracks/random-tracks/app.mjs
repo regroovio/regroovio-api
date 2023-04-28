@@ -120,14 +120,14 @@ const processTracks = async (items) => {
 
         const popularity = item.track.spotify.popularity;
         const artist = item.track.spotify.artists[0].name
-        const track_id = item.track.spotify.id
+        const id = item.track.spotify.id
         const album_id = item.album_id
         const album = item.track.album
         const title = item.track.name
         const url = item.track.url
         const image = item.image
 
-        tracks.push({ album_id, url, track_id, title, artist, popularity, album, image });
+        tracks.push({ album_id, url, id, title, artist, popularity, album, image });
         console.log(tracks[0]);
     }
     return tracks;
