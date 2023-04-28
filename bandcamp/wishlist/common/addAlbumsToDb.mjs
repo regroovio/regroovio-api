@@ -12,12 +12,11 @@ const addAlbumsToDb = async (table, links) => {
         console.log(`Uploading`);
 
         await Promise.all(chunk.map(async (link) => {
-            let album_id = link?.split("?")[0] ? link.split("?")[0] : link;
-            album_id = Buffer.from(album_id).toString("base64");
-            albumData.url = album_id
+            const album_url = link?.split("?")[0] ? link.split("?")[0] : link;
 
             const albumData = {
-                album_id: { S: album_id },
+                album_id: { S: Buffer.from(album_url).toString("base64") },
+                url: { S: album_url },
             };
 
             const params = {
