@@ -4,8 +4,17 @@ import { CUSTOM } from './common/config.mjs';
 import { initializePuppeteer } from './common/browser.mjs';
 import { getAlbumLinks } from './common/getAlbumLinks.mjs';
 import { addAlbumsToDb } from './common/addAlbumsToDb.mjs';
+import { DynamoDB } from "@aws-sdk/client-dynamodb";
 import dotenv from "dotenv";
 dotenv.config();
+
+const AWS_DYNAMO = {
+    region: process.env.REGION,
+    accessKeyId: process.env.ACCESS_KEY,
+    secretAccessKey: process.env.SECRET_ACCESS_KEY,
+};
+
+const dynamoClient = new DynamoDB(AWS_DYNAMO);
 
 const collectAlbumLinks = async (page, genre) => {
     console.log(`getting ${genre}...`);
@@ -69,14 +78,35 @@ const app = async (event) => {
         const albumLinks = await collectAlbumLinks(page, genre);
         await page.close();
         await browser.close();
+        const initialItemCount = await getTotalItemsInTable(table);
         await addAlbumsToDb(table, albumLinks);
-        const response = { functionName: `bandcamp-${genre}-${process.env.STAGE}`, status: 'Success', message: `Scanned ${albumLinks.length} items.` }
-        return response;
+        const finalItemCount = await getTotalItemsInTable(table);
+        const numberOfItemsAdded = finalItemCount - initialItemCount;
+        console.log(`Added ${numberOfItemsAdded} items.`);
+        return {
+            functionName: `bandcamp-${genre}-${process.env.STAGE}`,
+            scanned: albumLinks.length,
+            added: numberOfItemsAdded
+        };
     } catch (error) {
-        console.log(error);
-        const response = { functionName: `bandcamp-${genre}-${process.env.STAGE}`, status: 'Error', message: error.message }
-        throw new Error(response);
+        throw new Error(`bandcamp-${genre}-${process.env.STAGE}: ${error}`);
     }
 }
+
+const getTotalItemsInTable = async (table) => {
+    const params = {
+        TableName: table,
+        Select: "COUNT",
+    };
+
+    try {
+        const response = await dynamoClient.scan(params);
+        return response.Count;
+    } catch (error) {
+        console.log(`Error getting total items in table: ${error}`);
+        throw error;
+    }
+};
+
 
 export { app };

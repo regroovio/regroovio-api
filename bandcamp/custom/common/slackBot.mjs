@@ -7,8 +7,9 @@ dotenv.config();
 
 const slackBot = async (event) => {
     try {
-        const { functionName, message, status, timeMessage = '' } = event
-        const blocks = [{
+        const { message, status, scanned, added, functionName, runtime } = event
+
+        const successBlocks = [{
             'type': 'section',
             'text': {
                 'type': 'mrkdwn',
@@ -19,11 +20,27 @@ const slackBot = async (event) => {
             'type': 'section',
             'text': {
                 'type': 'mrkdwn',
-                'text': `*Function:* \`${functionName}\`\n*Message:* \`${message}\`\n\`${timeMessage}\``
+                'text': `*Function:* \`${functionName}\`\n\*Scanned:* \`${scanned}\`\n*Added:* \`${added}\`\n*Runtime:* \`${runtime}\``
             }
         }]
-
-        await axios.post(process.env.SLACK_ENDPOINT, { blocks });
+        const errorBlocks = [{
+            'type': 'section',
+            'text': {
+                'type': 'mrkdwn',
+                'text': `*${status}*`
+            }
+        },
+        {
+            'type': 'section',
+            'text': {
+                'type': 'mrkdwn',
+                'text': `*Message:* \`${message}\``
+            }
+        }]
+        if (status === "FAILURE") {
+            return await axios.post(process.env.SLACK_ENDPOINT, { blocks: errorBlocks });
+        }
+        return await axios.post(process.env.SLACK_ENDPOINT, { blocks: successBlocks });
     } catch (error) {
         console.error('Error sending notification to Slack:', error);
     }

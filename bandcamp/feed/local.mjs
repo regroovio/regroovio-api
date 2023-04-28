@@ -2,7 +2,7 @@ import { handler } from './index.mjs'
 const start = async () => {
     const response = await handler(
         {
-            amount: 10,
+            amount: 1000,
             user_id: process.env.ADMIN_ID,
             executablePath: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
         }

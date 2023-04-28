@@ -17,7 +17,7 @@ import update_album_in_dynamodb
 load_dotenv()
 s3 = boto3.client('s3', region_name='us-east-1')
 
-tableToProcess = 'r-b'
+tableToProcess = 'daily'
 
 
 def app():
@@ -65,7 +65,7 @@ def process_unprocessed_albums(admin_id, admin, unprocessed_albums, table_name):
 
 def process_track(token, track, album):
     track["release_year"] = album["release_date"].split(
-        " ")[2] if album.get("release_date") else None
+        "-")[2] if album.get("release_date") else None
     time.sleep(3)
     target_track = invoke_lambda.invoke_lambda(
         {
@@ -158,7 +158,6 @@ def process_albums_for_table(table_name):
         print({"message": "No unprocessed albums found."})
         return
     admin_id = os.getenv('ADMIN_ID')
-    print(f'admin_id: {admin_id}')
     admin = get_user_by_id.get_user_by_id(admin_id)
     if not admin:
         print("User not found")
