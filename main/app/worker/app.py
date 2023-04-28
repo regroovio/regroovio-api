@@ -1,9 +1,9 @@
 import os
 import json
-import boto3
 import time
-from datetime import datetime
+import boto3
 from dotenv import load_dotenv
+from datetime import datetime
 
 import list_tables
 import fetch_unsaved_albums
