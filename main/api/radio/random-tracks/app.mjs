@@ -3,12 +3,9 @@
 import dotenv from 'dotenv';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
-import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 dotenv.config();
 
-const s3 = new S3Client({ region: 'us-east-1' });
 
 const documentClient = DynamoDBDocument.from(new DynamoDB({
     region: process.env.REGION,
@@ -119,17 +116,7 @@ const shuffleArray = (array) => {
 const processTracks = async (items) => {
     const tracks = [];
     for (const item of items) {
-        const imageCommand = new GetObjectCommand({
-            Bucket: 'albums-regroovio',
-            Key: item.image_key,
-        });
-        const image = await getSignedUrl(s3, imageCommand, { expiresIn: 604800 });
-        const trackCommand = new GetObjectCommand({
-            Bucket: 'albums-regroovio',
-            Key: item.track.key,
-        });
-        const url = await getSignedUrl(s3, trackCommand, { expiresIn: 604800 });
-        tracks.push({ url: url, id: item.track.spotify.id, title: item.track.name, artist: item.track.spotify.artists[0].name, album: item.track.spotify.album, image: image });
+        tracks.push({ url: item.url, id: item.track.spotify.id, title: item.track.name, artist: item.track.spotify.artists[0].name, album: item.track.spotify.album, image: item.image });
     }
     return tracks;
 };

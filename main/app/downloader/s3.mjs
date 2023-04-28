@@ -13,12 +13,14 @@ const saveAlbumToS3 = async (item) => {
         const buffer = Buffer.from(response.data, 'binary');
         const params = {
             Bucket: bucketName,
-            Key: `bandcamp/${artist.replace('/', '-')}/${album.replace('/', '-')}/${name.replace('/', '-')}.${type}`,
+            Key: `${artist.replace('/', '-')}/${album.replace('/', '-')}/${name.replace('/', '-')}.${type}`,
             Body: buffer,
             ContentType: response.headers['content-type']
         };
         await s3.send(new PutObjectCommand(params));
-        return { key: params.Key, name };
+        const track = `https://${bucketName}.s3.amazonaws.com/${params.Key}`;
+        console.log(`Saved track to S3: ${track}`);
+        return { url: track, name };
     } catch (err) {
         console.error(`Error saving album to S3: ${err}`);
         return null;
@@ -35,12 +37,14 @@ const saveImageToS3 = async (item) => {
         const buffer = Buffer.from(response.data, 'binary');
         const params = {
             Bucket: bucketName,
-            Key: `bandcamp/${artist.replace('/', '-')}/${album.replace('/', '-')}/${album.replace('/', '-')}.${type}`,
+            Key: `${artist.replace('/', '-')}/${album.replace('/', '-')}/${album.replace('/', '-')}.${type}`,
             Body: buffer,
             ContentType: response.headers['content-type']
         };
         await s3.send(new PutObjectCommand(params));
-        return { key: params.Key };
+        const image = `https://${bucketName}.s3.amazonaws.com/${params.Key}`;
+        console.log(`Saved image to S3: ${image}`);
+        return { url: image }
     } catch (err) {
         console.error(`Error saving image to S3: ${err}`);
         return null;
