@@ -4,9 +4,6 @@ import { CUSTOM } from './common/config.mjs';
 import { initializePuppeteer } from './common/browser.mjs';
 import { getAlbumLinks } from './common/getAlbumLinks.mjs';
 import { addAlbumsToDb } from './common/addAlbumsToDb.mjs';
-import { setEnvironmentVariables } from './common/setEnvironmentVariables.mjs';
-
-import { slackBot } from './common/slackBot.mjs';
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -74,12 +71,11 @@ const app = async (event) => {
         await browser.close();
         await addAlbumsToDb(table, albumLinks);
         const response = { functionName: `bandcamp-${genre}-${process.env.STAGE}`, status: 'Success', message: `Scanned ${albumLinks.length} items.` }
-        await slackBot(response);
         return response;
     } catch (error) {
+        console.log(error);
         const response = { functionName: `bandcamp-${genre}-${process.env.STAGE}`, status: 'Error', message: error.message }
-        await slackBot(response);
-        throw new Error(`Error: ${error}`);
+        throw new Error(response);
     }
 }
 

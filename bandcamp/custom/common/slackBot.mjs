@@ -7,7 +7,7 @@ dotenv.config();
 
 const slackBot = async (event) => {
     try {
-        const { functionName, message, status } = event
+        const { functionName, message, status, timeMessage } = event
         const blocks = [{
             'type': 'section',
             'text': {
@@ -19,7 +19,7 @@ const slackBot = async (event) => {
             'type': 'section',
             'text': {
                 'type': 'mrkdwn',
-                'text': `*Function:* \`${functionName}\`\n*Message:* \`${message}\``
+                'text': `*Function:* \`${functionName}\`\n*Message:* \`${message}\n${timeMessage}\``
             }
         }]
 
