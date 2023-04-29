@@ -130,7 +130,7 @@ jobs:
 
   deploy_lambdas:
     runs-on: ubuntu-latest
-    needs: before_deploy
+    needs: [before_deploy, filter_functions]
     strategy:
       matrix:
         function: ${{fromJson(needs.filter_functions.outputs.available_functions)}}
