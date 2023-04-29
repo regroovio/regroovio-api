@@ -92,11 +92,13 @@ jobs:
           selected_function="${{ github.event.inputs.functions }}"
           if [ "$selected_function" = "all" ]; then
             available_functions=$(cat ./lambdas.json)
+            available_functions_no_spaces=$(echo "$available_functions" | tr -d '[:space:]')
+            echo "filtered_functions=${available_functions_no_spaces}" >> $GITHUB_OUTPUT
           else
             available_functions=$(jq -c '.[] | select(.name == '\"$selected_function\"')' ./lambdas.json)
+            available_functions_no_spaces=$(echo "$available_functions" | tr -d '[:space:]')
+            echo "filtered_functions=${available_functions_no_spaces}" >> $GITHUB_ENV
           fi
-          available_functions_no_spaces=$(echo "$available_functions" | tr -d '[:space:]')
-          echo "filtered_functions=${available_functions_no_spaces}" >> $GITHUB_OUTPUT
 
   deploy_lambdas:
     runs-on: ubuntu-latest
