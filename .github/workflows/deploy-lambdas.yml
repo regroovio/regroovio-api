@@ -92,13 +92,11 @@ jobs:
               {"name": "regroovio-random-tracks", "path": "./main/api/tracks/random-tracks"},
               {"name": "regroovio-downloader", "path": "./main/app/downloader"},
               {"name": "regroovio-recognizer", "path": "./main/app/recognizer"},
-
               {"name": "bandcamp-wishlist", "path": "./bandcamp/wishlist"},
               {"name": "bandcamp-collection", "path": "./bandcamp/collection"},
               {"name": "bandcamp-feed", "path": "./bandcamp/feed"},
               {"name": "bandcamp-daily", "path": "./bandcamp/daily"},
               {"name": "bandcamp-custom", "path": "./bandcamp/custom"},
-
               {"name": "spotify-refresh", "path": "./spotify/api/auth/refresh"},
               {"name": "spotify-login", "path": "./spotify/api/auth/login"},
               {"name": "spotify-callback", "path": "./spotify/api/auth/callback"},
