@@ -9,12 +9,12 @@ const app = async (event, context) => {
     try {
         const { track, token } = event;
         console.log(event);
-        if (!track || !track.name || !track.sourceTrackUrl) {
+        if (!track || !track.name || !track.url) {
             throw new Error('Invalid track data');
         }
 
         console.log('Getting track info', track.name);
-        const trackInfo = await getTrackInfo(track.sourceTrackUrl);
+        const trackInfo = await getTrackInfo(track.url);
 
         if (!trackInfo) {
             throw new Error('Failed to get track info');
