@@ -58,7 +58,6 @@ def process_unprocessed_albums(admin_id, admin, unprocessed_albums, table_name):
         for track in album['tracks']:
             track = process_track(token, track, album)
 
-        # create the update_album_in_dynamodb function
         update_album_in_dynamodb.update_album_in_dynamodb(
             table_name, album)
 
