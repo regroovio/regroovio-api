@@ -22,7 +22,7 @@ const app = async (event, context) => {
         console.log('Getting track info', track.name);
         const trackInfo = await getTrackInfo(track.url);
 
-        if (!trackInfo) {
+        if (!trackInfo?.data.result) {
             throw new CustomError('Failed to get track info', 'app');
         }
 
