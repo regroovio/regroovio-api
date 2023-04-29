@@ -8,7 +8,7 @@ dotenv.config();
 const slackBot = async (error) => {
     try {
         const { message, functionName, additionalInfo } = error;
-
+        const parsedAdditionalInfo = JSON.stringify(additionalInfo);
         const errorBlocks = [
             {
                 'type': 'section',
@@ -21,14 +21,7 @@ const slackBot = async (error) => {
                 'type': 'section',
                 'text': {
                     'type': 'mrkdwn',
-                    'text': `*Function:* \`${functionName}\`\n*Message:* \`${message}\`${additionalInfo ? `\n*Additional Info:*` : ''}`
-                }
-            },
-            {
-                'type': 'section',
-                'text': {
-                    'type': 'mrkdwn',
-                    'text': additionalInfo ? additionalInfo : ''
+                    'text': `*Function:* \`${functionName}\`\n*Message:* \`${message}\`${additionalInfo ? `\n*Additional Info:* \`${parsedAdditionalInfo}\`` : ''}`
                 }
             }
         ];
