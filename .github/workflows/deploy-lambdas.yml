@@ -90,30 +90,26 @@ jobs:
               {"name": "regroovio-signup", "path": "./main/api/auth/signup"},
               {"name": "regroovio-confirm", "path": "./main/api/auth/confirm"},
               {"name": "regroovio-random-tracks", "path": "./main/api/tracks/random-tracks"},
-              {"name": "regroovio-random-tracks", "path": "./main/api/tracks/random-tracks"},
-              {"name": "regroovio-random-tracks", "path": "./main/api/tracks/random-tracks"},
-              {"name": "regroovio-random-tracks", "path": "./main/api/tracks/random-tracks"},
-              {"name": "regroovio-downloader", "path": "./main/app/downloader"}
-              {"name": "regroovio-recognizer", "path": "./main/app/recognizer"}
+              {"name": "regroovio-downloader", "path": "./main/app/downloader"},
+              {"name": "regroovio-recognizer", "path": "./main/app/recognizer"},
 
-              {"name": "bandcamp-wishlist", "path": "./bandcamp/wishlist"}
-              {"name": "bandcamp-collection", "path": "./bandcamp/collection"}
-              {"name": "bandcamp-feed", "path": "./bandcamp/feed"}
-              {"name": "bandcamp-daily", "path": "./bandcamp/daily"}
-              {"name": "bandcamp-custom", "path": "./bandcamp/custom"}
+              {"name": "bandcamp-wishlist", "path": "./bandcamp/wishlist"},
+              {"name": "bandcamp-collection", "path": "./bandcamp/collection"},
+              {"name": "bandcamp-feed", "path": "./bandcamp/feed"},
+              {"name": "bandcamp-daily", "path": "./bandcamp/daily"},
+              {"name": "bandcamp-custom", "path": "./bandcamp/custom"},
 
-              {"name": "spotify-refresh", "path": "./spotify/api/auth/refresh"}
-              {"name": "spotify-login", "path": "./spotify/api/auth/login"}
-              {"name": "spotify-callback", "path": "./spotify/api/auth/callback"}
-              {"name": "spotify-get-top", "path": "./spotify/api/tracks/get-top"}
-              {"name": "spotify-get-likes", "path": "./spotify/api/tracks/get-likes"}
-              {"name": "spotify-add-track", "path": "./spotify/api/tracks/add-track"}
-              {"name": "spotify-remove-track", "path": "./spotify/api/tracks/remove-track"}
-              {"name": "spotify-get-playlist", "path": "./spotify/api/tracks/get-playlist"}
-              {"name": "spotify-get-audio-features", "path": "./spotify/api/tracks/get-audio-features"}
-              {"name": "spotify-get-audio-analysis", "path": "./spotify/api/tracks/get-audio-analysis"}
-              {"name": "spotify-search-track", "path": "./spotify/api/tracks/search-track"}
-              {"name": "spotify-search-track", "path": "./spotify/api/tracks/search-track"}
+              {"name": "spotify-refresh", "path": "./spotify/api/auth/refresh"},
+              {"name": "spotify-login", "path": "./spotify/api/auth/login"},
+              {"name": "spotify-callback", "path": "./spotify/api/auth/callback"},
+              {"name": "spotify-get-top", "path": "./spotify/api/tracks/get-top"},
+              {"name": "spotify-get-likes", "path": "./spotify/api/tracks/get-likes"},
+              {"name": "spotify-add-track", "path": "./spotify/api/tracks/add-track"},
+              {"name": "spotify-remove-track", "path": "./spotify/api/tracks/remove-track"},
+              {"name": "spotify-get-playlist", "path": "./spotify/api/tracks/get-playlist"},
+              {"name": "spotify-get-audio-features", "path": "./spotify/api/tracks/get-audio-features"},
+              {"name": "spotify-get-audio-analysis", "path": "./spotify/api/tracks/get-audio-analysis"},
+              {"name": "spotify-search-track", "path": "./spotify/api/tracks/search-track"},
               {"name": "spotify-token", "path": "./spotify/scrap-token"}
             ]'
           else
