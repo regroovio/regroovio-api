@@ -9,6 +9,7 @@ const app = async (event, context) => {
     try {
         const { track, token } = event
         console.log('Getting track info', track.name);
+        console.log(event);
         const trackInfo = await getTrackInfo(track.sourceTrackUrl);
         const trackResult = trackInfo.data.result;
 

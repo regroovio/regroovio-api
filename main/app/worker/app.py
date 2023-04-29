@@ -17,7 +17,7 @@ import update_album_in_dynamodb
 load_dotenv()
 s3 = boto3.client('s3', region_name='us-east-1')
 
-tableToProcess = 'daily'
+tableToProcess = 'r-b'
 
 
 def app():
@@ -54,7 +54,8 @@ def get_token(admin_id, admin):
 def process_unprocessed_albums(admin_id, admin, unprocessed_albums, table_name):
     for i, album in enumerate(unprocessed_albums):
         token = get_token(admin_id, admin)
-        print(f"Searching {i + 1} of {len(unprocessed_albums)}")
+        print(
+            f"\nSearching: {album['artist_name']} - {album['album_name']} [{i + 1}/{len(unprocessed_albums)}]")
         for track in album['tracks']:
             track = process_track(token, track, album)
 

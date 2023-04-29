@@ -15,7 +15,6 @@ def invoke_lambda(params):
         if "body" in cleaned_payload:
             return cleaned_payload["body"]
         else:
-            raise ValueError(
-                "The 'body' key was not found in the Lambda response payload")
+            raise ValueError(cleaned_payload)
     except ClientError as error:
         print("Error invoking Lambda function:", error)
