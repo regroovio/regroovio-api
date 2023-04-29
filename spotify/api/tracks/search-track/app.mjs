@@ -163,7 +163,7 @@ const findArtist = async (token, artistName) => {
     const response = await http.get("https://api.spotify.com/v1/search", {
       headers: buildHeaders(token),
       params: {
-        q: artistName,
+        q: `artist:${encodeURIComponent(artistName)}`,
         type: "artist",
       },
     });
