@@ -10,19 +10,23 @@ const app = async (event) => {
 
     console.log(event);
 
-    const album = await searchAlbum(token, albumName, year);
-    const trackInAlbum = await findTrackInAlbum(token, album, trackName);
-    if (trackInAlbum) {
-      return { statusCode: 200, body: trackInAlbum };
+    const album = await searchAlbum(token, albumName, artistName, year);
+    if (album) {
+      const trackInAlbum = await findTrackInAlbum(token, album, trackName);
+      if (trackInAlbum) {
+        return { statusCode: 200, body: trackInAlbum };
+      }
     }
 
     const individualArtists = splitArtists(artistName);
     for (const individualArtist of individualArtists) {
       if (!isVariousArtist(individualArtist)) {
         const artistData = await findArtist(token, individualArtist);
-        const trackInArtistAlbums = await findTrackInArtistAlbums(token, artistData, trackName, albumName);
-        if (trackInArtistAlbums) {
-          return { statusCode: 200, body: trackInArtistAlbums };
+        if (artistData) {
+          const trackInArtistAlbums = await findTrackInArtistAlbums(token, artistData, trackName, albumName, artistName, year);
+          if (trackInArtistAlbums) {
+            return { statusCode: 200, body: trackInArtistAlbums };
+          }
         }
       }
     }
@@ -58,11 +62,13 @@ const search = async (token, query, type) => {
   return response.data;
 };
 
-const searchAlbum = async (token, albumName, year) => {
+const searchAlbum = async (token, albumName, artistName, year) => {
   let response = await search(token, `album:${albumName}`, "album");
   for (const album of response.albums.items) {
     const release_year = album.release_date.split("-")[0];
-    if (release_year === year) {
+    console.log(`searching album; ${album.name} - ${albumName}`);
+    const incluedsArtist = album.artists.some((artist) => artist.name.toLowerCase() === artistName.toLowerCase());
+    if (album.name.toLowerCase() === albumName.toLowerCase() && release_year === year || incluedsArtist) {
       console.log("found album", album.name)
       album.release_year = release_year;
       return album
@@ -140,7 +146,7 @@ const findTrack = async (tracks, fullTrackName, token) => {
   for (const track of tracks) {
     console.log(`comparing track: '${track.name}' with '${trackNameToFind}'`);
     const trackNameSimilarity = compareStrings(track.name, trackNameToFind);
-    if (trackNameSimilarity >= 0.8) {
+    if (trackNameSimilarity) {
       const trackWithPopularity = await getTrackWithPopularity(token, track.id);
       trackWithPopularity.preview_url = track.preview_url;
       return trackWithPopularity;
@@ -158,18 +164,20 @@ const findTrackInAlbum = async (token, album, trackName) => {
   return null;
 };
 
-const findTrackInArtistAlbums = async (token, artistData, trackName, albumName) => {
+const findTrackInArtistAlbums = async (token, artistData, trackName, albumName, artistName, year) => {
   if (artistData.artists?.items) {
     for (const artist of artistData.artists.items) {
+      if (artist.name.toLowerCase() !== artistName.toLowerCase()) continue;
       const artistId = artist.id;
       const artistAlbumsResponse = await http.get(`https://api.spotify.com/v1/artists/${artistId}/albums`, {
         headers: buildHeaders(token),
       });
       await sleep(2000);
       for (const album of artistAlbumsResponse.data.items) {
-        const albumNameSimilarity = compareStrings(album.name, albumName);
-        const albumNameIncludes = album.name.toLowerCase().includes(albumName.toLowerCase());
-        if (albumNameSimilarity >= 0.8 || albumNameIncludes) {
+        const release_year = album.release_date.split("-")[0];
+        console.log(`searching album; ${album.name} - ${albumName}`);
+        if (album.name.toLowerCase() === albumName.toLowerCase() && release_year === year) {
+          console.log('album found; ', album.name);
           const albumTracksResponse = await http.get(`https://api.spotify.com/v1/albums/${album.id}/tracks`, {
             headers: buildHeaders(token),
           });
