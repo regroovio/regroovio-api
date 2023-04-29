@@ -100,7 +100,7 @@ jobs:
     needs: [before_deploy, filter_functions]
     strategy:
       matrix:
-        function: ${{fromJson(needs.filter_functions.outputs.filtered_functions)}}
+        function: ${{fromJson(needs.filter_functions.outputs.available_functions)}}
     steps:
       # - uses: actions/checkout@v3
 
