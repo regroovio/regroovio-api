@@ -24,12 +24,17 @@ const addAlbumsToDb = async (table, links) => {
             const params = {
                 TableName: table,
                 Item: albumData,
+                ConditionExpression: "attribute_not_exists(album_id)",
             };
 
             try {
                 await dynamoClient.putItem(params);
             } catch (error) {
-                console.log(error);
+                if (error.name === "ConditionalCheckFailedException") {
+                    console.log(`Item with album_id ${album_id} already exists.`);
+                } else {
+                    console.log(error);
+                }
             }
         }));
     }

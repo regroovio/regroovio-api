@@ -90,7 +90,7 @@ const getTrackInfo = async (track) => {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
-            timeout: 10000, // Set a timeout of 10 seconds
+            timeout: 10000,
         });
         return response;
     } catch (error) {
