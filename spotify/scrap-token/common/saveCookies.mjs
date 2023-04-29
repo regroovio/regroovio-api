@@ -9,7 +9,7 @@ const saveCookies = async (page, user) => {
         const cookies = await page.cookies();
         const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
         user.cookies_spotify = cookies;
-        await documentClient.put({ TableName: `users-${process.env.STAGE}`, Item: user });
+        await documentClient.put({ TableName: `regroovio-users-${process.env.STAGE}`, Item: user });
     } catch (err) {
         console.error(`Error saveCookies: ${err}`);
         throw err;

@@ -8,7 +8,7 @@ const getUserById = async (user_id) => {
     try {
         const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
         const params = {
-            TableName: `users-${process.env.STAGE}`,
+            TableName: `regroovio-users-${process.env.STAGE}`,
             Key: {
                 user_id: user_id,
             },

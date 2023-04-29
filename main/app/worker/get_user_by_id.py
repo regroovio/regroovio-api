@@ -15,7 +15,7 @@ dynamodb = boto3.resource('dynamodb', **AWS_DYNAMO)
 
 def get_user_by_id(user_id):
     try:
-        table = dynamodb.Table(f"users-{os.getenv('STAGE')}")
+        table = dynamodb.Table(f"regroovio-users-{os.getenv('STAGE')}")
         items = []
         last_evaluated_key = None
         while True:

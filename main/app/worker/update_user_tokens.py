@@ -15,7 +15,7 @@ dynamodb = boto3.resource('dynamodb', **AWS_DYNAMO)
 
 def update_user_tokens(user, tokens):
     try:
-        table = dynamodb.Table(f"users-{os.getenv('STAGE')}")
+        table = dynamodb.Table(f"regroovio-users-{os.getenv('STAGE')}")
         table.update_item(
             Key={"user_id": user["user_id"]},
             UpdateExpression="set access_token_spotify = :at, expiration_timestamp_spotify = :et",
