@@ -121,7 +121,6 @@ def handle_track_search_response(parsed_target_track, token, track, album):
         else:
             print(f"\nTrack not recognized", track["name"])
             track["spotify"] = recognizer_response_info
-            # upload the not recognized tracks to dynamodb 'regroovio-missing-tracks-prod' table
             dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
             table = dynamodb.Table(
                 f"regroovio-missing-tracks-{os.getenv('STAGE')}")

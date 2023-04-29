@@ -13,19 +13,15 @@ class CustomError extends Error {
 
 const app = async (event, context) => {
     try {
-        const { track, token } = event;
+        const { track } = event;
         console.log(event);
         if (!track || !track.name || !track.url) {
             throw new CustomError('Invalid track data', 'app');
         }
 
         console.log('Getting track info', track.name);
+
         const trackInfo = await getTrackInfo(track.url);
-
-        if (!trackInfo?.data.result) {
-            throw new CustomError('Failed to get track info', 'app');
-        }
-
         const trackResult = trackInfo.data.result;
 
         if (trackResult?.spotify) {
@@ -37,7 +33,7 @@ const app = async (event, context) => {
             track.spotify = null;
             await slackBot({
                 message: `No track info found for ${track.name}`,
-                functionName: 'app',
+                functionName: `regroovio-recognizer-${process.env.STAGE}}`,
                 additionalInfo: trackInfo.data || trackInfo.status
             });
 
@@ -45,7 +41,11 @@ const app = async (event, context) => {
         return { body: track.spotify };
     } catch (err) {
         console.error('Error:', err.message);
-        await slackBot(err);
+        await slackBot({
+            message: err.message,
+            functionName: `regroovio-recognizer-${process.env.STAGE}}`,
+            additionalInfo: err
+        });
         return { message: 'Failed', err };
     }
 };
