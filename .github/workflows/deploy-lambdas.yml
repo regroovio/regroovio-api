@@ -102,11 +102,11 @@ jobs:
     #   matrix:
     #     function: ${{fromJson(needs.filter_functions.outputs.filtered_functions)}}
     steps:
-      - uses: actions/checkout@v3
+      # - uses: actions/checkout@v3
 
       - name: Test
         run: |
-          echo ${{needs.filter_functions.outputs.available_functions}}
+          echo ${{fromJson(needs.filter_functions.outputs.available_functions)}}
 
       # - name: Configure AWS credentials
       #   uses: aws-actions/configure-aws-credentials@v2
