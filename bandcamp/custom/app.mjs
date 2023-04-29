@@ -78,46 +78,16 @@ const app = async (event) => {
         const albumLinks = await collectAlbumLinks(page, genre);
         await page.close();
         await browser.close();
-        const initialItemCount = await getTotalItemsInTable(table);
-        await addAlbumsToDb(table, albumLinks);
-        const finalItemCount = await getTotalItemsInTable(table);
-        const numberOfItemsAdded = finalItemCount - initialItemCount;
-        console.log(`Added ${numberOfItemsAdded} items.`);
+        const itemsAdded = await addAlbumsToDb(table, albumLinks);
+        console.log(`Added ${itemsAdded} items.`);
         return {
             functionName: `bandcamp-${genre}-${process.env.STAGE}`,
             scanned: albumLinks.length,
-            added: numberOfItemsAdded
+            added: itemsAdded
         };
     } catch (error) {
         throw new Error(`bandcamp-${genre}-${process.env.STAGE}: ${error}`);
     }
 }
-
-const getTotalItemsInTable = async (table) => {
-    const params = {
-        TableName: table,
-        Select: "COUNT",
-    };
-
-    let totalItems = 0;
-    let lastEvaluatedKey = null;
-
-    try {
-        do {
-            if (lastEvaluatedKey) {
-                params.ExclusiveStartKey = lastEvaluatedKey;
-            }
-
-            const response = await dynamoClient.scan(params);
-            totalItems += response.Count;
-            lastEvaluatedKey = response.LastEvaluatedKey;
-        } while (lastEvaluatedKey);
-
-        return totalItems;
-    } catch (error) {
-        console.log(`Error getting total items in table: ${error}`);
-        throw error;
-    }
-};
 
 export { app };

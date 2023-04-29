@@ -8,6 +8,7 @@ const dynamoClient = new DynamoDB(AWS_DYNAMO);
 
 const addAlbumsToDb = async (table, links) => {
     const chunkSize = links.length;
+    let itemsAdded = 0
     for (let i = 0; i < links.length; i += chunkSize) {
         const chunk = links.slice(i, i + chunkSize);
         console.log(`Uploading`);
@@ -29,6 +30,7 @@ const addAlbumsToDb = async (table, links) => {
 
             try {
                 await dynamoClient.putItem(params);
+                itemsAdded++;
             } catch (error) {
                 if (error.name === "ConditionalCheckFailedException") {
                     console.log(`Item with album_id ${album_id} already exists.`);
@@ -38,6 +40,7 @@ const addAlbumsToDb = async (table, links) => {
             }
         }));
     }
+    return itemsAdded;
 };
 
 export { addAlbumsToDb };
