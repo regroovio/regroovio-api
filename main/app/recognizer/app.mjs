@@ -33,7 +33,7 @@ const app = async (event, context) => {
             track.spotify = null;
             await slackBot({
                 message: `No track info found for ${track.name}`,
-                functionName: `regroovio-recognizer-${process.env.STAGE}}`,
+                functionName: `regroovio-recognizer-${process.env.STAGE}`,
                 additionalInfo: trackInfo.data || trackInfo.status
             });
 
@@ -43,7 +43,7 @@ const app = async (event, context) => {
         console.error('Error:', err.message);
         await slackBot({
             message: err.message,
-            functionName: `regroovio-recognizer-${process.env.STAGE}}`,
+            functionName: `regroovio-recognizer-${process.env.STAGE}`,
             additionalInfo: err
         });
         return { message: 'Failed', err };

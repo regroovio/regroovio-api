@@ -106,7 +106,7 @@ def handle_track_search_response(parsed_target_track, token, track, album):
         parsed_recognizer_response = json.loads(recognizer_response)
         recognizer_response_info = parsed_recognizer_response["body"]
 
-        if "id" in recognizer_response_info is not None:
+        if recognizer_response_info is not None and "id" in recognizer_response_info:
             print(f"\nTrack recognized", recognizer_response_info["name"])
             del recognizer_response_info["album"]
             del recognizer_response_info["is_playable"]
