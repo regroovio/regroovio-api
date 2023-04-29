@@ -84,7 +84,7 @@ jobs:
       - name: Read lambdas from file
         id: read_lambdas
         run: |
-          lambdas=$(jq -R -s -c '[(split("\n")[:-1][] | split(" ")) as $item | {name: $item[0], path: $item[1]}]' lambdas.txt)
+          lambdas=$(cat ./lambdas.json)
           echo "lambdas=${lambdas}" >> $GITHUB_ENV
 
   filter_functions:
@@ -93,14 +93,17 @@ jobs:
     outputs:
       available_functions: ${{ steps.filter_functions.outputs.filtered_functions }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
       - name: Filter functions
         id: filter_functions
         run: |
           selected_function="${{ github.event.inputs.functions }}"
           if [ "$selected_function" = "all" ]; then
-            available_functions="${{ needs.read_lambdas.outputs.lambdas }}"
+            available_functions=$(cat ./lambdas.json)
           else
-            available_functions=$(jq -n --arg name "$selected_function" --arg path "./path/to/$selected_function" '[{ "name": $name, "path": $path }]')
+            available_functions=$(jq -c '.[] | select(.name == '\"$selected_function\"')' ./lambdas.json)
           fi
           echo "filtered_functions=${available_functions}" >> $GITHUB_ENV
 
