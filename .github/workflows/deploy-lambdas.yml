@@ -102,60 +102,60 @@ jobs:
           echo $available_functions_no_spaces
           echo "filtered_functions=${available_functions_no_spaces}" >> $GITHUB_OUTPUT
 
-  # deploy_lambdas:
-  #   runs-on: ubuntu-latest
-  #   needs: [before_deploy, filter_functions]
-  #   strategy:
-  #     matrix:
-  #       function: ${{fromJson(needs.filter_functions.outputs.available_functions)}}
+  deploy_lambdas:
+    runs-on: ubuntu-latest
+    needs: [before_deploy, filter_functions]
+    strategy:
+      matrix:
+        function: ${{fromJson(needs.filter_functions.outputs.available_functions)}}
 
-  #   steps:
-  #     - uses: actions/checkout@v3
+    steps:
+      - uses: actions/checkout@v3
 
-  #     - name: Configure AWS credentials
-  #       uses: aws-actions/configure-aws-credentials@v2
-  #       with:
-  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  #         aws-region: ${{ env.AWS_REGION }}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-  #     - name: Install dependencies
-  #       run: |
-  #         cd ${{ matrix.function.path }}
-  #         npm ci --production
+      - name: Install dependencies
+        run: |
+          cd ${{ matrix.function.path }}
+          npm ci --production
 
-  #     - name: Cache Node modules
-  #       uses: actions/cache@v3
-  #       with:
-  #         path: ${{ matrix.function.path }}/node_modules
-  #         key: ${{ matrix.function.path }}-${{ inputs.stage }}-${{ hashFiles('**/package-lock.json') }}
-  #         restore-keys: |
-  #           ${{ matrix.function.path }}-${{ inputs.stage }}-
+      - name: Cache Node modules
+        uses: actions/cache@v3
+        with:
+          path: ${{ matrix.function.path }}/node_modules
+          key: ${{ matrix.function.path }}-${{ inputs.stage }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ matrix.function.path }}-${{ inputs.stage }}-
 
-  #     - name: Package Lambda function
-  #       run: |
-  #         cd ${{ matrix.function.path }}
-  #         zip -r ${{ matrix.function.name }}-${{ inputs.stage }}.zip .
-  #         aws s3 cp ${{ matrix.function.name }}-${{ inputs.stage }}.zip s3://lambdas-regroovio-${{ inputs.stage }}
-  #         rm ${{ matrix.function.name }}-${{ inputs.stage }}.zip
+      - name: Package Lambda function
+        run: |
+          cd ${{ matrix.function.path }}
+          zip -r ${{ matrix.function.name }}-${{ inputs.stage }}.zip .
+          aws s3 cp ${{ matrix.function.name }}-${{ inputs.stage }}.zip s3://lambdas-regroovio-${{ inputs.stage }}
+          rm ${{ matrix.function.name }}-${{ inputs.stage }}.zip
 
-  #     - name: Update Lambda function code
-  #       run: |
-  #         aws lambda update-function-code \
-  #           --function-name ${{ matrix.function.name }}-${{ inputs.stage }} \
-  #           --s3-bucket lambdas-regroovio-${{ inputs.stage }} \
-  #           --s3-key ${{ matrix.function.name }}-${{ inputs.stage }}.zip
+      - name: Update Lambda function code
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ matrix.function.name }}-${{ inputs.stage }} \
+            --s3-bucket lambdas-regroovio-${{ inputs.stage }} \
+            --s3-key ${{ matrix.function.name }}-${{ inputs.stage }}.zip
 
-  #     - name: Wait for Lambda update
-  #       run: |
-  #         aws lambda wait function-updated --function-name ${{ matrix.function.name }}-${{ inputs.stage }}
+      - name: Wait for Lambda update
+        run: |
+          aws lambda wait function-updated --function-name ${{ matrix.function.name }}-${{ inputs.stage }}
 
-  #     - name: Update Lambda function configuration
-  #       run: |
-  #         aws lambda update-function-configuration \
-  #         --function-name ${{ matrix.function.name }}-${{ inputs.stage }} \
-  #         --region us-east-1 \
-  #         --environment "Variables={
-  #         STAGE=\"${{ inputs.stage }}\",
-  #         ${{ secrets.LAMBDAS_ENV }}
-  #         }"
+      - name: Update Lambda function configuration
+        run: |
+          aws lambda update-function-configuration \
+          --function-name ${{ matrix.function.name }}-${{ inputs.stage }} \
+          --region us-east-1 \
+          --environment "Variables={
+          STAGE=\"${{ inputs.stage }}\",
+          ${{ secrets.LAMBDAS_ENV }}
+          }"
