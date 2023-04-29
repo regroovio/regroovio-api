@@ -32,9 +32,7 @@ const addAlbumsToDb = async (table, links) => {
                 await dynamoClient.putItem(params);
                 itemsAdded++;
             } catch (error) {
-                if (error.name === "ConditionalCheckFailedException") {
-                    console.log(`Item with album_id ${album_id} already exists.`);
-                } else {
+                if (error.name != "ConditionalCheckFailedException") {
                     console.log(error);
                 }
             }
