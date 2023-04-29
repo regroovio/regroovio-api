@@ -98,8 +98,8 @@ jobs:
             available_functions_no_spaces=$(echo "$available_functions" | tr -d '[:space:]')
           fi
 
-          echo [$available_functions_no_spaces]
-          echo "filtered_functions=${available_functions_no_spaces}" >> $GITHUB_OUTPUT
+          echo "filtered_functions=[$available_functions_no_spaces]" >> $GITHUB_OUTPUT
+          echo $filtered_functions
 
   # deploy_lambdas:
   #   runs-on: ubuntu-latest
