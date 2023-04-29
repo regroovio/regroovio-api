@@ -94,8 +94,25 @@ const findArtist = async (token, artistName) => {
   }
 };
 
+const tokenize = (str) => {
+  return str.toLowerCase().split(/[\s\-]+/);
+};
+
+const tokenOverlap = (str1, str2) => {
+  const tokens1 = new Set(tokenize(str1));
+  const tokens2 = new Set(tokenize(str2));
+  for (const token of tokens1) {
+    if (tokens2.has(token)) {
+      return true;
+    }
+  }
+  return false;
+};
+
 const compareStrings = (str1, str2) => {
-  return jaroWinkler(str1, str2, { caseSensitive: false });
+  const similarity = jaroWinkler(str1, str2, { caseSensitive: false });
+  const overlap = tokenOverlap(str1, str2);
+  return similarity >= 0.8 || overlap;
 };
 
 const getTrackWithPopularity = async (token, trackId) => {
