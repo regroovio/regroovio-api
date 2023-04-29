@@ -9,17 +9,14 @@ const app = async (event) => {
   try {
     const { token, trackName, year, albumName, artistName } = event;
     console.log(event);
-    const isVA = isVariousArtist(artistName);
     const individualArtists = splitArtists(artistName);
     let track = null;
     for (const individualArtist of individualArtists) {
-      if (isVA) {
-        const albumData = await search(token, year, albumName, individualArtist);
-        const trackInAlbum = await findTrackInAlbum(token, albumData, trackName, isVA);
-        if (trackInAlbum) {
-          track = trackInAlbum;
-          break;
-        }
+      const albumData = await search(token, year, albumName, individualArtist);
+      const trackInAlbum = await findTrackInAlbum(token, albumData, trackName);
+      if (trackInAlbum) {
+        track = trackInAlbum;
+        break;
       }
       const artistData = await findArtist(token, individualArtist);
       const trackInArtistAlbums = await findTrackInArtistAlbums(token, artistData, trackName, albumName);
@@ -128,7 +125,7 @@ const findTrack = async (tracks, fullTrackName, token) => {
   console.log(`findTrack: `, { tracks, fullTrackName, token });
 
   let trackNameToFind = fullTrackName;
-  if (isVariousArtist) {
+  if (isVariousArtist()) {
     const splitTrackName = fullTrackName.split(" - ");
     trackNameToFind = splitTrackName.length > 1 ? splitTrackName[1] : splitTrackName[0];
   }
