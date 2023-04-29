@@ -83,12 +83,12 @@ def process_track(token, track, album):
     )
     parsed_target_track = json.loads(target_track)
     track["spotify"] = handle_track_search_response(
-        parsed_target_track, token, track)
+        parsed_target_track, token, track, album)
 
     return track
 
 
-def handle_track_search_response(parsed_target_track, token, track):
+def handle_track_search_response(parsed_target_track, token, track, album):
     if parsed_target_track.get("statusCode") == 404:
         print(f"\nTrack not found: {track['name']}")
         time.sleep(3)
@@ -121,6 +121,15 @@ def handle_track_search_response(parsed_target_track, token, track):
         else:
             print(f"\nTrack not recognized", track["name"])
             track["spotify"] = recognizer_response_info
+            # upload the not recognized tracks to dynamodb 'regroovio-missing-tracks-prod' table
+            dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+            table = dynamodb.Table(
+                f"regroovio-missing-tracks-{os.getenv('STAGE')}")
+            item = {
+                'track_id': track['url'],
+                'album_id': album['album_id']
+            }
+            table.put_item(Item=item)
 
     else:
         print(f"\nTrack found: {track['name']}")
