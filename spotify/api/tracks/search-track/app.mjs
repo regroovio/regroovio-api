@@ -58,6 +58,8 @@ const handleError = (error, context) => {
 };
 
 const findTrackInArtistAlbums = async (token, artistData, trackName, albumName) => {
+  console.log(`findTrackInArtistAlbums: `, { token, artistData, trackName, albumName });
+
   if (artistData.artists?.items) {
     for (const artist of artistData.artists.items) {
       const artistId = artist.id;
@@ -83,6 +85,8 @@ const findTrackInArtistAlbums = async (token, artistData, trackName, albumName) 
 };
 
 const search = async (token, year, albumName, artistName) => {
+  console.log(`search: `, { token, year, albumName, artistName });
+
   try {
     const response = await http.get("https://api.spotify.com/v1/search", {
       headers: buildHeaders(token),
@@ -108,6 +112,8 @@ const search = async (token, year, albumName, artistName) => {
 };
 
 const findTrackInAlbum = async (token, albumData, trackName) => {
+  console.log(`findTrackInAlbum: `, { token, albumData, trackName });
+
   for (const album of albumData) {
     const albumTracksResponse = await http.get(`https://api.spotify.com/v1/albums/${album.id}/tracks`, {
       headers: buildHeaders(token),
@@ -119,6 +125,8 @@ const findTrackInAlbum = async (token, albumData, trackName) => {
 };
 
 const findTrack = async (tracks, fullTrackName, token) => {
+  console.log(`findTrack: `, { tracks, fullTrackName, token });
+
   let trackNameToFind = fullTrackName;
   if (isVariousArtist) {
     const splitTrackName = fullTrackName.split(" - ");
@@ -138,6 +146,8 @@ const findTrack = async (tracks, fullTrackName, token) => {
 };
 
 const getTrackWithPopularity = async (token, trackId) => {
+  console.log(`getTrackWithPopularity: `, { token, trackId });
+
   try {
     const response = await http.get(`https://api.spotify.com/v1/tracks/${trackId}`, {
       headers: buildHeaders(token),
@@ -151,6 +161,8 @@ const getTrackWithPopularity = async (token, trackId) => {
 
 
 const findArtist = async (token, artistName) => {
+  console.log(`findArtist: `, { token, artistName });
+
   try {
     const response = await http.get("https://api.spotify.com/v1/search", {
       headers: buildHeaders(token),
@@ -167,6 +179,7 @@ const findArtist = async (token, artistName) => {
 };
 
 const compareStrings = (str1, str2) => {
+  console.log(`compareStrings: `, { str1, str2 });
   return jaroWinkler(str1, str2, { caseSensitive: false });
 };
 
