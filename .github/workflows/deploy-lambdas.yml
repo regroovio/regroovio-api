@@ -85,8 +85,7 @@ jobs:
         run: |
           selected_function="${{ github.event.inputs.functions }}"
           if [ "$selected_function" = "all" ]; then
-            available_functions='[
-            {"name": "regroovio-login", "path": "./main/api/auth/login"},
+            available_functions='[{"name": "regroovio-login", "path": "./main/api/auth/login"},
             {"name": "regroovio-signup", "path": "./main/api/auth/signup"},
             {"name": "regroovio-confirm", "path": "./main/api/auth/confirm"},
             {"name": "regroovio-random-tracks", "path": "./main/api/tracks/random-tracks"},
