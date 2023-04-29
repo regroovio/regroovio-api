@@ -98,15 +98,15 @@ jobs:
   deploy_lambdas:
     runs-on: ubuntu-latest
     needs: [before_deploy, filter_functions]
-    # strategy:
-    #   matrix:
-    #     function: ${{fromJson(needs.filter_functions.outputs.filtered_functions)}}
+    strategy:
+      matrix:
+        function: ${{fromJson(needs.filter_functions.outputs.filtered_functions)}}
     steps:
       # - uses: actions/checkout@v3
 
       - name: Test
         run: |
-          echo ${{fromJson(needs.filter_functions.outputs.available_functions)}}
+          echo test
 
       # - name: Configure AWS credentials
       #   uses: aws-actions/configure-aws-credentials@v2
