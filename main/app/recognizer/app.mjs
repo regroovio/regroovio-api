@@ -3,25 +3,27 @@
 import axios from 'axios';
 import { slackBot } from './common/slackBot.mjs';
 
+class CustomError extends Error {
+    constructor(message, functionName, additionalInfo) {
+        super(message);
+        this.functionName = functionName;
+        this.additionalInfo = additionalInfo;
+    }
+}
+
 const app = async (event, context) => {
     try {
         const { track, token } = event;
         console.log(event);
         if (!track || !track.name || !track.url) {
-            throw new Error('Invalid track data');
+            throw new CustomError('Invalid track data', 'app');
         }
 
         console.log('Getting track info', track.name);
         const trackInfo = await getTrackInfo(track.url);
 
         if (!trackInfo) {
-            const notification = {
-                status: "FAILURE",
-                functionName: `regroovio-recognizer-${process.env.STAGE}`,
-                message: "trackInfo is null",
-            };
-            await slackBot(notification);
-            throw new Error('Failed to get track info');
+            throw new CustomError('Failed to get track info', 'app');
         }
 
         const trackResult = trackInfo.data.result;
@@ -32,17 +34,16 @@ const app = async (event, context) => {
             track.spotify = trackSpotify;
         } else {
             console.log('No track info found for', track.name);
-            const notification = {
-                status: "FAILURE",
-                functionName: `regroovio-recognizer-${process.env.STAGE}`,
-                message: `No track info found for ${track.name}\n${trackInfo.data || trackInfo.status}`,
-            };
-            await slackBot(notification);
-            track.spotify = trackInfo.data || trackInfo.status;
+            throw new CustomError(
+                `No track info found for ${track.name}`,
+                'app',
+                trackInfo.data || trackInfo.status
+            );
         }
         return { body: track.spotify };
     } catch (err) {
         console.error('Error:', err.message);
+        await slackBot(err);
         return { message: 'Failed', err };
     }
 };
@@ -68,13 +69,7 @@ const getTrackInfo = async (track) => {
         return response;
     } catch (error) {
         console.error(error);
-        const notification = {
-            status: "FAILURE",
-            functionName: `regroovio-recognizer-${process.env.STAGE}`,
-            message: error.message,
-        };
-        await slackBot(notification);
-        return null;
+        throw new CustomError(error.message, 'getTrackInfo');
     }
 };
 
