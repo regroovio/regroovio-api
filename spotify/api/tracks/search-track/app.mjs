@@ -88,7 +88,7 @@ const search = async (token, year, albumName, artistName) => {
     const response = await http.get("https://api.spotify.com/v1/search", {
       headers: buildHeaders(token),
       params: {
-        q: `album:${albumName} artist:${artistName}`,
+        q: `album:${encodeURIComponent(albumName)} artist:${encodeURIComponent(artistName)}`,
         type: "album",
       },
     });
@@ -125,7 +125,7 @@ const findTrack = async (tracks, fullTrackName, token) => {
   console.log(`findTrack: `, { tracks, fullTrackName, token });
 
   let trackNameToFind = fullTrackName;
-  if (isVariousArtist()) {
+  if (isVariousArtist(fullTrackName)) {
     const splitTrackName = fullTrackName.split(" - ");
     trackNameToFind = splitTrackName.length > 1 ? splitTrackName[1] : splitTrackName[0];
   }
