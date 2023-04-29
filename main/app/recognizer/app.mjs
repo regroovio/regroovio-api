@@ -35,11 +35,11 @@ const app = async (event, context) => {
         } else {
             console.log('No track info found for', track.name);
             track.spotify = null;
-            await slackBot(new CustomError(
-                `No track info found for ${track.name}`,
-                'app',
-                trackInfo.data || trackInfo.status
-            ));
+            await slackBot({
+                message: `No track info found for ${track.name}`,
+                functionName: 'app',
+                additionalInfo: trackInfo.data || trackInfo.status
+            });
 
         }
         return { body: track.spotify };
