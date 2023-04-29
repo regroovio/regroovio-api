@@ -74,9 +74,22 @@ jobs:
             ${{ secrets.LAMBDAS_ENV }}" \
             --overwrite
 
+  read_lambdas:
+    runs-on: ubuntu-latest
+    outputs:
+      lambdas: ${{ steps.read_lambdas.outputs.lambdas }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Read lambdas from file
+        id: read_lambdas
+        run: |
+          lambdas=$(jq -R -s -c '[(split("\n")[:-1][] | split(" ")) as $item | {name: $item[0], path: $item[1]}]' lambdas.txt)
+          echo "lambdas=${lambdas}" >> $GITHUB_ENV
+
   filter_functions:
     runs-on: ubuntu-latest
-    needs: before_deploy
+    needs: [before_deploy, read_lambdas]
     outputs:
       available_functions: ${{ steps.filter_functions.outputs.filtered_functions }}
     steps:
@@ -85,29 +98,7 @@ jobs:
         run: |
           selected_function="${{ github.event.inputs.functions }}"
           if [ "$selected_function" = "all" ]; then
-            available_functions='[{"name": "regroovio-login", "path": "./main/api/auth/login"},
-            {"name": "regroovio-signup", "path": "./main/api/auth/signup"},
-            {"name": "regroovio-confirm", "path": "./main/api/auth/confirm"},
-            {"name": "regroovio-random-tracks", "path": "./main/api/tracks/random-tracks"},
-            {"name": "regroovio-downloader", "path": "./main/app/downloader"},
-            {"name": "regroovio-recognizer", "path": "./main/app/recognizer"},
-            {"name": "bandcamp-wishlist", "path": "./bandcamp/wishlist"},
-            {"name": "bandcamp-collection", "path": "./bandcamp/collection"},
-            {"name": "bandcamp-feed", "path": "./bandcamp/feed"},
-            {"name": "bandcamp-daily", "path": "./bandcamp/daily"},
-            {"name": "bandcamp-custom", "path": "./bandcamp/custom"},
-            {"name": "spotify-refresh", "path": "./spotify/api/auth/refresh"},
-            {"name": "spotify-login", "path": "./spotify/api/auth/login"},
-            {"name": "spotify-callback", "path": "./spotify/api/auth/callback"},
-            {"name": "spotify-get-top", "path": "./spotify/api/tracks/get-top"},
-            {"name": "spotify-get-likes", "path": "./spotify/api/tracks/get-likes"},
-            {"name": "spotify-add-track", "path": "./spotify/api/tracks/add-track"},
-            {"name": "spotify-remove-track", "path": "./spotify/api/tracks/remove-track"},
-            {"name": "spotify-get-playlist", "path": "./spotify/api/tracks/get-playlist"},
-            {"name": "spotify-get-audio-features", "path": "./spotify/api/tracks/get-audio-features"},
-            {"name": "spotify-get-audio-analysis", "path": "./spotify/api/tracks/get-audio-analysis"},
-            {"name": "spotify-search-track", "path": "./spotify/api/tracks/search-track"},
-            {"name": "spotify-token", "path": "./spotify/scrap-token"}]'
+            available_functions="${{ needs.read_lambdas.outputs.lambdas }}"
           else
             available_functions=$(jq -n --arg name "$selected_function" --arg path "./path/to/$selected_function" '[{ "name": $name, "path": $path }]')
           fi
