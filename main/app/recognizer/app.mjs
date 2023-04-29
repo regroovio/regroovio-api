@@ -17,6 +17,12 @@ const app = async (event, context) => {
         const trackInfo = await getTrackInfo(track.url);
 
         if (!trackInfo) {
+            const notification = {
+                status: "FAILURE",
+                functionName: `regroovio-recognizer-${process.env.STAGE}`,
+                message: "trackInfo is null",
+            };
+            await slackBot(notification);
             throw new Error('Failed to get track info');
         }
 
@@ -32,6 +38,12 @@ const app = async (event, context) => {
             };
         } else {
             console.log('No track info found for', track.name);
+            const notification = {
+                status: "FAILURE",
+                functionName: `regroovio-recognizer-${process.env.STAGE}`,
+                message: `No track info found for ${track.name}\n${trackInfo.data || trackInfo.status}`,
+            };
+            await slackBot(notification);
             track.spotify = trackInfo.data || trackInfo.status;
         }
         return { body: track.spotify };
@@ -78,10 +90,17 @@ const getTrackInfo = async (track) => {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
+            timeout: 10000, // Set a timeout of 10 seconds
         });
         return response;
     } catch (error) {
         console.error(error);
+        const notification = {
+            status: "FAILURE",
+            functionName: `regroovio-recognizer-${process.env.STAGE}`,
+            message: error.message,
+        };
+        await slackBot(notification);
         return null;
     }
 };

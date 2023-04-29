@@ -17,7 +17,7 @@ import update_album_in_dynamodb
 load_dotenv()
 s3 = boto3.client('s3', region_name='us-east-1')
 
-tableToProcess = 'r-b'
+tableToProcess = 'electronic'
 
 
 def app():
