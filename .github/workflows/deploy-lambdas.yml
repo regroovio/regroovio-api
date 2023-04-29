@@ -95,11 +95,12 @@ jobs:
             available_functions_no_spaces=$(echo "$available_functions" | tr -d '[:space:]')
           else
             available_functions=$(jq -c '.[] | select(.name == '\"$selected_function\"')' ./lambdas.json) 
-            available_functions_no_spaces=$(echo "$available_functions" | tr -d '[:space:]')
+            available_functions_no_spaces=$([echo "$available_functions" | tr -d '[:space:]'])
+            
           fi
 
-          echo "filtered_functions=[$available_functions_no_spaces]" >> $GITHUB_OUTPUT
-          echo $filtered_functions
+          echo $available_functions_no_spaces
+          echo "filtered_functions=${available_functions_no_spaces}" >> $GITHUB_OUTPUT
 
   # deploy_lambdas:
   #   runs-on: ubuntu-latest
