@@ -81,7 +81,7 @@ jobs:
       available_functions: ${{ steps.filter_functions.outputs.filtered_functions }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Filter functions
         id: filter_functions
@@ -100,7 +100,7 @@ jobs:
     needs: [before_deploy, filter_functions]
     strategy:
       matrix:
-        function: ${{fromJson(needs.filter_functions.outputs.available_functions)}}
+        function: ${{fromJson(needs.filter_functions.outputs.filtered_functions)}}
     steps:
       - uses: actions/checkout@v3
 
