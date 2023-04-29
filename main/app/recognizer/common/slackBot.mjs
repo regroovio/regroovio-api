@@ -21,7 +21,14 @@ const slackBot = async (error) => {
                 'type': 'section',
                 'text': {
                     'type': 'mrkdwn',
-                    'text': `*Function:* \`${functionName}\`\n*Message:* \`${message}\`${additionalInfo ? `\n*Additional Info:* \`${additionalInfo}\`` : ''}`
+                    'text': `*Function:* \`${functionName}\`\n*Message:* \`${message}\`${additionalInfo ? `\n*Additional Info:*` : ''}`
+                }
+            },
+            {
+                'type': 'section',
+                'text': {
+                    'type': 'mrkdwn',
+                    'text': additionalInfo ? additionalInfo : ''
                 }
             }
         ];

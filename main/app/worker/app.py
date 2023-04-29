@@ -123,6 +123,8 @@ def handle_track_search_response(parsed_target_track, token, track):
             track["spotify"] = recognizer_response_info
 
     else:
+        print(f"\nTrack found: {track['name']}")
+
         target_track_info = parsed_target_track["body"]
         del target_track_info["album"]
         del target_track_info["available_markets"]
