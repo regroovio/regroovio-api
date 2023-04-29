@@ -12,7 +12,7 @@ const app = async (event) => {
     const individualArtists = splitArtists(artistName);
     let track = null;
     for (const individualArtist of individualArtists) {
-      const albumData = await search(token, year, albumName, individualArtist);
+      const albumData = await search(token, year, albumName);
       const trackInAlbum = await findTrackInAlbum(token, albumData, trackName);
       if (trackInAlbum) {
         track = trackInAlbum;
@@ -81,14 +81,14 @@ const findTrackInArtistAlbums = async (token, artistData, trackName, albumName) 
   return null;
 };
 
-const search = async (token, year, albumName, artistName) => {
-  console.log(`search: `, { token, year, albumName, artistName });
+const search = async (token, year, albumName,) => {
+  console.log(`search: `, { token, year, albumName });
 
   try {
     const response = await http.get("https://api.spotify.com/v1/search", {
       headers: buildHeaders(token),
       params: {
-        q: `album:${encodeURIComponent(albumName)} artist:${encodeURIComponent(artistName)}`,
+        q: `album:${encodeURIComponent(albumName)}`,
         type: "album",
       },
     });
@@ -97,9 +97,7 @@ const search = async (token, year, albumName, artistName) => {
       const albumYear = album.release_date?.substring(0, 4);
       const albumNameSimilarity = compareStrings(album.name, albumName);
       const albumNameIncludes = album.name.toLowerCase().includes(albumName.toLowerCase());
-      const artistNameSimilarity = compareStrings(album.artists[0]?.name, artistName);
-      console.log(albumYear);
-      return (albumYear === year || albumNameSimilarity >= 0.5 || albumNameIncludes) && artistNameSimilarity >= 0.6;
+      return (albumYear === year || albumNameIncludes) && albumNameSimilarity >= 0.5;
     });
     return filteredAlbums;
   } catch (error) {
