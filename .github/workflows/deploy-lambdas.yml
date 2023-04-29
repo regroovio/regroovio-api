@@ -48,6 +48,7 @@ jobs:
   before_deploy:
     name: Before Deploy
     runs-on: ubuntu-latest
+    timeout-minutes: 1
     steps:
       - uses: actions/checkout@v3
 
@@ -79,6 +80,8 @@ jobs:
     needs: [before_deploy]
     outputs:
       available_functions: ${{ steps.filter_functions.outputs.filtered_functions }}
+    timeout-minutes: 1
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -101,6 +104,8 @@ jobs:
     strategy:
       matrix:
         function: ${{fromJson(needs.filter_functions.outputs.available_functions)}}
+    timeout-minutes: 5
+
     steps:
       - uses: actions/checkout@v3
 
