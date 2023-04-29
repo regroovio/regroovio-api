@@ -73,6 +73,7 @@ const search = async (token, query, type) => {
 const searchAlbum = async (token, albumName, artistName, year) => {
   const response = await search(token, `album:${albumName}`, "album");
   for (const album of response.albums.items) {
+    console.log(`searching album; ${album.name} - ${albumName}`);
     const release_year = album.release_date.split("-")[0];
     const includesArtist = album.artists.some((artist) => artist.name.toLowerCase() === artistName.toLowerCase());
     if (album.name.toLowerCase() === albumName.toLowerCase() && (release_year === year || includesArtist)) {
@@ -174,6 +175,7 @@ const findTrackInArtistAlbums = async (token, artistData, trackName, albumName, 
         headers: buildHeaders(token),
       });
       await sleep(2000);
+      console.log('');
       for (const album of artistAlbumsResponse.data.items) {
         const release_year = album.release_date.split("-")[0];
         console.log(`searching album; ${album.name} - ${albumName}`);
