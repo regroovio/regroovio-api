@@ -7,22 +7,22 @@ const http = rateLimit(axios.create(), { maxRequests: 1, perMilliseconds: 2000 }
 
 const app = async (event) => {
   try {
-    const { trackName, year, albumName, artistName } = event;
+    const { token, trackName, year, albumName, artistName } = event;
     console.log(event);
     const isVA = isVariousArtist(artistName);
     const individualArtists = splitArtists(artistName);
     let track = null;
     for (const individualArtist of individualArtists) {
       if (isVA) {
-        const albumData = await search(year, albumName, individualArtist);
-        const trackInAlbum = await findTrackInAlbum(albumData, trackName, isVA);
+        const albumData = await search(token, year, albumName, individualArtist);
+        const trackInAlbum = await findTrackInAlbum(token, albumData, trackName, isVA);
         if (trackInAlbum) {
           track = trackInAlbum;
           break;
         }
       }
-      const artistData = await findArtist(individualArtist);
-      const trackInArtistAlbums = await findTrackInArtistAlbums(artistData, trackName, albumName);
+      const artistData = await findArtist(token, individualArtist);
+      const trackInArtistAlbums = await findTrackInArtistAlbums(token, artistData, trackName, albumName);
       if (trackInArtistAlbums) {
         track = trackInArtistAlbums;
         break;
@@ -57,11 +57,12 @@ const handleError = (error, context) => {
   console.log(error.response.data.error);
 };
 
-const findTrackInArtistAlbums = async (artistData, trackName, albumName) => {
+const findTrackInArtistAlbums = async (token, artistData, trackName, albumName) => {
   if (artistData.artists?.items) {
     for (const artist of artistData.artists.items) {
       const artistId = artist.id;
       const artistAlbumsResponse = await http.get(`https://api.spotify.com/v1/artists/${artistId}/albums`, {
+        headers: buildHeaders(token),
       });
       await sleep(2000);
       for (const album of artistAlbumsResponse.data.items) {
@@ -69,9 +70,10 @@ const findTrackInArtistAlbums = async (artistData, trackName, albumName) => {
         const albumNameIncludes = album.name.toLowerCase().includes(albumName.toLowerCase());
         if (albumNameSimilarity >= 0.8 || albumNameIncludes) {
           const albumTracksResponse = await http.get(`https://api.spotify.com/v1/albums/${album.id}/tracks`, {
+            headers: buildHeaders(token),
           });
           await sleep(2000);
-          const track = await findTrack(albumTracksResponse.data.items, trackName);
+          const track = await findTrack(albumTracksResponse.data.items, trackName, token);
           if (track) return track;
         }
       }
@@ -80,9 +82,10 @@ const findTrackInArtistAlbums = async (artistData, trackName, albumName) => {
   return null;
 };
 
-const search = async (year, albumName, artistName) => {
+const search = async (token, year, albumName, artistName) => {
   try {
     const response = await http.get("https://api.spotify.com/v1/search", {
+      headers: buildHeaders(token),
       params: {
         q: `album:${albumName} artist:${artistName}`,
         type: "album",
@@ -103,17 +106,18 @@ const search = async (year, albumName, artistName) => {
   }
 };
 
-const findTrackInAlbum = async (albumData, trackName) => {
+const findTrackInAlbum = async (token, albumData, trackName) => {
   for (const album of albumData) {
     const albumTracksResponse = await http.get(`https://api.spotify.com/v1/albums/${album.id}/tracks`, {
+      headers: buildHeaders(token),
     });
-    const track = await findTrack(albumTracksResponse.data.items, trackName);
+    const track = await findTrack(albumTracksResponse.data.items, trackName, token);
     if (track) return track;
   }
   return null;
 };
 
-const findTrack = async (tracks, fullTrackName) => {
+const findTrack = async (tracks, fullTrackName, token) => {
   let trackNameToFind = fullTrackName;
   if (isVariousArtist) {
     const splitTrackName = fullTrackName.split(" - ");
@@ -123,7 +127,7 @@ const findTrack = async (tracks, fullTrackName) => {
     console.log(`comparing track: '${track.name}' with '${trackNameToFind}'`);
     const trackNameSimilarity = compareStrings(track.name, trackNameToFind);
     if (trackNameSimilarity >= 0.8) {
-      const trackWithPopularity = await getTrackWithPopularity(track.id);
+      const trackWithPopularity = await getTrackWithPopularity(token, track.id);
       trackWithPopularity.preview_url = track.preview_url
       console.log(trackWithPopularity);
       return trackWithPopularity;
@@ -132,9 +136,10 @@ const findTrack = async (tracks, fullTrackName) => {
   return null;
 };
 
-const getTrackWithPopularity = async (trackId) => {
+const getTrackWithPopularity = async (token, trackId) => {
   try {
     const response = await http.get(`https://api.spotify.com/v1/tracks/${trackId}`, {
+      headers: buildHeaders(token),
     });
     return response.data;
   } catch (error) {
@@ -144,9 +149,10 @@ const getTrackWithPopularity = async (trackId) => {
 };
 
 
-const findArtist = async (artistName) => {
+const findArtist = async (token, artistName) => {
   try {
-    const response = await http.get(`https://api.spotify.com/v1/search`, {
+    const response = await http.get("https://api.spotify.com/v1/search", {
+      headers: buildHeaders(token),
       params: {
         q: artistName,
         type: "artist",
@@ -161,6 +167,13 @@ const findArtist = async (artistName) => {
 
 const compareStrings = (str1, str2) => {
   return jaroWinkler(str1, str2, { caseSensitive: false });
+};
+
+const buildHeaders = (token) => {
+  return {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  };
 };
 
 const sleep = (ms) => {
