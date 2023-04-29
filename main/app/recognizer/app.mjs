@@ -7,10 +7,19 @@ const lambdaClient = new LambdaClient({ region: 'us-east-1' });
 
 const app = async (event, context) => {
     try {
-        const { track, token } = event
-        console.log('Getting track info', track.name);
+        const { track, token } = event;
         console.log(event);
+        if (!track || !track.name || !track.sourceTrackUrl) {
+            throw new Error('Invalid track data');
+        }
+
+        console.log('Getting track info', track.name);
         const trackInfo = await getTrackInfo(track.sourceTrackUrl);
+
+        if (!trackInfo) {
+            throw new Error('Failed to get track info');
+        }
+
         const trackResult = trackInfo.data.result;
 
         if (trackResult?.spotify) {
@@ -27,11 +36,17 @@ const app = async (event, context) => {
         }
         return { body: track.spotify };
     } catch (err) {
+        console.error('Error:', err.message);
         return { message: 'Failed', err };
     }
 };
 
 const getTrackFeatures = async (track, token) => {
+    if (!track || !track.id || !token) {
+        console.error("getTrackFeatures: Invalid parameters");
+        return null;
+    }
+
     const payload = JSON.stringify({ token, id: track.id });
     const rawResult = await invokeLambda({
         FunctionName: `spotify-get-audio-features-${process.env.STAGE}`,
@@ -48,6 +63,11 @@ const getTrackFeatures = async (track, token) => {
 };
 
 const getTrackInfo = async (track) => {
+    if (!track || !process.env.AUDD_API_KEY) {
+        console.error("getTrackInfo: Invalid parameters");
+        return null;
+    }
+
     try {
         console.log('fetching from audd.io: ', track);
         const response = await axios.post('https://api.audd.io/', {
@@ -62,7 +82,7 @@ const getTrackInfo = async (track) => {
         return response;
     } catch (error) {
         console.error(error);
-        return error;
+        return null;
     }
 };
 
@@ -75,6 +95,7 @@ const invokeLambda = async (params) => {
         return cleanedPayload.body;
     } catch (error) {
         console.error('Error invoking Lambda function:', error);
+        return null;
     }
 };
 
