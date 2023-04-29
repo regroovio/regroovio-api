@@ -1,24 +1,28 @@
 import axios from "axios";
+import rateLimit from "axios-rate-limit";
 import jaroWinkler from "jaro-winkler";
+
+const http = rateLimit(axios.create(), { maxRequests: 1, perMilliseconds: 2000 });
+
 
 const app = async (event) => {
   try {
-    const { token, trackName, year, albumName, artistName } = event;
+    const { trackName, year, albumName, artistName } = event;
     console.log(event);
     const isVA = isVariousArtist(artistName);
     const individualArtists = splitArtists(artistName);
     let track = null;
     for (const individualArtist of individualArtists) {
       if (isVA) {
-        const albumData = await search(token, year, albumName, individualArtist);
-        const trackInAlbum = await findTrackInAlbum(token, albumData, trackName, isVA);
+        const albumData = await search(year, albumName, individualArtist);
+        const trackInAlbum = await findTrackInAlbum(albumData, trackName, isVA);
         if (trackInAlbum) {
           track = trackInAlbum;
           break;
         }
       }
-      const artistData = await findArtist(token, individualArtist);
-      const trackInArtistAlbums = await findTrackInArtistAlbums(token, artistData, trackName, albumName);
+      const artistData = await findArtist(individualArtist);
+      const trackInArtistAlbums = await findTrackInArtistAlbums(artistData, trackName, albumName);
       if (trackInArtistAlbums) {
         track = trackInArtistAlbums;
         break;
@@ -53,23 +57,21 @@ const handleError = (error, context) => {
   console.log(error.response.data.error);
 };
 
-const findTrackInArtistAlbums = async (token, artistData, trackName, albumName) => {
+const findTrackInArtistAlbums = async (artistData, trackName, albumName) => {
   if (artistData.artists?.items) {
     for (const artist of artistData.artists.items) {
       const artistId = artist.id;
-      const artistAlbumsResponse = await axios.get(`https://api.spotify.com/v1/artists/${artistId}/albums`, {
-        headers: buildHeaders(token),
+      const artistAlbumsResponse = await http.get(`https://api.spotify.com/v1/artists/${artistId}/albums`, {
       });
       await sleep(2000);
       for (const album of artistAlbumsResponse.data.items) {
         const albumNameSimilarity = compareStrings(album.name, albumName);
         const albumNameIncludes = album.name.toLowerCase().includes(albumName.toLowerCase());
         if (albumNameSimilarity >= 0.8 || albumNameIncludes) {
-          const albumTracksResponse = await axios.get(`https://api.spotify.com/v1/albums/${album.id}/tracks`, {
-            headers: buildHeaders(token),
+          const albumTracksResponse = await http.get(`https://api.spotify.com/v1/albums/${album.id}/tracks`, {
           });
           await sleep(2000);
-          const track = await findTrack(albumTracksResponse.data.items, trackName, token);
+          const track = await findTrack(albumTracksResponse.data.items, trackName);
           if (track) return track;
         }
       }
@@ -78,10 +80,9 @@ const findTrackInArtistAlbums = async (token, artistData, trackName, albumName) 
   return null;
 };
 
-const search = async (token, year, albumName, artistName) => {
+const search = async (year, albumName, artistName) => {
   try {
-    const response = await axios.get("https://api.spotify.com/v1/search", {
-      headers: buildHeaders(token),
+    const response = await http.get("https://api.spotify.com/v1/search", {
       params: {
         q: `album:${albumName} artist:${artistName}`,
         type: "album",
@@ -102,18 +103,17 @@ const search = async (token, year, albumName, artistName) => {
   }
 };
 
-const findTrackInAlbum = async (token, albumData, trackName) => {
+const findTrackInAlbum = async (albumData, trackName) => {
   for (const album of albumData) {
-    const albumTracksResponse = await axios.get(`https://api.spotify.com/v1/albums/${album.id}/tracks`, {
-      headers: buildHeaders(token),
+    const albumTracksResponse = await http.get(`https://api.spotify.com/v1/albums/${album.id}/tracks`, {
     });
-    const track = await findTrack(albumTracksResponse.data.items, trackName, token);
+    const track = await findTrack(albumTracksResponse.data.items, trackName);
     if (track) return track;
   }
   return null;
 };
 
-const findTrack = async (tracks, fullTrackName, token) => {
+const findTrack = async (tracks, fullTrackName) => {
   let trackNameToFind = fullTrackName;
   if (isVariousArtist) {
     const splitTrackName = fullTrackName.split(" - ");
@@ -123,7 +123,7 @@ const findTrack = async (tracks, fullTrackName, token) => {
     console.log(`comparing track: '${track.name}' with '${trackNameToFind}'`);
     const trackNameSimilarity = compareStrings(track.name, trackNameToFind);
     if (trackNameSimilarity >= 0.8) {
-      const trackWithPopularity = await getTrackWithPopularity(token, track.id);
+      const trackWithPopularity = await getTrackWithPopularity(track.id);
       trackWithPopularity.preview_url = track.preview_url
       console.log(trackWithPopularity);
       return trackWithPopularity;
@@ -132,10 +132,9 @@ const findTrack = async (tracks, fullTrackName, token) => {
   return null;
 };
 
-const getTrackWithPopularity = async (token, trackId) => {
+const getTrackWithPopularity = async (trackId) => {
   try {
-    const response = await axios.get(`https://api.spotify.com/v1/tracks/${trackId}`, {
-      headers: buildHeaders(token),
+    const response = await http.get(`https://api.spotify.com/v1/tracks/${trackId}`, {
     });
     return response.data;
   } catch (error) {
@@ -145,10 +144,9 @@ const getTrackWithPopularity = async (token, trackId) => {
 };
 
 
-const findArtist = async (token, artistName) => {
+const findArtist = async (artistName) => {
   try {
-    const response = await axios.get("https://api.spotify.com/v1/search", {
-      headers: buildHeaders(token),
+    const response = await http.get(`https://api.spotify.com/v1/search`, {
       params: {
         q: artistName,
         type: "artist",
@@ -163,13 +161,6 @@ const findArtist = async (token, artistName) => {
 
 const compareStrings = (str1, str2) => {
   return jaroWinkler(str1, str2, { caseSensitive: false });
-};
-
-const buildHeaders = (token) => {
-  return {
-    Authorization: `Bearer ${token}`,
-    "Content-Type": "application/json",
-  };
 };
 
 const sleep = (ms) => {
