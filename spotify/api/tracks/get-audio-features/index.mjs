@@ -22,7 +22,7 @@ const handler = async (event, context) => {
         console.error(`Error handler: ${error}`);
         return {
             body: JSON.stringify({ error: error }),
-            exitCode: process.exit(1),
+
         };
     }
 };

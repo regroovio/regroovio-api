@@ -34,7 +34,7 @@ const handler = async (event, context) => {
         await slackBot(notification);
         return {
             body: JSON.stringify({ error: error }),
-            exitCode: process.exit(1),
+
         };
     }
 };
