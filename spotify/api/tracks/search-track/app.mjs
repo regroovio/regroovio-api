@@ -8,6 +8,8 @@ const app = async (event) => {
   try {
     const { token, trackName, year, albumName, artistName } = event;
 
+    console.log(event);
+
     const album = await searchAlbum(token, albumName, year);
     const trackInAlbum = await findTrackInAlbum(token, album, trackName);
     if (trackInAlbum) {
