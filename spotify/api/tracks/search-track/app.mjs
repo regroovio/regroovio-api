@@ -20,7 +20,7 @@ const app = async (event) => {
         const artistData = await findArtist(token, individualArtist);
         const trackInArtistAlbums = await findTrackInArtistAlbums(token, artistData, trackName, albumName);
         if (trackInArtistAlbums) {
-          return { statusCode: 200, body: trackInAlbum };
+          return { statusCode: 200, body: trackInArtistAlbums };
         }
       }
     }
@@ -28,7 +28,7 @@ const app = async (event) => {
     return { statusCode: 404, body: "Track not found." };
   } catch (error) {
     handleError(error, "searching");
-    return error.response.data.error;
+    return { statusCode: error.response?.status || 500, body: error.message };
   }
 };
 
@@ -42,7 +42,9 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const handleError = (error, context) => {
   console.error(`Error ${context}:`);
   console.log(error.message);
-  console.log(error.response.data.error);
+  if (error.response) {
+    console.log(error.response.data);
+  }
 };
 
 const search = async (token, query, type) => {

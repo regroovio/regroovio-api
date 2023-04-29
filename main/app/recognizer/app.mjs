@@ -22,13 +22,7 @@ const app = async (event, context) => {
         console.log('Getting track info', track.name);
         const trackInfo = await getTrackInfo(track.url);
 
-        if (!trackInfo) {
-            console.error('trackInfo is undefined');
-            throw new CustomError('Failed to get track info', 'app');
-        }
-
         if (!trackInfo?.data.result) {
-            console.error('trackInfo.data.result is undefined');
             throw new CustomError('Failed to get track info', 'app');
         }
 
@@ -75,7 +69,7 @@ const getTrackInfo = async (track) => {
         });
         return response;
     } catch (error) {
-        console.error('Error in getTrackInfo:', error);
+        console.error(error);
         throw new CustomError(error.message, 'getTrackInfo');
     }
 };
