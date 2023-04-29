@@ -92,9 +92,9 @@ const search = async (token, year, albumName,) => {
         type: "album",
       },
     });
+    console.log("found album: ", response.data.albums);
     const albums = response.data.albums?.items || [];
     const filteredAlbums = albums.filter((album) => {
-      console.log("found album: ", album);
       const albumYear = album.release_date?.substring(0, 4);
       const albumNameSimilarity = compareStrings(album.name, albumName);
       const albumNameIncludes = album.name.toLowerCase().includes(albumName.toLowerCase());
