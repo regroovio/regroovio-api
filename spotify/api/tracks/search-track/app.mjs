@@ -152,7 +152,6 @@ const search = async (token, query, type, limit) => {
 };
 
 const splitArtists = (artistName) => {
-  // if name includes "feat" or "ft" remove it and everything after
   if (artistName.includes("feat")) {
     return artistName.split(" feat")[0];
   }

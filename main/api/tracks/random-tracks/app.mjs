@@ -16,10 +16,10 @@ const documentClient = DynamoDBDocument.from(new DynamoDB({
 const app = async (event) => {
     const minPopularity = event.queryStringParameters?.popularity || 0;
     const genres = event.queryStringParameters?.genres || []
-
     try {
-        const bandcampTables = await fetchAllBandcampTables();
+        const bandcampTables = await fetchAllBandcampTables(genres);
         let allPopularTracks = [];
+        const uniqueTrackIds = new Set();
         for (const tableName of bandcampTables) {
             console.log(tableName);
             let items = await fetchTracks(tableName, minPopularity, genres);
@@ -28,7 +28,7 @@ const app = async (event) => {
                 continue;
             }
             console.log({ message: `Tracks found. [${items.length}]` });
-            const tracks = await processTracks(items);
+            const tracks = await processTracks(items, uniqueTrackIds);
             allPopularTracks.push(...tracks);
         }
         console.log({ message: `Total tracks found. [${allPopularTracks.length}]` });
@@ -39,7 +39,7 @@ const app = async (event) => {
     }
 };
 
-const fetchAllBandcampTables = async () => {
+const fetchAllBandcampTables = async (genres) => {
     const dynamoDB = new DynamoDB({
         region: process.env.REGION,
         accessKeyId: process.env.ACCESS_KEY,
@@ -51,7 +51,10 @@ const fetchAllBandcampTables = async () => {
         let params = {};
         do {
             result = await dynamoDB.listTables(params);
-            bandcampTables.push(...result.TableNames.filter(name => name.includes("regroovio")));
+            bandcampTables.push(...result.TableNames.filter(name => {
+                const genreInName = genres.some(genre => name.includes(genre));
+                return name.includes("regroovio") && genreInName;
+            }));
             params.ExclusiveStartTableName = result.LastEvaluatedTableName;
         } while (result.LastEvaluatedTableName);
         return bandcampTables;
@@ -90,23 +93,24 @@ const fetchTracks = async (tableName, minPopularity, genres) => {
                         mostPopularTrack = track;
                     }
                 }
-                if (genres.length > 0) {
-                    if (album?.key_words) {
-                        for (const key_word of album.key_words) {
-                            if (genres.includes(key_word)) {
-                                if (mostPopularTrack && (highestPopularity >= minPopularity || (albumYear === currentYear))) {
-                                    popularTracks.push({ track: mostPopularTrack, image: album.image, album_id: album.album_id });
-                                    selectedAlbums.add(album.album_id);
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    if (mostPopularTrack && (highestPopularity >= minPopularity || (albumYear === currentYear))) {
-                        popularTracks.push({ track: mostPopularTrack, image: album.image, album_id: album.album_id });
-                        selectedAlbums.add(album.album_id);
-                    }
+                // more strict genre filtering
+                // if (genres.length > 0) {
+                //     if (album?.key_words) {
+                //         for (const key_word of album.key_words) {
+                //             if (genres.includes(key_word)) {
+                //                 if (mostPopularTrack && (highestPopularity >= minPopularity || (albumYear === currentYear))) {
+                //                     popularTracks.push({ track: mostPopularTrack, image: album.image, album_id: album.album_id });
+                //                     selectedAlbums.add(album.album_id);
+                //                 }
+                //             }
+                //         }
+                //     }
+                // } else {
+                if (mostPopularTrack && (highestPopularity >= minPopularity || (albumYear === currentYear))) {
+                    popularTracks.push({ track: mostPopularTrack, image: album.image, album_id: album.album_id });
+                    selectedAlbums.add(album.album_id);
                 }
+                // }
 
             }
             params.ExclusiveStartKey = result.LastEvaluatedKey;
@@ -128,18 +132,22 @@ const shuffleArray = (array) => {
     return array;
 };
 
-const processTracks = async (items) => {
+const processTracks = async (items, uniqueTrackIds) => {
     const tracks = [];
     for (const item of items) {
+        const id = item.track.spotify.id;
+        if (uniqueTrackIds.has(id)) {
+            continue;
+        }
+        uniqueTrackIds.add(id);
 
         const popularity = item.track.spotify.popularity;
-        const artist = item.track.spotify.artists[0].name
-        const id = item.track.spotify.id
-        const album_id = item.album_id
-        const album = item.track.album
-        const title = item.track.name
-        const url = item.track.url
-        const image = item.image
+        const artist = item.track.spotify.artists[0].name;
+        const album_id = item.album_id;
+        const album = item.track.album;
+        const title = item.track.name;
+        const url = item.track.url;
+        const image = item.image;
 
         tracks.push({ album_id, url, id, title, artist, popularity, album, image });
         console.log(tracks[0]);
