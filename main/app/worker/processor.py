@@ -2,11 +2,9 @@ import os
 import json
 import time
 import boto3
-import threading
 from decimal import Decimal
 from datetime import datetime
 from dotenv import load_dotenv
-from concurrent.futures import ThreadPoolExecutor
 
 import list_tables
 import fetch_unprocessed_albums
@@ -178,11 +176,8 @@ def processor_worker():
             if not admin:
                 print("User not found")
                 return
-
-            with ThreadPoolExecutor() as executor:
-                executor.map(lambda table_name: process_albums_for_table_processor(
-                    table_name, admin_id, admin), tables)
-
+            for table_name in tables:
+                process_albums_for_table_processor(table_name, admin_id, admin)
         except Exception as error:
             response = {"functionName": "processor_worker",
                         "status": "Error", "message": str(error)}
@@ -191,6 +186,4 @@ def processor_worker():
 
 
 if __name__ == '__main__':
-    processor_thread = threading.Thread(target=processor_worker)
-    processor_thread.start()
-    processor_thread.join()
+    processor_worker()
