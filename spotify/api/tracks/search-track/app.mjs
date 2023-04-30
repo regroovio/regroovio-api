@@ -13,9 +13,9 @@ const app = async (event) => {
     const individualArtists = splitArtists(artistName);
     for (const individualArtist of individualArtists) {
       if (!isVariousArtist(individualArtist)) {
-        const artistData = await search(token, `artist:${individualArtist}`, "artist");
+        const artistData = await search(token, `artist:${individualArtist}`, "artist", 20);
         if (artistData) {
-          const trackInArtistAlbums = await findTrackInArtistAlbums(token, artistData, trackName, artistName);
+          const trackInArtistAlbums = await findTrackInArtistAlbums(token, artistData, trackName, artistName, year);
           if (trackInArtistAlbums) {
             return { statusCode: 200, body: trackInArtistAlbums };
           }
@@ -35,9 +35,9 @@ const app = async (event) => {
     // if (trackName.split('-').length) {
     //   for (const word of trackName.split('-')) {
     //     if (!isVariousArtist(word)) {
-    //       const artistData = await search(token, `artist:${word}`, "artist");
+    //       const artistData = await search(token, `artist:${word}`, "artist", 10);
     //       if (artistData) {
-    //         const trackInArtistAlbums = await findTrackInArtistAlbums(token, artistData, trackName);
+    //         const trackInArtistAlbums = await findTrackInArtistAlbums(token, artistData, trackName, year);
     //         if (trackInArtistAlbums) {
     //           return { statusCode: 200, body: trackInArtistAlbums };
     //         }
@@ -54,7 +54,7 @@ const app = async (event) => {
 };
 
 const searchAlbum = async (token, albumName, artistName, year) => {
-  const response = await search(token, `album:${albumName}`, "album");
+  const response = await search(token, `album:${albumName}`, "album", 10);
   for (const album of response.albums.items) {
     const release_year = album.release_date.split("-")[0];
     const includesArtist = album.artists.some((artist) => artist.name.toLowerCase() === artistName.toLowerCase());
@@ -67,15 +67,16 @@ const searchAlbum = async (token, albumName, artistName, year) => {
 };
 
 const findTrackInAlbum = async (token, album, trackName) => {
+  console.log('findTrackInAlbum');
   const albumTracksResponse = await http.get(`https://api.spotify.com/v1/albums/${album.id}/tracks`, {
     headers: buildHeaders(token),
   });
-  const track = await findTrack(albumTracksResponse.data.items, trackName, token, album.artists);
+  const track = await findTrack(albumTracksResponse.data.items, trackName, token);
   if (track) return track;
   return null;
 };
 
-const findTrackInArtistAlbums = async (token, artistData, trackName) => {
+const findTrackInArtistAlbums = async (token, artistData, trackName, year) => {
   if (artistData.artists?.items) {
     for (const artist of artistData.artists.items) {
       const artistId = artist.id;
@@ -84,19 +85,21 @@ const findTrackInArtistAlbums = async (token, artistData, trackName) => {
       });
       await sleep(2000);
       for (const album of artistAlbumsResponse.data.items) {
-        const albumTracksResponse = await http.get(`https://api.spotify.com/v1/albums/${album.id}/tracks`, {
-          headers: buildHeaders(token),
-        });
-        await sleep(2000);
-        const track = await findTrack(albumTracksResponse.data.items, trackName, token, album.artists);
-        if (track) return track;
+        if (album.release_date.split('-')[0] === year) {
+          const albumTracksResponse = await http.get(`https://api.spotify.com/v1/albums/${album.id}/tracks`, {
+            headers: buildHeaders(token),
+          });
+          await sleep(2000);
+          const track = await findTrack(albumTracksResponse.data.items, trackName, token);
+          if (track) return track;
+        }
       }
     }
   }
   return null;
 };
 
-const findTrack = async (tracks, fullTrackName, token, artists) => {
+const findTrack = async (tracks, fullTrackName, token) => {
   let normalizedTrackNames = [fullTrackName]
   if (fullTrackName.split('-').length) {
     normalizedTrackNames = [];
@@ -113,11 +116,6 @@ const findTrack = async (tracks, fullTrackName, token, artists) => {
       threshold: 0.3,
     });
     results = fuse.search(normalizedTrackName);
-    console.log('');
-    for (const track of tracks) {
-      console.log(`comparing track ${track.name} to ${normalizedTrackName}`);
-    }
-    console.log(`fuse search results for ${normalizedTrackName}:`, results);
     if (results.length > 0) {
       const bestMatch = results[0].item;
       const trackWithPopularity = await getTrackWithPopularity(token, bestMatch.id);
@@ -139,10 +137,10 @@ const getTrackWithPopularity = async (token, trackId) => {
   }
 };
 
-const search = async (token, query, type) => {
+const search = async (token, query, type, limit) => {
   const response = await http.get("https://api.spotify.com/v1/search", {
     headers: buildHeaders(token),
-    params: { q: query, type: type, limit: 50, offset: 0 },
+    params: { q: query, type: type, limit, offset: 0 },
   });
   return response.data;
 };
