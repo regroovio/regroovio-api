@@ -1,10 +1,11 @@
 import os
 import json
-from decimal import Decimal
 import time
 import boto3
-from dotenv import load_dotenv
+import threading
+from decimal import Decimal
 from datetime import datetime
+from dotenv import load_dotenv
 
 import list_tables
 import fetch_unsaved_albums
@@ -18,20 +19,7 @@ import update_album_in_dynamodb
 load_dotenv()
 s3 = boto3.client('s3', region_name='us-east-1')
 
-tableToProcess = 'electronic'
-
-
-def app():
-    try:
-        tables = list_tables.list_tables()
-        for table_name in tables:
-            if tableToProcess in table_name:
-                process_albums_for_table(table_name)
-
-    except Exception as error:
-        response = {"functionName": "app",
-                    "status": "Error", "message": str(error)}
-        raise Exception(f"Failed to process albums: {response}")
+CHECK_INTERVAL = 60 * 60  # Check every 1 hour
 
 
 class DecimalEncoder(json.JSONEncoder):
@@ -46,6 +34,7 @@ def get_token(admin_id, admin):
     remaining_time_in_minutes = (
         float(admin['expiration_timestamp_spotify'] / 1000) - datetime.now().timestamp()) / 60 if 'expiration_timestamp_spotify' in admin else -1
     minutes = int(remaining_time_in_minutes)
+    print(minutes)
     if minutes <= 15:
         print("getting token...")
         raw_tokens = invoke_lambda.invoke_lambda({
@@ -186,4 +175,21 @@ def process_albums_for_table(table_name):
     process_unprocessed_albums(admin_id, admin, unprocessed_albums, table_name)
 
 
-app()
+def worker():
+    while True:
+        try:
+            tables = list_tables.list_tables()
+            for table_name in tables:
+                if 'r-b' in table_name:
+                    process_albums_for_table(table_name)
+        except Exception as error:
+            response = {"functionName": "app",
+                        "status": "Error", "message": str(error)}
+            raise Exception(f"Failed to process albums: {response}")
+        time.sleep(CHECK_INTERVAL)
+
+
+if __name__ == '__main__':
+    worker_thread = threading.Thread(target=worker)
+    worker_thread.start()
+    worker_thread.join()
