@@ -31,19 +31,20 @@ const app = async (event) => {
       }
     }
 
-    if (trackName.split('-').length) {
-      for (const word of trackName.split('-')) {
-        if (!isVariousArtist(word)) {
-          const artistData = await search(token, `artist:${word}`, "artist");
-          if (artistData) {
-            const trackInArtistAlbums = await findTrackInArtistAlbums(token, artistData, trackName);
-            if (trackInArtistAlbums) {
-              return { statusCode: 200, body: trackInArtistAlbums };
-            }
-          }
-        }
-      }
-    }
+    // returns original tracks, might not be the best idea
+    // if (trackName.split('-').length) {
+    //   for (const word of trackName.split('-')) {
+    //     if (!isVariousArtist(word)) {
+    //       const artistData = await search(token, `artist:${word}`, "artist");
+    //       if (artistData) {
+    //         const trackInArtistAlbums = await findTrackInArtistAlbums(token, artistData, trackName);
+    //         if (trackInArtistAlbums) {
+    //           return { statusCode: 200, body: trackInArtistAlbums };
+    //         }
+    //       }
+    //     }
+    //   }
+    // }
 
     return { statusCode: 404, body: "Track not found." };
   } catch (error) {
