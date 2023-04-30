@@ -100,21 +100,21 @@ const fetchTracks = async (tableName, minPopularity, genres) => {
                     }
                 }
                 // more strict genre filtering
-                if (genres.length > 0 && album?.key_words) {
-                    for (const key_word of album.key_words) {
-                        if (genres.includes(key_word)) {
-                            if (mostPopularTrack && (highestPopularity >= minPopularity || (albumYear === currentYear))) {
-                                popularTracks.push({ track: mostPopularTrack, image: album.image, album_id: album.album_id });
-                                selectedAlbums.add(album.album_id);
-                            }
-                        }
-                    }
-                } else {
-                    if (mostPopularTrack && (highestPopularity >= minPopularity || (albumYear === currentYear))) {
-                        popularTracks.push({ track: mostPopularTrack, image: album.image, album_id: album.album_id });
-                        selectedAlbums.add(album.album_id);
-                    }
+                // if (genres.length > 0 && album?.key_words) {
+                //     for (const key_word of album.key_words) {
+                //         if (genres.includes(key_word)) {
+                //             if (mostPopularTrack && (highestPopularity >= minPopularity || (albumYear === currentYear))) {
+                //                 popularTracks.push({ track: mostPopularTrack, image: album.image, album_id: album.album_id });
+                //                 selectedAlbums.add(album.album_id);
+                //             }
+                //         }
+                //     }
+                // } else {
+                if (mostPopularTrack && (highestPopularity >= minPopularity || (albumYear === currentYear))) {
+                    popularTracks.push({ track: mostPopularTrack, image: album.image, album_id: album.album_id });
+                    selectedAlbums.add(album.album_id);
                 }
+                // }
 
             }
             params.ExclusiveStartKey = result.LastEvaluatedKey;
