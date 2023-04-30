@@ -16,6 +16,7 @@ const documentClient = DynamoDBDocument.from(new DynamoDB({
 const app = async (event) => {
     const minPopularity = event.queryStringParameters?.popularity || 0;
     const genres = event.queryStringParameters?.genres || []
+
     try {
         const bandcampTables = await fetchAllBandcampTables(genres);
         let allPopularTracks = [];
@@ -52,8 +53,11 @@ const fetchAllBandcampTables = async (genres) => {
         do {
             result = await dynamoDB.listTables(params);
             bandcampTables.push(...result.TableNames.filter(name => {
-                const genreInName = genres.some(genre => name.includes(genre));
-                return name.includes("regroovio") && genreInName;
+                if (genres.length) {
+                    const genreInName = genres.some(genre => name.includes(genre));
+                    return name.includes("regroovio") && !name.includes("regroovio-users") && genreInName;
+                }
+                return name.includes("regroovio") && !name.includes("regroovio-users");
             }));
             params.ExclusiveStartTableName = result.LastEvaluatedTableName;
         } while (result.LastEvaluatedTableName);
@@ -94,23 +98,21 @@ const fetchTracks = async (tableName, minPopularity, genres) => {
                     }
                 }
                 // more strict genre filtering
-                // if (genres.length > 0) {
-                //     if (album?.key_words) {
-                //         for (const key_word of album.key_words) {
-                //             if (genres.includes(key_word)) {
-                //                 if (mostPopularTrack && (highestPopularity >= minPopularity || (albumYear === currentYear))) {
-                //                     popularTracks.push({ track: mostPopularTrack, image: album.image, album_id: album.album_id });
-                //                     selectedAlbums.add(album.album_id);
-                //                 }
-                //             }
-                //         }
-                //     }
-                // } else {
-                if (mostPopularTrack && (highestPopularity >= minPopularity || (albumYear === currentYear))) {
-                    popularTracks.push({ track: mostPopularTrack, image: album.image, album_id: album.album_id });
-                    selectedAlbums.add(album.album_id);
+                if (genres.length > 0 && album?.key_words) {
+                    for (const key_word of album.key_words) {
+                        if (genres.includes(key_word)) {
+                            if (mostPopularTrack && (highestPopularity >= minPopularity || (albumYear === currentYear))) {
+                                popularTracks.push({ track: mostPopularTrack, image: album.image, album_id: album.album_id });
+                                selectedAlbums.add(album.album_id);
+                            }
+                        }
+                    }
+                } else {
+                    if (mostPopularTrack && (highestPopularity >= minPopularity || (albumYear === currentYear))) {
+                        popularTracks.push({ track: mostPopularTrack, image: album.image, album_id: album.album_id });
+                        selectedAlbums.add(album.album_id);
+                    }
                 }
-                // }
 
             }
             params.ExclusiveStartKey = result.LastEvaluatedKey;
