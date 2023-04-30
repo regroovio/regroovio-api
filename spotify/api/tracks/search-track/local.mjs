@@ -4,10 +4,10 @@ import { handler } from './index.mjs';
 
 const start = async () => {
     const event = {
-        token: 'BQA838lgDqH_3eqtIaV7u5ANoF75k0R8odiP5yLVOu4WBZ86Voz6EFf9Cjc0qaQ0omPB9z90shamhvKJ-SV1OaTqYUZEPKKihkApxjkEhZlFPs5L_n3yQKVmMuvB4iYV9R-31O4eCLhhGZrNP2r2eF1GEcezcGM2SyQm1wsfFUGsxs2i7LEV78D3zLtheXKxJ_U8xlSQfD2AB1FDx0C-xaGPWxwS1M1EUW8XhpbMJ0yuf1qi-Dwzq5wlt1JmKsArGgflWxR-jnGaVVU6SkavaEstltai_xek2U9_lqMeL4jCH1ndM2Tc3CqW06H1PsfiJD2xxRNegjbmoyoh_IH5Sg',
-        trackName: 'The Tiger',
-        albumName: 'The Tiger',
-        artistName: 'biome',
+        token: 'BQDdFyHUVqd52e9mrQ1Xv-SypyM2AlgiQHaF91Tf21CGNh5mDu8yu-oeGu8pF89jL0mTzJ1PEWBNd7mL4lxgDVuh0wr1PCqxeMLOqV4QpSKjsX5HF3a6PksCDGsBrcis2uXXD5VU3raDaYDfKn1NpgOzz_Mu08ZMmyPrU2Wu_UPYuMDfEtfmGgNhuls6K_t8qxB581YHfYwbffIKZE-0UERArK31sLzpIwSsWLma_j_snnofPX7BO7NgHC_Rx7g-7Iuk9H8kWyOEg_pjjxPiTA6OP7H668kaowqtEhgK7QXS-3JxcIqpOh1rXLwgO8HAF1UlR2ntZCvBDw079r9-Aw',
+        trackName: 'Ganja White Night, CloZee - Infinity',
+        albumName: 'Unity',
+        artistName: 'Ganja White Night',
         year: '2023'
     }
     const response = await handler(event);

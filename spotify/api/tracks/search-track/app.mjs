@@ -23,11 +23,13 @@ const app = async (event) => {
       }
     }
 
-    const album = await searchAlbum(token, albumName, artistName, year);
-    if (album) {
-      const trackInAlbum = await findTrackInAlbum(token, album, trackName, album);
-      if (trackInAlbum) {
-        return { statusCode: 200, body: trackInAlbum };
+    const albums = await searchAlbum(token, albumName, artistName, year);
+    if (albums.length) {
+      for (const album of albums) {
+        const trackInAlbum = await findTrackInAlbum(token, album, trackName, album);
+        if (trackInAlbum) {
+          return { statusCode: 200, body: trackInAlbum };
+        }
       }
     }
 
@@ -54,20 +56,21 @@ const app = async (event) => {
 };
 
 const searchAlbum = async (token, albumName, artistName, year) => {
-  const response = await search(token, `album:${albumName}`, "album", 10);
+  const response = await search(token, `album:${albumName}`, "album", 50);
+  const albums = []
   for (const album of response.albums.items) {
     const release_year = album.release_date.split("-")[0];
     const includesArtist = album.artists.some((artist) => artist.name.toLowerCase() === artistName.toLowerCase());
     if (album.name.toLowerCase() === albumName.toLowerCase() && (release_year === year || includesArtist)) {
       console.log('album found: ', album.name);
       album.release_year = release_year;
-      return album;
+      albums.push(album);
     }
   }
+  return albums;
 };
 
 const findTrackInAlbum = async (token, album, trackName) => {
-  console.log('findTrackInAlbum');
   const albumTracksResponse = await http.get(`https://api.spotify.com/v1/albums/${album.id}/tracks`, {
     headers: buildHeaders(token),
   });
@@ -115,6 +118,9 @@ const findTrack = async (tracks, fullTrackName, token) => {
       includeScore: true,
       threshold: 0.3,
     });
+    for (const track of tracks) {
+      console.log(`searching for ${normalizedTrackName} in ${track.name}`);
+    }
     results = fuse.search(normalizedTrackName);
     if (results.length > 0) {
       const bestMatch = results[0].item;

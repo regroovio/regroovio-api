@@ -1,5 +1,6 @@
 import os
 import json
+from decimal import Decimal
 import time
 import boto3
 from dotenv import load_dotenv
@@ -31,6 +32,13 @@ def app():
         response = {"functionName": "app",
                     "status": "Error", "message": str(error)}
         raise Exception(f"Failed to process albums: {response}")
+
+
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return float(obj)
+        return super(DecimalEncoder, self).default(obj)
 
 
 def get_token(admin_id, admin):
@@ -77,7 +85,8 @@ def process_track(token, track, album):
                     "albumName": track["album"],
                     "artistName": album["artist_name"],
                     "year": track["release_year"],
-                }
+                },
+                cls=DecimalEncoder,
             ),
         }
     )
@@ -99,7 +108,8 @@ def handle_track_search_response(parsed_target_track, token, track, album):
                     {
                         "token": token,
                         "track": track,
-                    }
+                    },
+                    cls=DecimalEncoder,
                 ),
             }
         )
