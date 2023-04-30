@@ -9,11 +9,9 @@ from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor
 
 import list_tables
-import fetch_unsaved_albums
 import fetch_unprocessed_albums
 import invoke_lambda
 import get_user_by_id
-import invoke_lambdas_in_chunks
 import update_user_tokens
 import update_album_in_dynamodb
 
@@ -152,18 +150,8 @@ def handle_track_search_response(parsed_target_track, token, track, album):
     return track["spotify"]
 
 
-def process_albums_for_table(table_name, admin_id, admin):
+def process_albums_for_table_processor(table_name, admin_id, admin):
     print(f"Getting {table_name}...")
-    print(f"Retrieving unsaved albums from {table_name}")
-    unsaved_albums = fetch_unsaved_albums.fetch_unsaved_albums(table_name)
-    if not unsaved_albums:
-        print({"message": "No unsaved albums found."})
-    else:
-        print('')
-        print(f"Found {len(unsaved_albums)} unsaved albums.")
-        invoke_lambdas_in_chunks.invoke_lambdas_in_chunks(
-            f"regroovio-downloader-{os.getenv('STAGE')}", unsaved_albums, table_name
-        )
     print(f"Retrieving unprocessed albums from {table_name}")
     unprocessed_albums = fetch_unprocessed_albums.fetch_unprocessed_albums(
         table_name)
@@ -181,7 +169,7 @@ def process_albums_for_table(table_name, admin_id, admin):
     process_unprocessed_albums(admin_id, admin, unprocessed_albums, table_name)
 
 
-def worker():
+def processor_worker():
     while True:
         try:
             tables = list_tables.list_tables()
@@ -192,17 +180,17 @@ def worker():
                 return
 
             with ThreadPoolExecutor() as executor:
-                executor.map(lambda table_name: process_albums_for_table(
+                executor.map(lambda table_name: process_albums_for_table_processor(
                     table_name, admin_id, admin), tables)
 
         except Exception as error:
-            response = {"functionName": "app",
+            response = {"functionName": "processor_worker",
                         "status": "Error", "message": str(error)}
             raise Exception(f"Failed to process albums: {response}")
         time.sleep(CHECK_INTERVAL)
 
 
 if __name__ == '__main__':
-    worker_thread = threading.Thread(target=worker)
-    worker_thread.start()
-    worker_thread.join()
+    processor_thread = threading.Thread(target=processor_worker)
+    processor_thread.start()
+    processor_thread.join()

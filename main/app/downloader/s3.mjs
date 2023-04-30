@@ -18,7 +18,7 @@ const saveAlbumToS3 = async (item) => {
             ContentType: response.headers['content-type']
         };
         await s3.send(new PutObjectCommand(params));
-        const track = `https://${bucketName}.s3.amazonaws.com/${params.Key}`;
+        const track = encodeURIComponent(`https://${bucketName}.s3.amazonaws.com/${params.Key}`);
         console.log(`Saved track to S3: ${track}`);
         return { url: track, name };
     } catch (err) {
@@ -42,9 +42,9 @@ const saveImageToS3 = async (item) => {
             ContentType: response.headers['content-type']
         };
         await s3.send(new PutObjectCommand(params));
-        const image = `https://${bucketName}.s3.amazonaws.com/${params.Key}`;
+        const image = encodeURIComponent(`https://${bucketName}.s3.amazonaws.com/${params.Key}`);
         console.log(`Saved image to S3: ${image}`);
-        return image
+        return image;
     } catch (err) {
         console.error(`Error saving image to S3: ${err}`);
         return null;
