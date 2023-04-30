@@ -55,7 +55,7 @@ const fetchAllBandcampTables = async (genres) => {
             bandcampTables.push(...result.TableNames.filter(name => {
                 if (genres.length) {
                     const genreInName = genres.some(genre => name.includes(genre));
-                    return name.includes("regroovio") && !name.includes("regroovio-users") && genreInName;
+                    return genreInName || name.includes("daily") && !name.includes("regroovio-users");
                 }
                 return name.includes("regroovio") && !name.includes("regroovio-users");
             }));
