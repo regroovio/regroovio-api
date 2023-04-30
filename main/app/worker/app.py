@@ -15,6 +15,7 @@ import get_user_by_id
 import invoke_lambdas_in_chunks
 import update_user_tokens
 import update_album_in_dynamodb
+from concurrent.futures import ThreadPoolExecutor
 
 load_dotenv()
 s3 = boto3.client('s3', region_name='us-east-1')
@@ -48,16 +49,24 @@ def get_token(admin_id, admin):
     return token
 
 
-def process_unprocessed_albums(admin_id, admin, unprocessed_albums, table_name):
-    for i, album in enumerate(unprocessed_albums):
-        token = get_token(admin_id, admin)
-        print(
-            f"\nSearching: {album['artist_name']} - {album['album_name']} [{i + 1}/{len(unprocessed_albums)}]")
-        for track in album['tracks']:
-            track = process_track(token, track, album)
+def process_album(admin_id, admin, album, table_name):
+    token = get_token(admin_id, admin)
+    print(f"\nSearching: {album['artist_name']} - {album['album_name']}")
+    for track in album['tracks']:
+        track = process_track(token, track, album)
 
-        update_album_in_dynamodb.update_album_in_dynamodb(
-            table_name, album)
+    update_album_in_dynamodb.update_album_in_dynamodb(table_name, album)
+
+
+def process_unprocessed_albums_parallel(admin_id, admin, unprocessed_albums, table_name, max_workers=5):
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = [
+            executor.submit(process_album, admin_id, admin, album, table_name)
+            for album in unprocessed_albums
+        ]
+
+        for future in futures:
+            future.result()
 
 
 def process_track(token, track, album):
@@ -131,17 +140,22 @@ def handle_track_search_response(parsed_target_track, token, track, album):
 
     else:
         target_track_info = parsed_target_track["body"]
-        del target_track_info["album"]
-        del target_track_info["available_markets"]
-        del target_track_info["disc_number"]
-        del target_track_info["is_local"]
-        del target_track_info["explicit"]
-        del target_track_info["external_ids"]
-        del target_track_info["external_urls"]
-        del target_track_info["preview_url"]
-        del target_track_info["type"]
-        print(f"\nTrack found", target_track_info["name"])
-        track["spotify"] = target_track_info
+        if isinstance(target_track_info, dict):
+            del target_track_info["album"]
+            del target_track_info["available_markets"]
+            del target_track_info["disc_number"]
+            del target_track_info["is_local"]
+            del target_track_info["explicit"]
+            del target_track_info["external_ids"]
+            del target_track_info["external_urls"]
+            del target_track_info["preview_url"]
+            del target_track_info["type"]
+            print(f"\nTrack found", target_track_info["name"])
+            track["spotify"] = target_track_info
+        else:
+            print(
+                f"\nError: target_track_info is not a dictionary: {target_track_info}")
+            track["spotify"] = {}
 
     return track["spotify"]
 
@@ -172,7 +186,8 @@ def process_albums_for_table(table_name):
 
     print('')
     print(f"Found {len(unprocessed_albums)} unprocessed albums.")
-    process_unprocessed_albums(admin_id, admin, unprocessed_albums, table_name)
+    process_unprocessed_albums_parallel(
+        admin_id, admin, unprocessed_albums, table_name)
 
 
 def worker():
@@ -180,8 +195,7 @@ def worker():
         try:
             tables = list_tables.list_tables()
             for table_name in tables:
-                if 'r-b' in table_name:
-                    process_albums_for_table(table_name)
+                process_albums_for_table(table_name)
         except Exception as error:
             response = {"functionName": "app",
                         "status": "Error", "message": str(error)}
