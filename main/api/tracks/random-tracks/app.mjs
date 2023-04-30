@@ -16,7 +16,8 @@ const documentClient = DynamoDBDocument.from(new DynamoDB({
 const app = async (event) => {
     console.log(event);
     const minPopularity = event.queryStringParameters?.popularity || 0;
-    const genres = `[${event.queryStringParameters?.genres}]` || []
+    const genres = event.queryStringParameters?.genres ? event.queryStringParameters.genres.split(',') : [];
+
 
     try {
         const bandcampTables = await fetchAllBandcampTables(genres);
