@@ -3,7 +3,6 @@ import time
 import boto3
 import threading
 from dotenv import load_dotenv
-from concurrent.futures import ThreadPoolExecutor
 
 import list_tables
 import fetch_unsaved_albums
@@ -29,15 +28,10 @@ def process_albums_for_table_downloader(table_name):
         )
 
 
-def downloader_worker():
+def downloader_worker(table_name):
     while True:
         try:
-            tables = list_tables.list_tables()
-
-            with ThreadPoolExecutor() as executor:
-                executor.map(lambda table_name: process_albums_for_table_downloader(
-                    table_name), tables)
-
+            process_albums_for_table_downloader(table_name)
         except Exception as error:
             response = {"functionName": "downloader_worker",
                         "status": "Error", "message": str(error)}
@@ -46,6 +40,14 @@ def downloader_worker():
 
 
 if __name__ == '__main__':
-    downloader_thread = threading.Thread(target=downloader_worker)
-    downloader_thread.start()
-    downloader_thread.join()
+    tables = list_tables.list_tables()
+    threads = []
+
+    for table_name in tables:
+        downloader_thread = threading.Thread(
+            target=downloader_worker, args=(table_name,))
+        downloader_thread.start()
+        threads.append(downloader_thread)
+
+    for thread in threads:
+        thread.join()

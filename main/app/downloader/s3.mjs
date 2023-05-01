@@ -3,6 +3,10 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import axios from 'axios';
 
+const encodeS3Key = (key) => {
+    return key.replace(/ /g, '+');
+}
+
 const saveAlbumToS3 = async (item) => {
     const { stream, name, album, artist } = item;
     const s3 = new S3Client({ region: 'us-east-1' });
@@ -13,12 +17,12 @@ const saveAlbumToS3 = async (item) => {
         const buffer = Buffer.from(response.data, 'binary');
         const params = {
             Bucket: bucketName,
-            Key: `artists/${artist.replace('/', '-')}/${album.replace('/', '-')}/${name.replace('/', '-')}.${type}`,
+            Key: encodeS3Key(`artists/${artist.replace('/', '-')}/${album.replace('/', '-')}/${name.replace('/', '-')}.${type}`),
             Body: buffer,
             ContentType: response.headers['content-type']
         };
         await s3.send(new PutObjectCommand(params));
-        const track = `https://${bucketName}.s3.amazonaws.com/${encodeURIComponent(params.Key)}`
+        const track = `https://${bucketName}.s3.amazonaws.com/${params.Key}`
         console.log(`Saved track to S3: ${track}`);
         return { url: track, name };
     } catch (err) {
@@ -37,12 +41,12 @@ const saveImageToS3 = async (item) => {
         const buffer = Buffer.from(response.data, 'binary');
         const params = {
             Bucket: bucketName,
-            Key: `artists/${artist.replace('/', '-')}/${album.replace('/', '-')}/${album.replace('/', '-')}.${type}`,
+            Key: encodeS3Key(`artists/${artist.replace('/', '-')}/${album.replace('/', '-')}/${album.replace('/', '-')}.${type}`),
             Body: buffer,
             ContentType: response.headers['content-type']
         };
         await s3.send(new PutObjectCommand(params));
-        const image = `https://${bucketName}.s3.amazonaws.com/${encodeURIComponent(params.Key)}`
+        const image = `https://${bucketName}.s3.amazonaws.com/${params.Key}`
         console.log(`Saved image to S3: ${image}`);
         return image;
     } catch (err) {
