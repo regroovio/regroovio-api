@@ -13,12 +13,13 @@ const saveAlbumToS3 = async (item) => {
         const buffer = Buffer.from(response.data, 'binary');
         const params = {
             Bucket: bucketName,
-            Key: `artists/${encodeURIComponent(artist)}/${encodeURIComponent(album)}/${encodeURIComponent(name).replace(/%20/g, '+')}.${type}`,
+            Key: `artists/${artist}/${album}/${name}.${type}`,
             Body: buffer,
             ContentType: response.headers['content-type']
         };
         await s3.send(new PutObjectCommand(params));
-        const track = `https://${bucketName}.s3.amazonaws.com/${params.Key}`
+        const key = params.Key.split(' ').join('');
+        const track = `https://${bucketName}.s3.amazonaws.com/${key}`
         console.log(`Saved track to S3: ${track}`);
         return { url: track, name };
     } catch (err) {
@@ -37,12 +38,13 @@ const saveImageToS3 = async (item) => {
         const buffer = Buffer.from(response.data, 'binary');
         const params = {
             Bucket: bucketName,
-            Key: `artists/${encodeURIComponent(artist)}/${encodeURIComponent(album)}/image.${type}`,
+            Key: `artists/${artist}/${album}/image.${type}`,
             Body: buffer,
             ContentType: response.headers['content-type']
         };
         await s3.send(new PutObjectCommand(params));
-        const image = `https://${bucketName}.s3.amazonaws.com/${params.Key}`
+        const key = params.Key.split(' ').join('');
+        const image = `https://${bucketName}.s3.amazonaws.com/${key}`
         console.log(`Saved image to S3: ${image}`);
         return image;
     } catch (err) {
