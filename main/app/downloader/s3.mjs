@@ -15,7 +15,8 @@ const saveAlbumToS3 = async (item) => {
             Bucket: bucketName,
             Key: `artists/${artist}/${album}/${name}.${type}`,
             Body: buffer,
-            ContentType: response.headers['content-type']
+            ContentType: response.headers['content-type'],
+            ACL: 'public-read'
         };
         await s3.send(new PutObjectCommand(params));
         const key = params.Key.split(' ').join('');
@@ -40,7 +41,8 @@ const saveImageToS3 = async (item) => {
             Bucket: bucketName,
             Key: `artists/${artist}/${album}/image.${type}`,
             Body: buffer,
-            ContentType: response.headers['content-type']
+            ContentType: response.headers['content-type'],
+            ACL: 'public-read'
         };
         await s3.send(new PutObjectCommand(params));
         const key = params.Key.split(' ').join('');
