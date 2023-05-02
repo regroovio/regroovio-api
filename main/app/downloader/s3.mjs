@@ -19,7 +19,7 @@ const saveAlbumToS3 = async (item) => {
             ACL: 'public-read'
         };
         await s3.send(new PutObjectCommand(params));
-        const key = params.Key.split(' ').join('');
+        const key = params.Key.split(' ').join('+');
         const track = `https://${bucketName}.s3.amazonaws.com/${key}`
         console.log(`Saved track to S3: ${track}`);
         return { url: track, name };
@@ -45,7 +45,7 @@ const saveImageToS3 = async (item) => {
             ACL: 'public-read'
         };
         await s3.send(new PutObjectCommand(params));
-        const key = params.Key.split(' ').join('');
+        const key = params.Key.split(' ').join('+');
         const image = `https://${bucketName}.s3.amazonaws.com/${key}`
         console.log(`Saved image to S3: ${image}`);
         return image;
