@@ -22,7 +22,8 @@ def list_tables():
         while True:
             result = dynamodb_client.list_tables(**params)
             tables.extend(
-                [name for name in result["TableNames"] if "regroovio" in name]
+                [name for name in result["TableNames"]
+                    if "regroovio" in name and "users" not in name]
             )
             if "LastEvaluatedTableName" in result:
                 params["ExclusiveStartTableName"] = result["LastEvaluatedTableName"]

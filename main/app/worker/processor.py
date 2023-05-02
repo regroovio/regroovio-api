@@ -31,7 +31,6 @@ def get_token(admin_id, admin):
     remaining_time_in_minutes = (
         float(admin['expiration_timestamp_spotify'] / 1000) - datetime.now().timestamp()) / 60 if 'expiration_timestamp_spotify' in admin else -1
     minutes = int(remaining_time_in_minutes)
-    print(minutes)
     if minutes <= 15:
         print("getting token...")
         raw_tokens = invoke_lambda.invoke_lambda({
@@ -39,15 +38,16 @@ def get_token(admin_id, admin):
             "Payload": json.dumps({"user_id": admin_id}),
         })
         tokens = json.loads(raw_tokens)
-        update_user_tokens.update_user_tokens(admin, tokens)
+        admin = update_user_tokens.update_user_tokens(
+            admin, tokens)
         token = tokens['access_token']
 
-    return token
+    return token, admin
 
 
 def process_unprocessed_albums(admin_id, admin, unprocessed_albums, table_name):
     for i, album in enumerate(unprocessed_albums):
-        token = get_token(admin_id, admin)
+        token, admin = get_token(admin_id, admin)
         print(
             f"\nSearching: {album['artist_name']} - {album['album_name']} [{i + 1}/{len(unprocessed_albums)}]")
         for track in album['tracks']:
@@ -154,7 +154,7 @@ def process_albums_for_table_processor(table_name, admin_id, admin):
     unprocessed_albums = fetch_unprocessed_albums.fetch_unprocessed_albums(
         table_name)
     if not unprocessed_albums:
-        print({"message": "No unprocessed albums found."})
+        print("No unprocessed albums found.")
         return
     admin_id = os.getenv('ADMIN_ID')
     admin = get_user_by_id.get_user_by_id(admin_id)
