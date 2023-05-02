@@ -28,7 +28,7 @@ def process_albums_for_table_downloader(table_name):
     chunk_size = 10
     albums = fetch_unsaved_albums.fetch_unsaved_albums(table_name)
     if not albums:
-        print({"message": "No unsaved albums found."})
+        print("No unsaved albums found.")
         return
     if len(albums) < chunk_size:
         chunk_size = len(albums)
