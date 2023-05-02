@@ -17,11 +17,11 @@ const documentClient = DynamoDBDocument.from(new DynamoDB({
 const app = async (event, context) => {
     try {
         const { tableName, album } = event
-        console.log(`Processing album ${album.album_id} for table ${tableName}`);
+        console.log(`Processing album ${album.url} for table ${tableName}`);
         await processAndSaveAlbum(album, tableName);
-        return { message: `Album ${album.album_id} added to ${tableName}.` };
+        return { message: `Album ${album.url} added to ${tableName}.` };
     } catch (err) {
-        console.error('Error processing album:', err);
+        console.error('Error app:', err);
         return { message: 'Failed to process album', err };
     }
 };
@@ -36,7 +36,7 @@ const processAndSaveAlbum = async (album, tableName) => {
         console.log('Adding album:', linkInfo.name);
         await saveAlbumToDatabase(tableName, { ...album, ...albumDetails });
     } catch (err) {
-        console.error("Error processing album:", err);
+        console.error("Error processAndSaveAlbum:", err);
     }
 };
 
@@ -78,9 +78,8 @@ const fetchAlbumData = async (album) => {
 const downloadTrack = async (stream, linkInfo) => {
     if (stream.stream) {
         console.log(`Downloading track: `, stream.name);
-        const track = await saveAlbumToS3({ ...stream, album: linkInfo.name, artist: linkInfo.artist.name });
-        track.name = stream.name
-        track.album = linkInfo.name
+        const url = await saveAlbumToS3({ ...stream, album: linkInfo.name, artist: linkInfo.artist.name });
+        const track = { url, name: stream.name, album: linkInfo.name };
         return track;
     } else {
         console.log(`Undefined track: `, stream);
