@@ -22,7 +22,7 @@ const saveAlbumToS3 = async (item) => {
         const key = params.Key.split(' ').join('+');
         const track = `https://${bucketName}.s3.amazonaws.com/${key}`
         console.log(`Saved track to S3: ${track}`);
-        return { url: track, name };
+        return track;
     } catch (err) {
         console.error(`Error saving album to S3: ${err}`);
         return null;
