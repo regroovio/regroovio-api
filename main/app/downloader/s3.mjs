@@ -24,6 +24,7 @@ const saveAlbumToS3 = async (item) => {
             ACL: 'public-read'
         };
         const putObjectResponse = await s3.send(new PutObjectCommand(params));
+        console.log(putObjectResponse);
         const track = putObjectResponse.Location;
         console.log(`Saved track to S3: ${track}`);
         return track;
@@ -50,6 +51,7 @@ const saveImageToS3 = async (item) => {
             ACL: 'public-read'
         };
         const putObjectResponse = await s3.send(new PutObjectCommand(params));
+        console.log(putObjectResponse);
         const image = putObjectResponse.Location;
         console.log(`Saved image to S3: ${image}`);
         return image;
