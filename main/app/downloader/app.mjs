@@ -90,18 +90,17 @@ const downloadTrack = async (stream, linkInfo) => {
 };
 
 const saveAlbumToDatabase = async (tableName, album) => {
-    console.log(album);
-    try {
-        delete album.url;
-        await documentClient.put({
-            TableName: tableName,
-            Item: album,
-        });
-    } catch (err) {
-        console.error(`Error saving album to database: ${err}`);
-        console.log('Table:', tableName);
-        console.log('Album:', album);
-    }
+    // try {
+    //     delete album.url;
+    //     await documentClient.put({
+    //         TableName: tableName,
+    //         Item: album,
+    //     });
+    // } catch (err) {
+    //     console.error(`Error saving album to database: ${err}`);
+    //     console.log('Table:', tableName);
+    //     console.log('Album:', album);
+    // }
 };
 
 export { app }
