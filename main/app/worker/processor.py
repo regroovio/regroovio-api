@@ -54,8 +54,6 @@ def process_unprocessed_albums(admin_id, admin, unprocessed_albums, table_name):
         print(
             f"\nSearching: {album['artist_name']} - {album['album_name']} [{i + 1}/{len(unprocessed_albums)}]")
         for track in album['tracks']:
-            print(track)
-            return
             track = process_track(token, track, album)
 
         update_album_in_dynamodb.update_album_in_dynamodb(
