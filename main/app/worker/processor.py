@@ -27,6 +27,9 @@ class DecimalEncoder(json.JSONEncoder):
 
 
 def get_token(admin_id, admin):
+    if admin is None:
+        raise ValueError("Admin not found")
+
     token = admin.get('access_token_spotify') or None
     remaining_time_in_minutes = (
         float(admin['expiration_timestamp_spotify'] / 1000) - datetime.now().timestamp()) / 60 if 'expiration_timestamp_spotify' in admin else -1
@@ -51,6 +54,8 @@ def process_unprocessed_albums(admin_id, admin, unprocessed_albums, table_name):
         print(
             f"\nSearching: {album['artist_name']} - {album['album_name']} [{i + 1}/{len(unprocessed_albums)}]")
         for track in album['tracks']:
+            print(track)
+            return
             track = process_track(token, track, album)
 
         update_album_in_dynamodb.update_album_in_dynamodb(
@@ -86,6 +91,7 @@ def process_track(token, track, album):
 def handle_track_search_response(parsed_target_track, token, track, album):
     if parsed_target_track.get("statusCode") == 404:
         print(f"\nTrack not found: {track['name']}")
+        print(track)
         time.sleep(3)
         recognizer_response = invoke_lambda.invoke_lambda(
             {
@@ -181,7 +187,7 @@ def processor_worker():
         except Exception as error:
             response = {"functionName": "processor_worker",
                         "status": "Error", "message": str(error)}
-            raise Exception(f"Failed to process albums: {response}")
+            raise Exception(response)
         time.sleep(CHECK_INTERVAL)
 
 
