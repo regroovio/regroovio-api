@@ -34,6 +34,9 @@ const processAndSaveAlbum = async (album, tableName) => {
         const tracksS3 = (await Promise.all(streams.map(stream => downloadTrack(stream, linkInfo)))).filter(track => track !== undefined);
         const albumDetails = await generateAlbumDetails(linkInfo, tracksS3);
         console.log('Adding album:', linkInfo.name);
+        console.log("tracksS3", tracksS3);
+        console.log("album", album);
+        console.log("albumDetails", albumDetails);
         await saveAlbumToDatabase(tableName, { ...album, ...albumDetails });
     } catch (err) {
         console.error("Error processAndSaveAlbum:", err);
@@ -88,17 +91,17 @@ const downloadTrack = async (stream, linkInfo) => {
 
 const saveAlbumToDatabase = async (tableName, album) => {
     console.log(album);
-    // try {
-    //     delete album.url;
-    //     await documentClient.put({
-    //         TableName: tableName,
-    //         Item: album,
-    //     });
-    // } catch (err) {
-    //     console.error(`Error saving album to database: ${err} `);
-    //     console.log('Table:', tableName);
-    //     console.log('Album:', album);
-    // }
+    try {
+        delete album.url;
+        await documentClient.put({
+            TableName: tableName,
+            Item: album,
+        });
+    } catch (err) {
+        console.error(`Error saving album to database: ${err}`);
+        console.log('Table:', tableName);
+        console.log('Album:', album);
+    }
 };
 
 export { app }
