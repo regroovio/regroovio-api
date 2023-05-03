@@ -3,6 +3,10 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import axios from 'axios';
 
+const sanitizeKey = (key) => {
+    return key.replace(/\s+/g, '+');
+};
+
 const saveAlbumToS3 = async (item) => {
     const { stream, name, album, artist } = item;
     const s3 = new S3Client({ region: 'us-east-1' });
@@ -11,16 +15,16 @@ const saveAlbumToS3 = async (item) => {
     try {
         const response = await axios.get(stream, { responseType: 'arraybuffer' });
         const buffer = Buffer.from(response.data, 'binary');
+        const key = sanitizeKey(`artists/${artist}/${album}/${name}.${type}`);
         const params = {
             Bucket: bucketName,
-            Key: `artists/${artist}/${album}/${name}.${type}`,
+            Key: key,
             Body: buffer,
             ContentType: response.headers['content-type'],
             ACL: 'public-read'
         };
-        await s3.send(new PutObjectCommand(params));
-        const key = params.Key.split(' ').join('+');
-        const track = `https://${bucketName}.s3.amazonaws.com/${key}` // this is not good enough, we need to get the url from the response
+        const putObjectResponse = await s3.send(new PutObjectCommand(params));
+        const track = putObjectResponse.Location;
         console.log(`Saved track to S3: ${track}`);
         return track;
     } catch (err) {
@@ -37,16 +41,16 @@ const saveImageToS3 = async (item) => {
     try {
         const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
         const buffer = Buffer.from(response.data, 'binary');
+        const key = sanitizeKey(`artists/${artist}/${album}/image.${type}`);
         const params = {
             Bucket: bucketName,
-            Key: `artists/${artist}/${album}/image.${type}`,
+            Key: key,
             Body: buffer,
             ContentType: response.headers['content-type'],
             ACL: 'public-read'
         };
-        await s3.send(new PutObjectCommand(params));
-        const key = params.Key.split(' ').join('+');
-        const image = `https://${bucketName}.s3.amazonaws.com/${key}` // this is not good enough, we need to get the url from the response
+        const putObjectResponse = await s3.send(new PutObjectCommand(params));
+        const image = putObjectResponse.Location;
         console.log(`Saved image to S3: ${image}`);
         return image;
     } catch (err) {
