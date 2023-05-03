@@ -50,7 +50,9 @@ def check_and_update_token_if_expired(admin_id, admin):
 
 def process_unprocessed_albums(admin_id, admin, unprocessed_albums, table_name):
     for i, album in enumerate(unprocessed_albums):
-        token, admin = check_and_update_token_if_expired(admin_id, admin)
+        token, new_admin = check_and_update_token_if_expired(admin_id, admin)
+        if new_admin is not None:
+            admin = new_admin
         print(
             f"\nSearching: {album['artist_name']} - {album['album_name']} [{i + 1}/{len(unprocessed_albums)}]")
         for track in album['tracks']:
@@ -71,7 +73,7 @@ def process_track(token, track, album):
                 {
                     "token": token,
                     "trackName": track["name"],
-                    "albumName": track["album"],
+                    "albumName": album["album_name"],
                     "artistName": album["artist_name"],
                     "year": track["release_year"],
                 },
@@ -89,7 +91,6 @@ def process_track(token, track, album):
 def handle_track_search_response(parsed_target_track, token, track, album):
     if parsed_target_track.get("statusCode") == 404:
         print(f"\nTrack not found: {track['name']}")
-        print(track)
         time.sleep(3)
         recognizer_response = invoke_lambda.invoke_lambda(
             {

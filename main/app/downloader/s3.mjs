@@ -20,7 +20,7 @@ const saveAlbumToS3 = async (item) => {
         };
         await s3.send(new PutObjectCommand(params));
         const key = params.Key.split(' ').join('+');
-        const track = `https://${bucketName}.s3.amazonaws.com/${key}`
+        const track = `https://${bucketName}.s3.amazonaws.com/${key}` // this is not good enough, we need to get the url from the response
         console.log(`Saved track to S3: ${track}`);
         return track;
     } catch (err) {
@@ -46,7 +46,7 @@ const saveImageToS3 = async (item) => {
         };
         await s3.send(new PutObjectCommand(params));
         const key = params.Key.split(' ').join('+');
-        const image = `https://${bucketName}.s3.amazonaws.com/${key}`
+        const image = `https://${bucketName}.s3.amazonaws.com/${key}` // this is not good enough, we need to get the url from the response
         console.log(`Saved image to S3: ${image}`);
         return image;
     } catch (err) {
