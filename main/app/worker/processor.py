@@ -26,7 +26,7 @@ class DecimalEncoder(json.JSONEncoder):
         return super(DecimalEncoder, self).default(obj)
 
 
-def get_token(admin_id, admin):
+def check_and_update_token_if_expired(admin_id, admin):
     if admin is None:
         raise ValueError("Admin not found")
 
@@ -50,7 +50,7 @@ def get_token(admin_id, admin):
 
 def process_unprocessed_albums(admin_id, admin, unprocessed_albums, table_name):
     for i, album in enumerate(unprocessed_albums):
-        token, admin = get_token(admin_id, admin)
+        token, admin = check_and_update_token_if_expired(admin_id, admin)
         print(
             f"\nSearching: {album['artist_name']} - {album['album_name']} [{i + 1}/{len(unprocessed_albums)}]")
         for track in album['tracks']:
@@ -189,5 +189,4 @@ def processor_worker():
         time.sleep(CHECK_INTERVAL)
 
 
-if __name__ == '__main__':
-    processor_worker()
+processor_worker()
