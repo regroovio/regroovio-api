@@ -16,12 +16,7 @@ dynamodb = boto3.resource('dynamodb', **AWS_DYNAMO)
 def update_album_in_dynamodb(table_name, album):
 
     try:
-        p = 'true'
         table = dynamodb.Table(table_name)
-        for track in album['tracks']:
-            if track['spotify'] is None:
-                p = 'failed'
-
         response = table.update_item(
             Key={
                 'album_id': album['album_id']
@@ -29,7 +24,8 @@ def update_album_in_dynamodb(table_name, album):
             UpdateExpression="set tracks=:t, #pr=:p",
             ExpressionAttributeValues={
                 ':t': album['tracks'],
-                ':p': p
+                ':p': 'true'
+
             },
             ExpressionAttributeNames={
                 "#pr": "processed"

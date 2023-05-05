@@ -17,7 +17,7 @@ load_dotenv()
 s3 = boto3.client('s3', region_name='us-east-1')
 
 # Check every 30 seconds
-CHECK_INTERVAL = 30
+CHECK_INTERVAL = 5
 
 
 class DecimalEncoder(json.JSONEncoder):
@@ -64,8 +64,9 @@ def process_unprocessed_albums(admin_id, admin, unprocessed_albums, table_name):
         for track in album['tracks']:
             track = process_track(token, track, album)
 
-        update_album_in_dynamodb.update_album_in_dynamodb(
-            table_name, album)
+        for track in album['tracks']:
+            if track['spotify'] is not None:
+                return update_album_in_dynamodb.update_album_in_dynamodb(table_name, album)
 
 
 def process_track(token, track, album):
@@ -161,11 +162,9 @@ def handle_track_search_response(parsed_target_track, token, track, album):
 
 def process_albums_for_table_processor(table_name, admin_id, admin):
     print(f"Getting {table_name}...")
-    print(f"Retrieving unprocessed albums from {table_name}")
     unprocessed_albums = fetch_unprocessed_albums.fetch_unprocessed_albums(
         table_name)
     if not unprocessed_albums:
-        print("No unprocessed albums found.")
         return
     admin_id = os.getenv('ADMIN_ID')
     admin = get_user_by_id.get_user_by_id(admin_id)

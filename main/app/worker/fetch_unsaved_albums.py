@@ -32,7 +32,7 @@ def fetch_unsaved_albums(table_name):
             if not last_evaluated_key:
                 break
         unsaved_albums = [
-            album for album in items if not album.get("saved", False) == True]
+            album for album in items if album.get("saved") != 'true']
         return unsaved_albums
     except ClientError as err:
         print(f"Error fetching unsaved albums: {err}")

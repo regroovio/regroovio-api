@@ -94,8 +94,10 @@ const fetchTracks = async (tableName, minPopularity, genres) => {
 
                 for (const track of album.tracks || []) {
                     const isCurrentYearAlbum = albumYear === currentYear;
-                    if (track.spotify?.popularity && (track.spotify.popularity > highestPopularity || isCurrentYearAlbum)) {
+                    if (track.spotify?.popularity && track.spotify.popularity > highestPopularity) {
                         highestPopularity = track.spotify.popularity;
+                        mostPopularTrack = track;
+                    } else if (isCurrentYearAlbum) {
                         mostPopularTrack = track;
                     }
                 }

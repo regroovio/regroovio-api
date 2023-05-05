@@ -14,7 +14,7 @@ load_dotenv()
 s3 = boto3.client('s3', region_name='us-east-1')
 
 # Check every 30 seconds
-CHECK_INTERVAL = 30
+CHECK_INTERVAL = 5
 
 
 class DecimalEncoder(json.JSONEncoder):
