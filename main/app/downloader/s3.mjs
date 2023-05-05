@@ -21,7 +21,6 @@ const saveAlbumToS3 = async (item) => {
             Key: key,
             Body: buffer,
             ContentType: response.headers['content-type'],
-            ACL: 'public-read'
         };
         const putObjectResponse = await s3.send(new PutObjectCommand(params));
         console.log(putObjectResponse);
@@ -48,7 +47,6 @@ const saveImageToS3 = async (item) => {
             Key: key,
             Body: buffer,
             ContentType: response.headers['content-type'],
-            ACL: 'public-read'
         };
         const putObjectResponse = await s3.send(new PutObjectCommand(params));
         console.log(putObjectResponse);
