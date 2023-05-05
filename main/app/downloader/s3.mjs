@@ -2,6 +2,7 @@
 
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import axios from 'axios';
+import { createHash } from "crypto";
 
 const saveAlbumToS3 = async (item) => {
     const { stream, name, album, artist } = item;
@@ -19,9 +20,12 @@ const saveAlbumToS3 = async (item) => {
             ContentType: response.headers['content-type'],
         };
         await s3.send(new PutObjectCommand(params));
-        const url = `https://${params.Bucket}.s3.amazonaws.com/${params.Key}`
-        console.log(`Saved track to S3: ${url}`);
-        return url;
+        console.log(`Saved track to S3: ${params.Key}`);
+        const id = createHash("sha256").update(params.Key).digest("hex");
+        // unhashed the id and log it to the console
+        const unhashedId = Buffer.from(id, 'hex').toString('utf8');
+        console.log(unhashedId);
+        return id;
     } catch (err) {
         console.error(`Error saving album to S3: ${err}`);
         return null;
@@ -43,11 +47,13 @@ const saveImageToS3 = async (item) => {
             Body: buffer,
             ContentType: response.headers['content-type'],
         };
-
-        const url = `https://${params.Bucket}.s3.amazonaws.com/${params.Key}`
         await s3.send(new PutObjectCommand(params));
-        console.log(`Saved image to S3: ${url}`);
-        return url;
+        console.log(`Saved image to S3: ${params.Key}`);
+        const id = createHash("sha256").update(params.Key).digest("hex");
+        // unhashed the id and log it to the console
+        const unhashedId = Buffer.from(id, 'hex').toString('utf8');
+        console.log(unhashedId);
+        return id;
     } catch (err) {
         console.error(`Error saving image to S3: ${err}`);
         return null;
