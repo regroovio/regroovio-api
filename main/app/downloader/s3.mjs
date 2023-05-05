@@ -20,8 +20,8 @@ const saveAlbumToS3 = async (item) => {
         };
         await s3.send(new PutObjectCommand(params));
         console.log(`Saved track to S3: ${params.Key}`);
-        const id = Buffer.from(params.Key, 'base64').toString('utf-8');
-        const decodedStr = Buffer.from(id, 'base64').toString('utf-8');
+        const id = btoa(params.Key);
+        const decodedStr = atob(id);
         console.log(id);
         console.log(decodedStr);
         return id;
@@ -48,8 +48,8 @@ const saveImageToS3 = async (item) => {
         };
         await s3.send(new PutObjectCommand(params));
         console.log(`Saved image to S3: ${params.Key}`);
-        const id = Buffer.from(params.Key, 'base64').toString('utf-8');
-        const decodedStr = Buffer.from(id, 'base64').toString('utf-8');
+        const id = btoa(params.Key);
+        const decodedStr = atob(id);
         console.log(id);
         console.log(decodedStr);
         return id;
