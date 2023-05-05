@@ -4,7 +4,7 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import axios from 'axios';
 
 const sanitizeKey = (key) => {
-    return key.replace(/\s+/g, '+');
+    return encodeURIComponent(key.replace(/\s+/g, ' '));
 };
 
 const saveAlbumToS3 = async (item) => {
@@ -22,11 +22,10 @@ const saveAlbumToS3 = async (item) => {
             Body: buffer,
             ContentType: response.headers['content-type'],
         };
-        const putObjectResponse = await s3.send(new PutObjectCommand(params));
-        console.log(putObjectResponse);
-        const track = putObjectResponse.Location;
-        console.log(`Saved track to S3: ${track}`);
-        return track;
+        const { ETag, Location } = await s3.send(new PutObjectCommand(params));
+        console.log({ ETag, Location });
+        console.log(`Saved track to S3: ${Location}`);
+        return Location;
     } catch (err) {
         console.error(`Error saving album to S3: ${err}`);
         return null;
@@ -48,11 +47,10 @@ const saveImageToS3 = async (item) => {
             Body: buffer,
             ContentType: response.headers['content-type'],
         };
-        const putObjectResponse = await s3.send(new PutObjectCommand(params));
-        console.log(putObjectResponse);
-        const image = putObjectResponse.Location;
-        console.log(`Saved image to S3: ${image}`);
-        return image;
+        const { ETag, Location } = await s3.send(new PutObjectCommand(params));
+        console.log({ ETag, Location });
+        console.log(`Saved image to S3: ${Location}`);
+        return Location;
     } catch (err) {
         console.error(`Error saving image to S3: ${err}`);
         return null;
