@@ -41,18 +41,23 @@ def check_and_update_token_if_expired(admin_id, admin):
             "Payload": json.dumps({"user_id": admin_id}),
         })
         tokens = json.loads(raw_tokens)
-        admin = update_user_tokens.update_user_tokens(
-            admin, tokens)
-        token = tokens['access_token']
-
-    return token, admin
+        if tokens.get('access_token'):
+            admin = update_user_tokens.update_user_tokens(
+                admin, tokens)
+            return admin
+    return admin
 
 
 def process_unprocessed_albums(admin_id, admin, unprocessed_albums, table_name):
     for i, album in enumerate(unprocessed_albums):
-        token, new_admin = check_and_update_token_if_expired(admin_id, admin)
+        new_admin = check_and_update_token_if_expired(admin_id, admin)
         if new_admin is not None:
             admin = new_admin
+
+        token = admin['access_token_spotify']
+        if token is None:
+            print("Error: Token not found")
+            return
         print(
             f"\nSearching: {album['artist_name']} - {album['album_name']} [{i + 1}/{len(unprocessed_albums)}]")
         for track in album['tracks']:

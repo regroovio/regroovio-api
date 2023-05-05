@@ -66,7 +66,6 @@ if __name__ == '__main__':
         downloader_thread = threading.Thread(
             target=downloader_worker, args=(table_name,))
         downloader_thread.start()
-        print('done')
         threads.append(downloader_thread)
 
     for thread in threads:

@@ -22,7 +22,7 @@ const initializePuppeteer = async (event) => {
         args: chromium.args,
         slowMo: 350,
         ignoreHTTPSErrors: true,
-        headless: false,
+        headless: true,
     });
 
     const page = await browser.newPage();
