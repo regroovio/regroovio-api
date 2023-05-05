@@ -23,8 +23,9 @@ const saveAlbumToS3 = async (item) => {
             ContentType: response.headers['content-type'],
         };
         await s3.send(new PutObjectCommand(params));
-        console.log(`Saved track to S3: ${params.Key}`);
-        return params.Key;
+        const url = `https://albums-regroovio.s3.amazonaws.com/${params.Key}`
+        console.log(`Saved track to S3: ${url}`);
+        return url;
     } catch (err) {
         console.error(`Error saving album to S3: ${err}`);
         return null;
@@ -46,9 +47,11 @@ const saveImageToS3 = async (item) => {
             Body: buffer,
             ContentType: response.headers['content-type'],
         };
+
+        const url = `https://albums-regroovio.s3.amazonaws.com/${params.Key}`
         await s3.send(new PutObjectCommand(params));
-        console.log(`Saved image to S3: ${params.Key}`);
-        return params.Key;
+        console.log(`Saved image to S3: ${url}`);
+        return url;
     } catch (err) {
         console.error(`Error saving image to S3: ${err}`);
         return null;
