@@ -16,7 +16,6 @@ const saveTrackToS3 = async (item) => {
             Bucket: bucketName, // required
             Key: key, // required
             Expires: new Date(),
-            ACL: "public-read",
             Body: buffer,
             // CacheControl: "STRING_VALUE",
             // ContentDisposition: "STRING_VALUE",
@@ -77,7 +76,6 @@ const saveImageToS3 = async (item) => {
             Bucket: bucketName, // required
             Key: key, // required
             Expires: new Date(),
-            ACL: "public-read",
             Body: buffer,
             // CacheControl: "STRING_VALUE",
             // ContentDisposition: "STRING_VALUE",
