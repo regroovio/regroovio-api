@@ -16,7 +16,8 @@ import update_album_in_dynamodb
 load_dotenv()
 s3 = boto3.client('s3', region_name='us-east-1')
 
-CHECK_INTERVAL = 60 * 60  # Check every 1 hour
+# Check every 30 seconds
+CHECK_INTERVAL = 30
 
 
 class DecimalEncoder(json.JSONEncoder):
