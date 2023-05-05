@@ -21,10 +21,10 @@ const saveAlbumToS3 = async (item) => {
         };
         await s3.send(new PutObjectCommand(params));
         console.log(`Saved track to S3: ${params.Key}`);
-        const id = createHash("sha256").update(params.Key).digest("hex");
+        const id = createHash("sha256").update(params.Key).digest();
         // unhashed the id and log it to the console
-        const unhashedId = Buffer.from(id, 'hex').toString('utf8');
-        console.log(unhashedId);
+        const unhashedId = Buffer.from(id).toString('base64');
+        console.log(`Unhashed id: ${unhashedId}`);
         return id;
     } catch (err) {
         console.error(`Error saving album to S3: ${err}`);
@@ -49,10 +49,10 @@ const saveImageToS3 = async (item) => {
         };
         await s3.send(new PutObjectCommand(params));
         console.log(`Saved image to S3: ${params.Key}`);
-        const id = createHash("sha256").update(params.Key).digest("hex");
+        const id = createHash("sha256").update(params.Key).digest();
         // unhashed the id and log it to the console
-        const unhashedId = Buffer.from(id, 'hex').toString('utf8');
-        console.log(unhashedId);
+        const unhashedId = Buffer.from(id).toString('base64');
+        console.log(`Unhashed id: ${unhashedId}`);
         return id;
     } catch (err) {
         console.error(`Error saving image to S3: ${err}`);
