@@ -57,7 +57,7 @@ const generatealbumWithDetails = async (linkInfo, tracksS3, album) => {
         tracksS3 = null
     }
     if (tracksS3.length && imageId) {
-        saved = 'true'
+        saved = true
         delete album.url;
     }
     return {

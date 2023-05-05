@@ -32,7 +32,8 @@ def fetch_unprocessed_albums(table_name):
             if not last_evaluated_key:
                 break
         unprocessed_albums = [
-            album for album in items if album.get("saved") and not album.get("processed") == 'true']
+            album for album in items if album.get("saved") and not album.get("processed") == True]
+
         return unprocessed_albums
     except ClientError as err:
         print(f"Error fetching unprocessed albums: {err}")

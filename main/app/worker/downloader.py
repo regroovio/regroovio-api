@@ -35,7 +35,7 @@ def process_albums_for_table_downloader(table_name):
     for i in range(0, len(albums), chunk_size):
         chunk = albums[i: i + chunk_size]
         print(
-            f"Downloading chunk {i // chunk_size + 1} of {len(albums) // chunk_size +1}")
+            f"Downloading chunk {i // chunk_size + 1} of {len(albums) // chunk_size +1}. {table_name}")
         for album in chunk:
             invoke_lambda.invoke_lambda(
                 {
