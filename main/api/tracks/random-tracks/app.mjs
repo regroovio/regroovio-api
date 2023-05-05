@@ -113,7 +113,7 @@ const fetchTracks = async (tableName, minPopularity, genres) => {
                 //     }
                 // } else {
                 if (mostPopularTrack && (highestPopularity >= minPopularity || (albumYear === currentYear))) {
-                    popularTracks.push({ track: mostPopularTrack, image: album.image, album_id: album.album_id });
+                    popularTracks.push({ track: mostPopularTrack, image: album.image, album_id: album.album_id, artist_name: album, album_name: album.album_name });
                     selectedAlbums.add(album.album_id);
                 }
                 // }
@@ -141,22 +141,19 @@ const shuffleArray = (array) => {
 const processTracks = async (items, uniqueTrackIds) => {
     const tracks = [];
     for (const item of items) {
-        const id = item.track.spotify.id;
+        const id = item.track.url
         if (uniqueTrackIds.has(id)) {
             continue;
         }
         uniqueTrackIds.add(id);
-
-        const popularity = item.track.spotify.popularity;
-        const artist = item.track.spotify.artists[0].name;
-        const album_id = item.album_id;
-        const album = item.track.album;
-        const title = item.track.name;
         const url = item.track.url;
+        const title = item.track.name;
         const image = item.image;
+        const album = item.album_name;
+        const artist = item.artist_name;
+        const album_id = item.album_id;
 
-        tracks.push({ album_id, url, id, title, artist, popularity, album, image });
-        console.log(tracks[0]);
+        tracks.push({ album_id, url, id, title, artist, album, image });
     }
     return tracks;
 };
