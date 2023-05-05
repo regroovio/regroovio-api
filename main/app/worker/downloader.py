@@ -54,9 +54,7 @@ def downloader_worker(table_name):
         try:
             process_albums_for_table_downloader(table_name)
         except Exception as error:
-            response = {"functionName": "downloader_worker",
-                        "status": "Error", "message": str(error)}
-            raise Exception(f"Failed to process albums: {response}")
+            raise Exception(error)
         time.sleep(CHECK_INTERVAL)
 
 

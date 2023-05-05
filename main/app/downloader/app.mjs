@@ -34,9 +34,7 @@ const processAndSaveAlbum = async (album, tableName) => {
         const tracksS3 = (await Promise.all(streams.map(stream => downloadTrack(stream, linkInfo)))).filter(track => track !== undefined);
         const albumDetails = await generateAlbumDetails(linkInfo, tracksS3);
         console.log('Adding album:', linkInfo.name);
-        console.log("tracksS3", tracksS3);
-        console.log("album", album);
-        console.log("albumDetails", albumDetails);
+        console.log({ ...album, ...albumDetails });
         await saveAlbumToDatabase(tableName, { ...album, ...albumDetails });
     } catch (err) {
         console.error("Error processAndSaveAlbum:", err);
@@ -45,9 +43,11 @@ const processAndSaveAlbum = async (album, tableName) => {
 
 const generateAlbumDetails = async (linkInfo, tracksS3) => {
     const url = await saveImageToS3({ imageUrl: linkInfo.imageUrl, album: linkInfo.name, artist: linkInfo.artist.name });
-    let saved = false
-    if (tracksS3.length) {
-        saved = true
+    let saved = null
+    if (tracksS3.length && url) {
+        saved = 'true'
+    } else {
+        saved = 'failed'
     }
     const d = linkInfo.releaseDate?.split(' ')[0]
     const m = linkInfo.releaseDate?.split(' ')[1]
