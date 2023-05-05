@@ -15,17 +15,16 @@ const saveAlbumToS3 = async (item) => {
     try {
         const response = await axios.get(stream, { responseType: 'arraybuffer' });
         const buffer = Buffer.from(response.data, 'binary');
-        const key = sanitizeKey(`artists/${artist}/${album}/${name}.${type}`);
+        const key = `artists/${sanitizeKey(artist)}/${sanitizeKey(album)}/${sanitizeKey(name)}.${type}`;
         const params = {
             Bucket: bucketName,
             Key: key,
             Body: buffer,
             ContentType: response.headers['content-type'],
         };
-        const { ETag, Location } = await s3.send(new PutObjectCommand(params));
-        console.log({ ETag, Location });
-        console.log(`Saved track to S3: ${Location}`);
-        return Location;
+        await s3.send(new PutObjectCommand(params));
+        console.log(`Saved track to S3: ${params.Key}`);
+        return params.Key;
     } catch (err) {
         console.error(`Error saving album to S3: ${err}`);
         return null;
@@ -40,17 +39,16 @@ const saveImageToS3 = async (item) => {
     try {
         const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
         const buffer = Buffer.from(response.data, 'binary');
-        const key = sanitizeKey(`artists/${artist}/${album}/image.${type}`);
+        const key = `artists/${sanitizeKey(artist)}/${sanitizeKey(album)}/image.${type}`;
         const params = {
             Bucket: bucketName,
             Key: key,
             Body: buffer,
             ContentType: response.headers['content-type'],
         };
-        const { ETag, Location } = await s3.send(new PutObjectCommand(params));
-        console.log({ ETag, Location });
-        console.log(`Saved image to S3: ${Location}`);
-        return Location;
+        await s3.send(new PutObjectCommand(params));
+        console.log(`Saved image to S3: ${params.Key}`);
+        return params.Key;
     } catch (err) {
         console.error(`Error saving image to S3: ${err}`);
         return null;
