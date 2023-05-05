@@ -32,28 +32,36 @@ const processAndSaveAlbum = async (album, tableName) => {
         if (!data || !data.linkInfo || !data.streams) return;
         const { linkInfo, streams } = data;
         const tracksS3 = (await Promise.all(streams.map(stream => downloadTrack(stream, linkInfo)))).filter(track => track !== undefined);
-        const albumDetails = await generateAlbumDetails(linkInfo, tracksS3);
-        console.log('Adding album:', linkInfo.name);
-        console.log({ ...album, ...albumDetails });
-        await saveAlbumToDatabase(tableName, { ...album, ...albumDetails });
+        const albumWithDetails = await generatealbumWithDetails(linkInfo, tracksS3, album);
+        console.log('Adding album:', albumWithDetails.album_name);
+        console.log(albumWithDetails);
+        await saveAlbumToDatabase(tableName, albumWithDetails);
     } catch (err) {
         console.error("Error processAndSaveAlbum:", err);
     }
 };
 
-const generateAlbumDetails = async (linkInfo, tracksS3) => {
-    const url = await saveImageToS3({ imageUrl: linkInfo.imageUrl, album: linkInfo.name, artist: linkInfo.artist.name });
+const generatealbumWithDetails = async (linkInfo, tracksS3, album) => {
+    let url = await saveImageToS3({ imageUrl: linkInfo.imageUrl, album: linkInfo.name, artist: linkInfo.artist.name });
     let saved = null
-    if (tracksS3.length && url) {
-        saved = 'true'
-    } else {
-        saved = 'failed'
-    }
     const d = linkInfo.releaseDate?.split(' ')[0]
     const m = linkInfo.releaseDate?.split(' ')[1]
     const y = linkInfo.releaseDate?.split(' ')[2]
     const release_date = d && m && y ? `${d}-${m}-${y}` : null
+    if (!url) {
+        saved = 'failed'
+        url = null
+    }
+    if (!tracksS3.length) {
+        saved = 'failed'
+        tracksS3 = null
+    }
+    if (tracksS3.length && url) {
+        saved = 'true'
+        delete album.url;
+    }
     return {
+        ...album,
         artist_name: linkInfo.artist.name,
         key_words: linkInfo.keywords,
         release_date: release_date,
@@ -91,7 +99,6 @@ const downloadTrack = async (stream, linkInfo) => {
 
 const saveAlbumToDatabase = async (tableName, album) => {
     try {
-        delete album.url;
         await documentClient.put({
             TableName: tableName,
             Item: album,
