@@ -5,7 +5,7 @@ import axios from 'axios';
 
 const saveTrackToS3 = async (item) => {
     const { stream, name, album, artist } = item;
-    const s3 = new S3Client({ region: 'us-east-1' });
+    const client = new S3Client({ region: 'us-east-1' });
     const bucketName = `albums-regroovio`;
     const type = "mp3";
     try {
@@ -66,7 +66,7 @@ const saveTrackToS3 = async (item) => {
 
 const saveImageToS3 = async (item) => {
     const { imageUrl, album, artist } = item;
-    const s3 = new S3Client({ region: 'us-east-1' });
+    const client = new S3Client({ region: 'us-east-1' });
     const bucketName = `albums-regroovio`;
     const type = "jpg";
     try {
