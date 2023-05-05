@@ -2,7 +2,7 @@
 
 import bcfetch from 'bandcamp-fetch';
 import dotenv from 'dotenv';
-import { saveAlbumToS3, saveImageToS3 } from './s3.mjs';
+import { saveTrackToS3, saveImageToS3 } from './s3.mjs';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
 
@@ -42,21 +42,21 @@ const processAndSaveAlbum = async (album, tableName) => {
 };
 
 const generatealbumWithDetails = async (linkInfo, tracksS3, album) => {
-    let url = await saveImageToS3({ imageUrl: linkInfo.imageUrl, album: linkInfo.name, artist: linkInfo.artist.name });
+    let imageId = await saveImageToS3({ imageUrl: linkInfo.imageUrl, album: linkInfo.name, artist: linkInfo.artist.name });
     let saved = null
     const d = linkInfo.releaseDate?.split(' ')[0]
     const m = linkInfo.releaseDate?.split(' ')[1]
     const y = linkInfo.releaseDate?.split(' ')[2]
     const release_date = d && m && y ? `${d}-${m}-${y}` : null
-    if (!url) {
+    if (!imageId) {
         saved = 'failed'
-        url = null
+        imageId = null
     }
     if (!tracksS3.length) {
         saved = 'failed'
         tracksS3 = null
     }
-    if (tracksS3.length && url) {
+    if (tracksS3.length && imageId) {
         saved = 'true'
         delete album.url;
     }
@@ -67,7 +67,7 @@ const generatealbumWithDetails = async (linkInfo, tracksS3, album) => {
         release_date: release_date,
         album_name: linkInfo.name,
         saved: saved,
-        image: url,
+        image: imageId,
         tracks: tracksS3
     };
 };
@@ -89,8 +89,8 @@ const fetchAlbumData = async (album) => {
 const downloadTrack = async (stream, linkInfo) => {
     if (stream.stream) {
         console.log(`Downloading track: `, stream.name);
-        const url = await saveAlbumToS3({ ...stream, album: linkInfo.name, artist: linkInfo.artist.name });
-        const track = { url, name: stream.name };
+        const trackId = await saveTrackToS3({ ...stream, album: linkInfo.name, artist: linkInfo.artist.name });
+        const track = { id: trackId, name: stream.name };
         return track;
     } else {
         console.log(`Undefined track: `, stream);
