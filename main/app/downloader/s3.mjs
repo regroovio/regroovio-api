@@ -20,9 +20,10 @@ const saveAlbumToS3 = async (item) => {
         };
         await s3.send(new PutObjectCommand(params));
         console.log(`Saved track to S3: ${params.Key}`);
-        const id = base64.encode(params.Key);
+        const id = Buffer.from(params.Key, 'base64').toString('utf-8');
+        const decodedStr = Buffer.from(id, 'base64').toString('utf-8');
         console.log(id);
-        console.log(base64.decode(id));
+        console.log(decodedStr);
         return id;
     } catch (err) {
         console.error(`Error saving album to S3: ${err}`);
@@ -47,9 +48,10 @@ const saveImageToS3 = async (item) => {
         };
         await s3.send(new PutObjectCommand(params));
         console.log(`Saved image to S3: ${params.Key}`);
-        const id = base64.encode(params.Key);
+        const id = Buffer.from(params.Key, 'base64').toString('utf-8');
+        const decodedStr = Buffer.from(id, 'base64').toString('utf-8');
         console.log(id);
-        console.log(base64.decode(id));
+        console.log(decodedStr);
         return id;
     } catch (err) {
         console.error(`Error saving image to S3: ${err}`);
