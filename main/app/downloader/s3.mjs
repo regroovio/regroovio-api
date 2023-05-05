@@ -21,10 +21,11 @@ const saveTrackToS3 = async (item) => {
         const buffer = Buffer.from(data, 'binary');
         const key = `artists/${artist}/${album}/${name}.${type}`;
         const input = {
-            Bucket: bucketName, // required
-            Key: key, // required
+            Bucket: bucketName,
+            Key: key,
             Expires: new Date(),
             Body: buffer,
+            ContentType: 'audio/mpeg',
         };
         const command = new PutObjectCommand(input);
         const response = await client.send(command);
@@ -50,10 +51,11 @@ const saveImageToS3 = async (item) => {
         const buffer = Buffer.from(data, 'binary');
         const key = `artists/${artist}/${album}/image.${type}`;
         const input = {
-            Bucket: bucketName, // required
-            Key: key, // required
+            Bucket: bucketName,
+            Key: key,
             Expires: new Date(),
             Body: buffer,
+            ContentType: 'image/jpeg',
         };
         const command = new PutObjectCommand(input);
         const response = await client.send(command);
