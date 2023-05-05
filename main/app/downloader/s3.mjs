@@ -3,10 +3,6 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import axios from 'axios';
 
-const sanitizeKey = (key) => {
-    return encodeURIComponent(key.replace(/\s+/g, ' '));
-};
-
 const saveAlbumToS3 = async (item) => {
     const { stream, name, album, artist } = item;
     const s3 = new S3Client({ region: 'us-east-1' });
@@ -15,7 +11,7 @@ const saveAlbumToS3 = async (item) => {
     try {
         const response = await axios.get(stream, { responseType: 'arraybuffer' });
         const buffer = Buffer.from(response.data, 'binary');
-        const key = `artists/${sanitizeKey(artist)}/${sanitizeKey(album)}/${sanitizeKey(name)}.${type}`;
+        const key = `artists/${encodeURIComponent(artist)}/${encodeURIComponent(album)}/${encodeURIComponent(name)}.${type}`;
         const params = {
             Bucket: bucketName,
             Key: key,
@@ -40,7 +36,7 @@ const saveImageToS3 = async (item) => {
     try {
         const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
         const buffer = Buffer.from(response.data, 'binary');
-        const key = `artists/${sanitizeKey(artist)}/${sanitizeKey(album)}/image.${type}`;
+        const key = `artists/${encodeURIComponent(artist)}/${encodeURIComponent(album)}/image.${type}`;
         const params = {
             Bucket: bucketName,
             Key: key,
