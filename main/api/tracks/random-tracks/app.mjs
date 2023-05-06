@@ -16,22 +16,18 @@ const documentClient = DynamoDBDocument.from(new DynamoDB({
 const app = async (event) => {
     console.log(event);
     const minPopularity = event.queryStringParameters?.popularity || 0;
-    const genres = event.queryStringParameters?.genres ? event.queryStringParameters.genres.split(',') : [];
-
-
     try {
         const bandcampTables = await fetchAllBandcampTables();
         let allPopularTracks = [];
         const uniqueTrackIds = new Set();
         for (const tableName of bandcampTables) {
             console.log(tableName);
-            let items = await fetchTracks(tableName, minPopularity, genres);
+            let items = await fetchTracks(tableName, minPopularity);
             if (!items?.length) {
                 console.log({ message: 'No tracks found.' });
                 continue;
             }
             console.log({ message: `Tracks found. [${items.length}]` });
-            console.log(items[0]);
             const tracks = await processTracks(items, uniqueTrackIds);
             allPopularTracks.push(...tracks);
         }
@@ -67,7 +63,7 @@ const fetchAllBandcampTables = async () => {
     }
 };
 
-const fetchTracks = async (tableName, minPopularity, genres) => {
+const fetchTracks = async (tableName, minPopularity) => {
     try {
         let popularTracks = [];
         let selectedAlbums = new Set();
@@ -91,39 +87,27 @@ const fetchTracks = async (tableName, minPopularity, genres) => {
 
                 for (const track of album.tracks || []) {
                     const isCurrentYearAlbum = albumYear === currentYear;
-                    if (track.spotify?.popularity && track.spotify.popularity > highestPopularity) {
+                    if (track.spotify?.popularity && track.spotify.popularity > highestPopularity && track.spotify.popularity >= minPopularity) {
                         highestPopularity = track.spotify.popularity;
                         mostPopularTrack = track;
                     } else if (isCurrentYearAlbum) {
                         mostPopularTrack = track;
                     }
                 }
-                // more strict genre filtering
-                if (genres.length && album?.key_words > 0) {
-                    for (const key_word of album.key_words) {
-                        if (genres.includes(key_word)) {
-                            popularTracks.push({ track: mostPopularTrack, image: album.image, album_id: album.album_id, artist_name: album.artist_name, album_name: album.album_name });
-                            selectedAlbums.add(album.album_id);
-                        }
-                    }
-                } else {
-                    if (mostPopularTrack && (highestPopularity >= minPopularity || (albumYear === currentYear))) {
-                        popularTracks.push({ track: mostPopularTrack, image: album.image, album_id: album.album_id, artist_name: album.artist_name, album_name: album.album_name });
-                        selectedAlbums.add(album.album_id);
-                    }
+                if (mostPopularTrack && (highestPopularity >= minPopularity)) {
+                    popularTracks.push({ track: mostPopularTrack, image: album.image, album_id: album.album_id, artist_name: album.artist_name, album_name: album.album_name });
+                    selectedAlbums.add(album.album_id);
                 }
             }
             params.ExclusiveStartKey = result.LastEvaluatedKey;
         } while (result.LastEvaluatedKey);
-
         return popularTracks;
     } catch (err) {
         console.error(`Error fetching albums: ${err}`);
         return [];
     }
-};
 
-
+}
 const shuffleArray = (array) => {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -135,19 +119,19 @@ const shuffleArray = (array) => {
 const processTracks = async (items, uniqueTrackIds) => {
     const tracks = [];
     for (const item of items) {
-        const id = item.track.url
+        const id = item.track.url;
         if (uniqueTrackIds.has(id)) {
             continue;
         }
         uniqueTrackIds.add(id);
-        const url = item.track.url;
-        const title = item.track.name;
-        const image = item.image;
-        const album = item.album_name;
+        const popularity = item.track?.spotify?.popularity || null;
         const artist = item.artist_name;
         const album_id = item.album_id;
-
-        tracks.push({ album_id, url, id, title, artist, album, image });
+        const album = item.album_name;
+        const title = item.track.name;
+        const url = item.track.url;
+        const image = item.image;
+        tracks.push({ album_id, url, id, title, artist, popularity, album, image });
     }
     return tracks;
 };
