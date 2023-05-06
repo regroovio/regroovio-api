@@ -31,6 +31,7 @@ const app = async (event) => {
                 continue;
             }
             console.log({ message: `Tracks found. [${items.length}]` });
+            console.log(items[0]);
             const tracks = await processTracks(items, uniqueTrackIds);
             allPopularTracks.push(...tracks);
         }
@@ -101,13 +102,13 @@ const fetchTracks = async (tableName, minPopularity, genres) => {
                 if (genres.length && album?.key_words > 0) {
                     for (const key_word of album.key_words) {
                         if (genres.includes(key_word)) {
-                            popularTracks.push({ track: mostPopularTrack, image: album.image, album_id: album.album_id });
+                            popularTracks.push({ track: mostPopularTrack, image: album.image, album_id: album.album_id, artist_name: album.artist_name, album_name: album.album_name });
                             selectedAlbums.add(album.album_id);
                         }
                     }
                 } else {
                     if (mostPopularTrack && (highestPopularity >= minPopularity || (albumYear === currentYear))) {
-                        popularTracks.push({ track: mostPopularTrack, image: album.image, album_id: album.album_id, artist_name: album, album_name: album.album_name });
+                        popularTracks.push({ track: mostPopularTrack, image: album.image, album_id: album.album_id, artist_name: album.artist_name, album_name: album.album_name });
                         selectedAlbums.add(album.album_id);
                     }
                 }
