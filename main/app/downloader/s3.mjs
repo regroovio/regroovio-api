@@ -14,7 +14,7 @@ function encodeS3ObjectKey(key) {
 const saveTrackToS3 = async (item) => {
     const { stream, name, album, artist } = item;
     const client = new S3Client({ region: 'us-east-1' });
-    const bucketName = `albums-regroovio`;
+    const bucketName = `regroovio-albums`;
     const type = "mp3";
     try {
         const { data } = await axios.get(stream, { responseType: 'arraybuffer' });
@@ -44,7 +44,7 @@ const saveTrackToS3 = async (item) => {
 const saveImageToS3 = async (item) => {
     const { imageUrl, album, artist } = item;
     const client = new S3Client({ region: 'us-east-1' });
-    const bucketName = `albums-regroovio`;
+    const bucketName = `regroovio-albums`;
     const type = "jpg";
     try {
         const { data } = await axios.get(imageUrl, { responseType: 'arraybuffer' });

@@ -120,7 +120,7 @@ jobs:
         run: |
           aws lambda update-function-code \
             --function-name ${{ matrix.function.name }}-${{ inputs.stage }} \
-            --s3-bucket lambdas-regroovio-${{ inputs.stage }} \
+            --s3-bucket regroovio-lambdas-${{ inputs.stage }} \
             --s3-key ${{ matrix.function.name }}-${{ inputs.stage }}.zip
 
       - name: Wait for Lambda update
