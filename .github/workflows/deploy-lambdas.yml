@@ -113,7 +113,7 @@ jobs:
         run: |
           cd ${{ matrix.function.path }}
           zip -r ${{ matrix.function.name }}-${{ inputs.stage }}.zip .
-          aws s3 cp ${{ matrix.function.name }}-${{ inputs.stage }}.zip s3://lambdas-regroovio-${{ inputs.stage }}
+          aws s3 cp ${{ matrix.function.name }}-${{ inputs.stage }}.zip s3://regroovio-lambdas-${{ inputs.stage }}
           rm ${{ matrix.function.name }}-${{ inputs.stage }}.zip
 
       - name: Update Lambda function code
