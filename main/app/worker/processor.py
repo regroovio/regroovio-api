@@ -38,7 +38,7 @@ def check_and_update_token_if_expired(admin_id, admin):
     if minutes <= 15:
         print("getting token...")
         raw_tokens = invoke_lambda.invoke_lambda({
-            "FunctionName": f"spotify-token-{os.getenv('STAGE')}",
+            "FunctionName": f"spotify-scrap-token-{os.getenv('STAGE')}",
             "Payload": json.dumps({"user_id": admin_id}),
         })
         tokens = json.loads(raw_tokens)
@@ -50,6 +50,8 @@ def check_and_update_token_if_expired(admin_id, admin):
 
 
 def process_unprocessed_albums(admin_id, admin, unprocessed_albums, table_name):
+    if not unprocessed_albums:
+        return False
     for i, album in enumerate(unprocessed_albums):
         new_admin = check_and_update_token_if_expired(admin_id, admin)
         if new_admin is not None:
@@ -62,9 +64,13 @@ def process_unprocessed_albums(admin_id, admin, unprocessed_albums, table_name):
         print(
             f"\nSearching: {album['artist_name']} - {album['album_name']} [{i + 1}/{len(unprocessed_albums)}]")
         for track in album['tracks']:
+            print("")
+            print(track)
             track = process_track(token, track, album)
 
         for track in album['tracks']:
+            print("")
+            print(track)
             if track['spotify'] is not None:
                 return update_album_in_dynamodb.update_album_in_dynamodb(table_name, album)
 
@@ -72,7 +78,7 @@ def process_unprocessed_albums(admin_id, admin, unprocessed_albums, table_name):
 def process_track(token, track, album):
     track["release_year"] = album["release_date"].split(
         "-")[2] if album.get("release_date") else None
-    time.sleep(3)
+    print(track["name"])
     target_track = invoke_lambda.invoke_lambda(
         {
             "FunctionName": f"spotify-search-track-{os.getenv('STAGE')}",
@@ -186,8 +192,12 @@ def processor_worker():
             if not admin:
                 print("User not found")
                 return
+            processed = False
             for table_name in tables:
-                process_albums_for_table_processor(table_name, admin_id, admin)
+                if process_albums_for_table_processor(table_name, admin_id, admin):
+                    processed = True
+            if not processed:
+                break
         except Exception as error:
             response = {"functionName": "processor_worker",
                         "status": "Error", "message": str(error)}

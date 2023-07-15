@@ -16,23 +16,30 @@ const documentClient = DynamoDBDocument.from(new DynamoDB({
 const app = async (event) => {
     console.log(event);
     const minPopularity = event.queryStringParameters?.popularity || 0;
+    const limit = event.queryStringParameters?.limit || 10; // Default limit of 10 if not specified
     try {
         const bandcampTables = await fetchAllBandcampTables();
         let allPopularTracks = [];
         const uniqueTrackIds = new Set();
-        for (const tableName of bandcampTables) {
+
+        const fetchTracksPromises = bandcampTables.map(async (tableName) => {
             console.log(tableName);
-            let items = await fetchTracks(tableName, minPopularity);
+            let items = await fetchTracks(tableName, minPopularity, limit);
             if (!items?.length) {
                 console.log({ message: 'No tracks found.' });
-                continue;
+                return [];
             }
             console.log({ message: `Tracks found. [${items.length}]` });
-            const tracks = await processTracks(items, uniqueTrackIds);
+            return processTracks(items, uniqueTrackIds);
+        });
+
+        const allTracks = await Promise.all(fetchTracksPromises);
+        allTracks.forEach(tracks => {
             allPopularTracks.push(...tracks);
-        }
+        });
+
         console.log({ message: `Total tracks found. [${allPopularTracks.length}]` });
-        return allPopularTracks;
+        return allPopularTracks.slice(0, limit); // Ensure the total result also respects the limit
     } catch (err) {
         console.error('Error processing albums:', err);
         return { message: 'Failed to process albums', err };
@@ -63,51 +70,28 @@ const fetchAllBandcampTables = async () => {
     }
 };
 
-const fetchTracks = async (tableName, minPopularity) => {
+const fetchTracks = async (tableName, minPopularity, limit) => {
     try {
-        let popularTracks = [];
-        let selectedAlbums = new Set();
+        const params = {
+            TableName: tableName,
+            KeyConditionExpression: "spotify.popularity >= :minPopularity",
+            ExpressionAttributeValues: {
+                ":minPopularity": minPopularity
+            },
+            ScanIndexForward: false, // this sorts results by sort key (popularity) in descending order
+            Limit: limit
+        };
 
-        let result;
-        let params = { TableName: tableName };
+        const result = await documentClient.query(params);
 
-        do {
-            result = await documentClient.scan(params);
-            const shuffledAlbums = shuffleArray(result.Items);
-
-            for (const album of shuffledAlbums) {
-                if (selectedAlbums.has(album.album_id)) {
-                    continue;
-                }
-                let mostPopularTrack = null;
-                let highestPopularity = 0;
-
-                const albumYear = parseInt(album.release_date?.split('-')[2]) || null;
-                const currentYear = new Date().getFullYear();
-
-                for (const track of album.tracks || []) {
-                    const isCurrentYearAlbum = albumYear === currentYear;
-                    if (track.spotify?.popularity && track.spotify.popularity > highestPopularity && track.spotify.popularity >= minPopularity) {
-                        highestPopularity = track.spotify.popularity;
-                        mostPopularTrack = track;
-                    } else if (isCurrentYearAlbum) {
-                        mostPopularTrack = track;
-                    }
-                }
-                if (mostPopularTrack && (highestPopularity >= minPopularity)) {
-                    popularTracks.push({ track: mostPopularTrack, image: album.image, album_id: album.album_id, artist_name: album.artist_name, album_name: album.album_name });
-                    selectedAlbums.add(album.album_id);
-                }
-            }
-            params.ExclusiveStartKey = result.LastEvaluatedKey;
-        } while (result.LastEvaluatedKey);
-        return popularTracks;
+        return processTracks(result.Items);
     } catch (err) {
         console.error(`Error fetching albums: ${err}`);
         return [];
     }
+};
 
-}
+
 const shuffleArray = (array) => {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -116,7 +100,7 @@ const shuffleArray = (array) => {
     return array;
 };
 
-const processTracks = async (items, uniqueTrackIds) => {
+const processTracks = (items, uniqueTrackIds) => {
     const tracks = [];
     for (const item of items) {
         const id = item.track.url;

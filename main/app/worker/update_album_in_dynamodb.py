@@ -15,6 +15,8 @@ dynamodb = boto3.resource('dynamodb', **AWS_DYNAMO)
 
 def update_album_in_dynamodb(table_name, album):
 
+    print(album)
+
     try:
         table = dynamodb.Table(table_name)
         response = table.update_item(
