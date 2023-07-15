@@ -88,7 +88,7 @@
     "path": "./spotify/api/tracks/search-track"
   },
   {
-    "name": "spotify-token",
+    "name": "spotify-scrap-token",
     "path": "./spotify/scrap-token"
   }
 ]

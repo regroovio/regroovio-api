@@ -23,7 +23,7 @@ const app = async () => {
     if (remainingTimeInMinutes <= 15 || !remainingTimeInMinutes) {
         console.log('Token is expiring soon or already expired, refreshing...');
         const rawTokens = await invokeLambda({
-            FunctionName: `spotify-token-${process.env.STAGE}`,
+            FunctionName: `spotify-scrap-token-${process.env.STAGE}`,
             Payload: JSON.stringify({ user_id: user_id })
         });
         const tokens = JSON.parse(rawTokens);
