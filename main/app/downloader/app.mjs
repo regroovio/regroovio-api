@@ -1,3 +1,4 @@
+
 // app.mjs
 
 import bcfetch from 'bandcamp-fetch';
@@ -8,21 +9,31 @@ import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
 
 dotenv.config();
 
-const documentClient = DynamoDBDocument.from(new DynamoDB({
+const client = new DynamoDB({
     region: process.env.REGION,
     accessKeyId: process.env.ACCESS_KEY,
     secretAccessKey: process.env.SECRET_ACCESS_KEY
-}));
+});
+
+const documentClient = DynamoDBDocument.from(client);
 
 const app = async (event, context) => {
+    const { tableName, album } = event;
     try {
-        const { tableName, album } = event
-        console.log(`Processing album ${album.url} for table ${tableName}`);
+        const { Item } = await documentClient.get({
+            TableName: tableName,
+            Key: { album_id: album.album_id }
+        });
+
+        if (Item && Item.saved === true) {
+            console.log(`Album already saved: ${Item.album_name}`);
+            return { message: `Album already saved: ${Item.album_name}` };
+        }
         await processAndSaveAlbum(album, tableName);
-        return { message: `Album ${album.url} added to ${tableName}.` };
+        return { message: `Albums processing completed.` };
     } catch (err) {
-        console.error('Error app:', err);
-        return { message: 'Failed to process album', err };
+        console.error('Error in app function:', err);
+        throw err;
     }
 };
 
@@ -32,12 +43,14 @@ const processAndSaveAlbum = async (album, tableName) => {
         if (!data || !data.linkInfo || !data.streams) return;
         const { linkInfo, streams } = data;
         const tracksS3 = (await Promise.all(streams.map(stream => downloadTrack(stream, linkInfo)))).filter(track => track !== undefined);
+        console.log(tracksS3);
         const albumWithDetails = await generatealbumWithDetails(linkInfo, tracksS3, album);
         console.log('Adding album:', albumWithDetails.album_name);
-        console.log(albumWithDetails);
         await saveAlbumToDatabase(tableName, albumWithDetails);
+        return albumWithDetails;
     } catch (err) {
-        console.error("Error processAndSaveAlbum:", err);
+        console.error("Error in processAndSaveAlbum function:", err);
+        throw err;
     }
 };
 
@@ -73,6 +86,10 @@ const generatealbumWithDetails = async (linkInfo, tracksS3, album) => {
 };
 
 const fetchAlbumData = async (album) => {
+    if (!album) {
+        console.log("Album is undefined");
+        throw new Error("Album is undefined");
+    }
     try {
         const linkInfo = await bcfetch.getAlbumInfo(album, { includeRawData: true });
         const streams = [...new Set(linkInfo.tracks.map((track) => {
@@ -80,9 +97,8 @@ const fetchAlbumData = async (album) => {
         }))];
         return { linkInfo, streams };
     } catch (err) {
-        console.error(`Error fetching album data for ${album.album_id}: ${err} `);
-        return { linkInfo: null, streams: null };
-
+        console.error(`Error fetching album data for ${album.album_id}:`, err);
+        throw err;
     }
 };
 
@@ -94,6 +110,7 @@ const downloadTrack = async (stream, linkInfo) => {
         return track;
     } else {
         console.log(`Undefined track: `, stream);
+        return
     }
 };
 
@@ -104,9 +121,10 @@ const saveAlbumToDatabase = async (tableName, album) => {
             Item: album,
         });
     } catch (err) {
-        console.error(`Error saving album to database: ${err}`);
+        console.error(`Error saving album to database:`, err);
         console.log('Table:', tableName);
         console.log('Album:', album);
+        throw err;
     }
 };
 

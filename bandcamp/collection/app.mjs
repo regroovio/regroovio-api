@@ -66,6 +66,18 @@ const isValidLink = (link) => {
     }
 };
 
+const invokeLambda = async (params) => {
+    try {
+        const command = new InvokeCommand(params);
+        const data = await lambdaClient.send(command);
+        const rawPayload = new TextDecoder().decode(data.Payload);
+        const cleanedPayload = JSON.parse(rawPayload.replace(/^"|"$/g, ''));
+        return cleanedPayload.body;
+    } catch (error) {
+        console.error('Error invoking Lambda function:', error);
+    }
+};
+
 const app = async (event) => {
     try {
         const { user_id } = event
@@ -88,7 +100,13 @@ const app = async (event) => {
         const albumLinks = await collectAlbumLinks(page);
         await page.close();
         await browser.close();
-        await addAlbumsToDb(table, albumLinks, user_id);
+        const albumAdded = await addAlbumsToDb(table, albumLinks, user_id);
+        for (const album of albumAdded) {
+            await invokeLambda({
+                FunctionName: `regroovio-downloader-${process.env.STAGE}`,
+                Payload: JSON.stringify({ table, album })
+            });
+        }
         return { message: 'done' };
     } catch (error) {
         throw new Error(`Error app: ${error}`);
