@@ -78,12 +78,12 @@ const app = async (event) => {
         const albumLinks = await collectAlbumLinks(page, genre);
         await page.close();
         await browser.close();
-        const itemsAdded = await addAlbumsToDb(table, albumLinks);
-        console.log(`Added ${itemsAdded} items.`);
+        const albumAdded = await addAlbumsToDb(table, albumLinks);
+        console.log(`Added ${albumAdded.length} items.`);
         return {
             functionName: `bandcamp-${genre}-${process.env.STAGE}`,
             scanned: albumLinks.length,
-            added: itemsAdded
+            added: albumAdded.length
         };
     } catch (error) {
         throw new Error(`bandcamp-${genre}-${process.env.STAGE}: ${error}`);

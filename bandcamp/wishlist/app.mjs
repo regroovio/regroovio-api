@@ -88,8 +88,13 @@ const app = async (event) => {
         const albumLinks = await collectAlbumLinks(page);
         await page.close();
         await browser.close();
-        await addAlbumsToDb(table, albumLinks, user_id);
-        return { message: 'done' };
+        await addAlbumsToDb(table, albumLinks);
+        console.log(`Added ${albumAdded.length} items.`);
+        return {
+            functionName: `bandcamp-collection-${process.env.STAGE}`,
+            scanned: albumLinks.length,
+            added: albumAdded.length
+        };
     } catch (error) {
         throw new Error(`Error app: ${error}`);
     }

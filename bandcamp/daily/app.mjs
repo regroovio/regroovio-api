@@ -71,12 +71,12 @@ const app = async (event) => {
         const albumLinks = await collectAlbumLinks(page);
         await page.close();
         await browser.close();
-        const itemsAdded = await addAlbumsToDb(table, albumLinks);
-        console.log(`Added ${itemsAdded} items.`);
+        const albumAdded = await addAlbumsToDb(table, albumLinks);
+        console.log(`Added ${albumAdded.length} items.`);
         return {
             functionName: `bandcamp-daily-${process.env.STAGE}`,
             scanned: albumLinks.length,
-            added: itemsAdded
+            added: albumAdded.length
         };
     } catch (error) {
         throw new Error(`bandcamp-daily-${process.env.STAGE}: ${error}`);
