@@ -8,13 +8,7 @@ import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import dotenv from "dotenv";
 dotenv.config();
 
-const AWS_DYNAMO = {
-    region: process.env.REGION,
-    accessKeyId: process.env.ACCESS_KEY,
-    secretAccessKey: process.env.SECRET_ACCESS_KEY,
-};
-
-const lambdaClient = new LambdaClient({ region: 'us-east-1' });
+const lambdaClient = new LambdaClient({ region: process.env.REGION });
 
 const collectAlbumLinks = async (page) => {
     console.log("getting daily...");
@@ -64,16 +58,9 @@ const isValidLink = (link) => {
     }
 };
 
-const invokeLambda = async (params) => {
-    try {
-        const command = new InvokeCommand(params);
-        const data = await lambdaClient.send(command);
-        const rawPayload = new TextDecoder().decode(data.Payload);
-        const cleanedPayload = JSON.parse(rawPayload.replace(/^"|"$/g, ''));
-        return cleanedPayload.body;
-    } catch (error) {
-        console.error('Error invoking Lambda function:', error);
-    }
+const invokeLambda = (params) => {
+    const command = new InvokeCommand(params);
+    return lambdaClient.send(command);
 };
 
 const app = async (event) => {
@@ -88,7 +75,7 @@ const app = async (event) => {
         invokeLambda({
             FunctionName: `regroovio-downloader-${process.env.STAGE}`,
             Payload: JSON.stringify({ tableName: table })
-        });
+        })
         return {
             functionName: `bandcamp-daily-${process.env.STAGE}`,
             scanned: albumLinks.length,

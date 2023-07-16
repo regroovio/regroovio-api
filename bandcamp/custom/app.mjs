@@ -4,18 +4,11 @@ import { CUSTOM } from './common/config.mjs';
 import { initializePuppeteer } from './common/browser.mjs';
 import { getAlbumLinks } from './common/getAlbumLinks.mjs';
 import { addAlbumsToDb } from './common/addAlbumsToDb.mjs';
-import { addAlbumsToS3 } from './common/addAlbumsToS3.mjs';
-import { DynamoDB } from "@aws-sdk/client-dynamodb";
+import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import dotenv from "dotenv";
 dotenv.config();
 
-const AWS_DYNAMO = {
-    region: process.env.REGION,
-    accessKeyId: process.env.ACCESS_KEY,
-    secretAccessKey: process.env.SECRET_ACCESS_KEY,
-};
-
-const dynamoClient = new DynamoDB(AWS_DYNAMO);
+const lambdaClient = new LambdaClient({ region: process.env.REGION });
 
 const collectAlbumLinks = async (page, genre) => {
     console.log(`getting ${genre}...`);
@@ -68,6 +61,10 @@ const isValidLink = (link) => {
     }
 };
 
+const invokeLambda = (params) => {
+    const command = new InvokeCommand(params);
+    return lambdaClient.send(command);
+};
 const app = async (event) => {
     const { genre } = event
     if (!genre) {
@@ -81,7 +78,10 @@ const app = async (event) => {
         await browser.close();
         const albumsAdded = await addAlbumsToDb(table, albumLinks);
         console.log(`Added ${albumsAdded.length} items.`);
-        const response = await addAlbumsToS3({ tableName: table, albums: albumsAdded });
+        invokeLambda({
+            FunctionName: `regroovio-downloader-${process.env.STAGE}`,
+            Payload: JSON.stringify({ tableName: table })
+        });
         return {
             functionName: `bandcamp-${genre}-${process.env.STAGE}`,
             scanned: albumLinks.length,
