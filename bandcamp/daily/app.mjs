@@ -4,7 +4,7 @@ import { DAILY } from './common/config.mjs';
 import { initializePuppeteer } from './common/browser.mjs';
 import { getAlbumLinks } from './common/getAlbumLinks.mjs';
 import { addAlbumsToDb } from './common/addAlbumsToDb.mjs';
-import { DynamoDB } from "@aws-sdk/client-dynamodb";
+import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -14,7 +14,7 @@ const AWS_DYNAMO = {
     secretAccessKey: process.env.SECRET_ACCESS_KEY,
 };
 
-const dynamoClient = new DynamoDB(AWS_DYNAMO);
+const lambdaClient = new LambdaClient({ region: 'us-east-1' });
 
 const collectAlbumLinks = async (page) => {
     console.log("getting daily...");
@@ -64,6 +64,18 @@ const isValidLink = (link) => {
     }
 };
 
+const invokeLambda = async (params) => {
+    try {
+        const command = new InvokeCommand(params);
+        const data = await lambdaClient.send(command);
+        const rawPayload = new TextDecoder().decode(data.Payload);
+        const cleanedPayload = JSON.parse(rawPayload.replace(/^"|"$/g, ''));
+        return cleanedPayload.body;
+    } catch (error) {
+        console.error('Error invoking Lambda function:', error);
+    }
+};
+
 const app = async (event) => {
     const table = `regroovio-daily-${process.env.STAGE}`;
     try {
@@ -71,12 +83,16 @@ const app = async (event) => {
         const albumLinks = await collectAlbumLinks(page);
         await page.close();
         await browser.close();
-        const albumAdded = await addAlbumsToDb(table, albumLinks);
-        console.log(`Added ${albumAdded.length} items.`);
+        const albumsAdded = await addAlbumsToDb(table, albumLinks);
+        console.log(`Added ${albumsAdded.length} items.`);
+        invokeLambda({
+            FunctionName: `regroovio-downloader-${process.env.STAGE}`,
+            Payload: JSON.stringify({ tableName: table })
+        });
         return {
             functionName: `bandcamp-daily-${process.env.STAGE}`,
             scanned: albumLinks.length,
-            added: albumAdded.length
+            added: albumsAdded.length
         };
     } catch (error) {
         throw new Error(`bandcamp-daily-${process.env.STAGE}: ${error}`);

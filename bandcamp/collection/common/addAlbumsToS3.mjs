@@ -1,5 +1,5 @@
 
-// app.mjs
+// addAlbumsToS3.mjs
 
 import bcfetch from 'bandcamp-fetch';
 import dotenv from 'dotenv';
@@ -17,23 +17,11 @@ const client = new DynamoDB({
 
 const documentClient = DynamoDBDocument.from(client);
 
-const app = async (event, context) => {
-    const { tableName } = event;
-    try {
-        const { Items } = await documentClient.scan({
-            TableName: tableName,
-        });
-        for (const album of Items) {
-            if (album?.saved) {
-                console.log(`Album already processed: ${album.album_id}`);
-                continue;
-            }
-            await processAndSaveAlbum(album, tableName)
-            console.log('Albums processing completed.');
-        }
-    } catch (err) {
-        console.error('Error in app function:', err);
-        throw err;
+const addAlbumsToS3 = async (event) => {
+    const { tableName, albums } = event;
+    for (const album of albums) {
+        await processAndSaveAlbum(album, tableName)
+        console.log('Albums processing completed.');
     }
 };
 
@@ -43,7 +31,6 @@ const processAndSaveAlbum = async (album, tableName) => {
         if (!data || !data.linkInfo || !data.streams) return;
         const { linkInfo, streams } = data;
         const tracksS3 = (await Promise.all(streams.map(stream => downloadTrack(stream, linkInfo)))).filter(track => track !== undefined);
-        console.log(tracksS3);
         const albumWithDetails = await generatealbumWithDetails(linkInfo, tracksS3, album);
         console.log('Adding album:', albumWithDetails.album_name);
         await saveAlbumToDatabase(tableName, albumWithDetails);
@@ -128,4 +115,4 @@ const saveAlbumToDatabase = async (tableName, album) => {
     }
 };
 
-export { app }
+export { addAlbumsToS3 }

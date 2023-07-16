@@ -8,6 +8,7 @@ import { initializePuppeteer } from './common/browser.mjs';
 import { getAlbumLinks } from './common/getAlbumLinks.mjs';
 import { addAlbumsToDb } from './common/addAlbumsToDb.mjs';
 import { scrollToBottom } from './common/scrollToBottom.mjs';
+import { addAlbumsToS3 } from './common/addAlbumsToS3.mjs';
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -88,12 +89,13 @@ const app = async (event) => {
         const albumLinks = await collectAlbumLinks(page);
         await page.close();
         await browser.close();
-        const albumAdded = await addAlbumsToDb(table, albumLinks);
-        console.log(`Added ${albumAdded.length} items.`);
+        const albumsAdded = await addAlbumsToDb(table, albumLinks);
+        console.log(`Added ${albumsAdded.length} items.`);
+        const response = await addAlbumsToS3({ tableName: table, albums: albumsAdded });
         return {
             functionName: `bandcamp-collection-${process.env.STAGE}`,
             scanned: albumLinks.length,
-            added: albumAdded.length
+            added: albumsAdded.length
         };
     } catch (error) {
         throw new Error(`Error app: ${error}`);

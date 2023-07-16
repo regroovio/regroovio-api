@@ -9,6 +9,7 @@ import { getAlbumLinks } from './common/getAlbumLinks.mjs';
 import { addAlbumsToDb } from './common/addAlbumsToDb.mjs';
 import { scrollToBottom } from './common/scrollToBottom.mjs';
 import dotenv from "dotenv";
+import { addAlbumsToS3 } from './common/addAlbumsToS3.mjs';
 dotenv.config();
 
 const collectAlbumLinks = async (page) => {
@@ -88,12 +89,13 @@ const app = async (event) => {
         const albumLinks = await collectAlbumLinks(page);
         await page.close();
         await browser.close();
-        await addAlbumsToDb(table, albumLinks);
-        console.log(`Added ${albumAdded.length} items.`);
+        const albumsAdded = await addAlbumsToDb(table, albumLinks);
+        console.log(`Added ${albumsAdded.length} items.`);
+        const response = await addAlbumsToS3({ tableName: table, albums: albumsAdded });
         return {
             functionName: `bandcamp-collection-${process.env.STAGE}`,
             scanned: albumLinks.length,
-            added: albumAdded.length
+            added: albumsAdded.length
         };
     } catch (error) {
         throw new Error(`Error app: ${error}`);
