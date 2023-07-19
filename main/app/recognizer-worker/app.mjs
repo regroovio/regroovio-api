@@ -9,7 +9,7 @@ const dynamoClient = new DynamoDB({ region: process.env.REGION });
 const lambdaClient = new LambdaClient({ region: process.env.REGION });
 const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
 
-const app = async (event, context) => {
+const runProcess = async () => {
     try {
         const tables = await list_tables()
         const admin_id = process.env.ADMIN_ID
@@ -17,10 +17,10 @@ const app = async (event, context) => {
             const admin = await getUserById(admin_id)
             if (!admin) {
                 console.log("User not found");
-                return
+                continue;
             }
-            const processedTracks = await processUnprocessedAlbums(table, admin)
-            return
+            console.log(`Processing table: ${table}`);
+            await processUnprocessedAlbums(table, admin)
         }
     } catch (err) {
         console.error('Error:', err.message);
@@ -28,6 +28,12 @@ const app = async (event, context) => {
     }
 };
 
+const app = async () => {
+    while (true) {
+        await runProcess();
+        await new Promise(resolve => setTimeout(resolve, 10000));
+    }
+};
 
 const processUnprocessedAlbums = async (table, admin) => {
     const params = {
@@ -44,21 +50,17 @@ const processUnprocessedAlbums = async (table, admin) => {
     if (newAdmin) {
         admin = newAdmin;
     }
-
     const token = admin.access_token_spotify;
     if (!token) {
         console.log("Error: Token not found");
         return;
     }
-
     const albums = await documentClient.scan(params);
-
     if (albums.Items.length === 0) {
         console.log(`No unprocessed albums found in ${table}`);
         return;
     }
     console.log(`Found ${albums.Items.length} unprocessed albums in ${table}`);
-
     for (const album of albums.Items) {
         console.log(`\nSearching: ${album.artist_name} - ${album.album_name}`);
         for (const track of album.tracks) {

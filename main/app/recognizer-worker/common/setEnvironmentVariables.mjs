@@ -2,7 +2,9 @@
 
 import { SSMClient, GetParameterCommand } from "@aws-sdk/client-ssm";
 
-const client = new SSMClient({ region: "us-east-1" });
+const client = new SSMClient({
+    region: "us-east-1"
+});
 
 const parseEnvironmentVariables = (envString) => {
     const keyValuePairs = envString.split(',');
