@@ -127,16 +127,6 @@ jobs:
         run: |
           aws lambda wait function-updated --function-name ${{ matrix.function.name }}-${{ inputs.stage }}
 
-      - name: Update Lambda function configuration
-        run: |
-          aws lambda update-function-configuration \
-          --function-name ${{ matrix.function.name }}-${{ inputs.stage }} \
-          --region us-east-1 \
-          --environment "Variables={
-          STAGE=\"${{ inputs.stage }}\",
-          ${{ secrets.LAMBDAS_ENV }}
-          }"
-
   update_parameter_store:
     name: Update Parameter Store
     runs-on: ubuntu-latest
@@ -150,19 +140,3 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
-
-      - name: Update Parameter Store
-        run: |
-          COGNITO_USER_POOL_ID=$(aws cognito-idp list-user-pools --max-results 20 | jq -r '.UserPools[] | select(.Name | contains("${{ inputs.stage }}")).Id')
-          COGNITO_CLIENT_ID=$(aws cognito-idp list-user-pool-clients --user-pool-id ${COGNITO_USER_POOL_ID} --max-results 20 | jq -r '.UserPoolClients[] | select(.ClientName | contains("${{ inputs.stage }}")) | .ClientId')
-          COGNITO_CLIENT_SECRET=$(aws cognito-idp describe-user-pool-client --user-pool-id ${COGNITO_USER_POOL_ID} --client-id ${COGNITO_CLIENT_ID} | jq -r '.UserPoolClient.ClientSecret')
-          aws ssm put-parameter \
-            --name "parameters-${{ inputs.stage }}" \
-            --type "String" \
-            --value "
-            COGNITO_USER_POOL_ID=${COGNITO_USER_POOL_ID},
-            COGNITO_CLIENT_ID=${COGNITO_CLIENT_ID},
-            COGNITO_CLIENT_SECRET=${COGNITO_CLIENT_SECRET},
-            STAGE=${{ inputs.stage }},
-            ${{ secrets.LAMBDAS_ENV }}" \
-            --overwrite
