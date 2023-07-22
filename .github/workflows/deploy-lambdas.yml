@@ -99,7 +99,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd ${{ matrix.function.path }}
-          npm ci
+          npm install
 
       - name: Cache Node modules
         uses: actions/cache@v3
