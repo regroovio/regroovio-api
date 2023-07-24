@@ -8,9 +8,7 @@ dotenv.config();
 
 
 const documentClient = DynamoDBDocument.from(new DynamoDB({
-    region: process.env.REGION,
-    accessKeyId: process.env.ACCESS_KEY,
-    secretAccessKey: process.env.SECRET_ACCESS_KEY
+    region: process.env.REGION
 }));
 
 const app = async (event) => {
@@ -48,9 +46,7 @@ const app = async (event) => {
 
 const fetchAllBandcampTables = async () => {
     const dynamoDB = new DynamoDB({
-        region: process.env.REGION,
-        accessKeyId: process.env.ACCESS_KEY,
-        secretAccessKey: process.env.SECRET_ACCESS_KEY
+        region: process.env.REGION
     });
     try {
         let result;

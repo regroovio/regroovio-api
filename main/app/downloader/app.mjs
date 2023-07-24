@@ -10,9 +10,7 @@ import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
 dotenv.config();
 
 const client = new DynamoDB({
-    region: process.env.REGION,
-    accessKeyId: process.env.ACCESS_KEY,
-    secretAccessKey: process.env.SECRET_ACCESS_KEY
+    region: process.env.REGION
 });
 
 const documentClient = DynamoDBDocument.from(client);
