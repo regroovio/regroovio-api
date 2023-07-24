@@ -95,17 +95,14 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Install dependencies
-        run: |
-          cd ${{ matrix.function.path }}
-          npm install
+        run: cd ${{ matrix.function.path }} && npm install
 
       - name: Cache Node modules
         uses: actions/cache@v3
         with:
           path: ${{ matrix.function.path }}/node_modules
           key: ${{ matrix.function.path }}-${{ inputs.stage }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ matrix.function.path }}-${{ inputs.stage }}-
+          restore-keys: ${{ matrix.function.path }}-${{ inputs.stage }}-
 
       - name: Package Lambda function
         run: |
@@ -122,19 +119,4 @@ jobs:
             --s3-key ${{ matrix.function.name }}-${{ inputs.stage }}.zip
 
       - name: Wait for Lambda update
-        run: |
-          aws lambda wait function-updated --function-name ${{ matrix.function.name }}-${{ inputs.stage }}
-
-  update_parameter_store:
-    name: Update Parameter Store
-    runs-on: ubuntu-latest
-    timeout-minutes: 1
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+        run: aws lambda wait function-updated --function-name ${{ matrix.function.name }}-${{ inputs.stage }}
