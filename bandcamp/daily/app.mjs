@@ -4,11 +4,8 @@ import { DAILY } from './common/config.mjs';
 import { initializePuppeteer } from './common/browser.mjs';
 import { getAlbumLinks } from './common/getAlbumLinks.mjs';
 import { addAlbumsToDb } from './common/addAlbumsToDb.mjs';
-import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import dotenv from "dotenv";
 dotenv.config();
-
-const lambdaClient = new LambdaClient({ region: process.env.REGION });
 
 const collectAlbumLinks = async (page) => {
     console.log("getting daily...");
@@ -58,11 +55,6 @@ const isValidLink = (link) => {
     }
 };
 
-const invokeLambda = (params) => {
-    const command = new InvokeCommand(params);
-    return lambdaClient.send(command);
-};
-
 const app = async (event) => {
     const table = `regroovio-daily-${process.env.STAGE}`;
     try {
@@ -72,10 +64,6 @@ const app = async (event) => {
         await browser.close();
         const albumsAdded = await addAlbumsToDb(table, albumLinks);
         console.log(`Added ${albumsAdded.length} items.`);
-        invokeLambda({
-            FunctionName: `regroovio-downloader-${process.env.STAGE}`,
-            Payload: JSON.stringify({ tableName: table })
-        })
         return {
             functionName: `bandcamp-daily-${process.env.STAGE}`,
             scanned: albumLinks.length,

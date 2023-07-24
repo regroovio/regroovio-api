@@ -16,14 +16,6 @@
     "path": "./main/api/tracks/random-tracks"
   },
   {
-    "name": "regroovio-downloader",
-    "path": "./main/app/downloader"
-  },
-  {
-    "name": "regroovio-recognizer",
-    "path": "./main/app/recognizer"
-  },
-  {
     "name": "bandcamp-wishlist",
     "path": "./bandcamp/wishlist"
   },
