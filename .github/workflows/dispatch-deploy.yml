@@ -17,5 +17,4 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
-          gh workflow list  
           gh workflow run deploy-lambdas.yml --ref main -f stage=prod -f functions=all
