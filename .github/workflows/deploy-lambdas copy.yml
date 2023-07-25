@@ -6,6 +6,7 @@ on:
 
 jobs:
   deploy:
+  
     uses: regroovio/server/.github/workflows/deploy-lambdas.yml@main
     secrets: inherit
     with:
