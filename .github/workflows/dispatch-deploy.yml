@@ -1,4 +1,4 @@
-name: Dispatch Deploy (Lambdas);
+name: Dispatch Deploy (Lambdas)
 on:
   push:
     branches:
@@ -17,5 +17,4 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh workflow list  
-          gh workflow run deploy-lambdas --ref main -f stage=prod functions=all
+          gh workflow run 52826773 --ref main -f stage=prod functions=all
