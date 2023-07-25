@@ -67,8 +67,8 @@ jobs:
     timeout-minutes: 1
 
     steps:
-      - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action0.11.0
+      # - name: Cancel Previous Runs
+      #   uses: styfle/cancel-workflow-action0.11.0
 
       - name: Checkout
         uses: actions/checkout@v3
