@@ -1,6 +1,22 @@
 name: Deploy Lambdas
 
 on:
+  workflow_call:
+    inputs:
+      stage:
+        description: "The stage to deploy to (prod or dev)"
+        required: true
+        type: string
+      functions:
+        description: "The function to deploy"
+        required: true
+        type: string
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+        
   workflow_dispatch:
     inputs:
       stage:
