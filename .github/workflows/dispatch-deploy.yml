@@ -1,4 +1,4 @@
-name: Dispatch Deploy (Lambda);
+name: Dispatch Deploy (Lambdas);
 on:
   push:
     branches:
@@ -6,8 +6,15 @@ on:
 
 jobs:
   deploy:
-    uses: regroovio/server/.github/workflows/deploy-lambdas.yml@main
-    secrets: inherit
-    with:
-      stage: prod
-      functions: all
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Dispatch Deploy
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          event-type: deploy-lambdas
+          client-payload: '{"stage": "prod", "functions": "${{ steps.filter_functions.outputs.filtered_functions }}"}'

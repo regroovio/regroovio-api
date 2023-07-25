@@ -16,7 +16,7 @@ on:
         required: true
       AWS_SECRET_ACCESS_KEY:
         required: true
-        
+
   workflow_dispatch:
     inputs:
       stage:
