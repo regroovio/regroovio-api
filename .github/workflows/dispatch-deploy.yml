@@ -14,7 +14,7 @@ jobs:
           fetch-depth: 0
 
       - name: Dispatch Deploy
-        uses: peter-evans/repository-dispatch@v1
+        uses: peter-evans/repository-dispatch@v2
         with:
           event-type: deploy-lambdas
           client-payload: '{"stage": "prod", "functions": "${{ steps.filter_functions.outputs.filtered_functions }}"}'
