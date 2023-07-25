@@ -1,0 +1,13 @@
+name: Dispatch Deploy (Lambda);
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    uses: regroovio/server/.github/workflows/deploy-lambdas.yml@main
+    secrets: inherit
+    with:
+      stage: prod
+      functuins: all
