@@ -22,7 +22,7 @@ const app = async (event, context) => {
             TableName: tableName,
         });
         for (const album of Items) {
-            if (album?.saved) {
+            if (!album?.url) {
                 console.log(`Album already processed: ${album.album_id}`);
                 continue;
             }
@@ -54,21 +54,19 @@ const processAndSaveAlbum = async (album, tableName) => {
 
 const generatealbumWithDetails = async (linkInfo, tracksS3, album) => {
     let imageId = await saveImageToS3({ imageUrl: linkInfo.imageUrl, album: linkInfo.name, artist: linkInfo.artist.name });
-    let saved = null
     const d = linkInfo.releaseDate?.split(' ')[0]
     const m = linkInfo.releaseDate?.split(' ')[1]
     const y = linkInfo.releaseDate?.split(' ')[2]
     const release_date = d && m && y ? `${d}-${m}-${y}` : null
     if (!imageId) {
-        saved = 'failed'
+        failed = true
         imageId = null
     }
     if (!tracksS3.length) {
-        saved = 'failed'
+        failed = true
         tracksS3 = null
     }
     if (tracksS3.length && imageId) {
-        saved = true
         delete album.url;
     }
     return {
@@ -77,7 +75,6 @@ const generatealbumWithDetails = async (linkInfo, tracksS3, album) => {
         key_words: linkInfo.keywords,
         release_date: release_date,
         album_name: linkInfo.name,
-        saved: saved,
         image: imageId,
         tracks: tracksS3
     };

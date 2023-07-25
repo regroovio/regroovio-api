@@ -25,7 +25,6 @@ const slackBot = async (error) => {
                 }
             }
         ];
-
         await axios.post(process.env.SLACK_ENDPOINT, { blocks: errorBlocks });
     } catch (error) {
         console.error('Error sending notification to Slack:', error);

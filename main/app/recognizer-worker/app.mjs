@@ -31,19 +31,20 @@ const runProcess = async () => {
 const app = async () => {
     while (true) {
         await runProcess();
-        await new Promise(resolve => setTimeout(resolve, 10000));
+        await new Promise(resolve => setTimeout(resolve, 60000));
     }
 };
 
 const processUnprocessedAlbums = async (table, admin) => {
     const params = {
         TableName: table,
-        FilterExpression: "attribute_not_exists(#pr) or #pr = :p",
+        FilterExpression: "(attribute_not_exists(#pr) or #pr = :p) and attribute_not_exists(#url)",
         ExpressionAttributeNames: {
-            "#pr": "processed"
+            "#pr": "processed",
+            "#url": "url"
         },
         ExpressionAttributeValues: {
-            ":p": 'false'
+            ":p": false
         }
     };
     const newAdmin = await checkAndUpdateTokenIfExpired(admin.user_id, admin);
@@ -109,7 +110,10 @@ const invokeLambda = async (params) => {
         const data = await lambdaClient.send(command);
         const rawPayload = new TextDecoder().decode(data.Payload);
         const cleanedPayload = JSON.parse(rawPayload.replace(/^"|"$/g, ''));
-        return cleanedPayload.body;
+        if (cleanedPayload.statusCode !== 200) {
+            return null;
+        }
+        return JSON.parse(cleanedPayload.body);
     } catch (error) {
         console.error('Error invoking Lambda function:', error);
     }
@@ -122,15 +126,15 @@ const checkAndUpdateTokenIfExpired = async (adminId, admin) => {
     const minutes = parseInt(remainingTimeInMinutes);
     if (minutes <= 15) {
         console.log("getting token...");
-        const rawTokens = await invokeLambda({
+        const tokens = await invokeLambda({
             FunctionName: `spotify-scrap-token-${process.env.STAGE}`,
             Payload: JSON.stringify({ "user_id": adminId }),
         });
-        const tokens = JSON.parse(rawTokens);
-        if (tokens.access_token) {
+        if (tokens?.access_token) {
             const admin = await updateUserTokens(admin, tokens);
             return admin;
         }
+        return null;
     }
     console.log("Token expires in: ", minutes, " minutes");
     return admin;
@@ -169,7 +173,7 @@ const processTrack = async (token, track, album) => {
             year: track.release_year
         })
     });
-    return JSON.parse(targetTrack);
+    return targetTrack;
 }
 
 const updateAlbumInDynamodb = async (table_name, album) => {
