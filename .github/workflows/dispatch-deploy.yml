@@ -16,4 +16,4 @@ jobs:
       - name: Dispatch Deploy
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh workflow run deploy-lambdas --ref branch-main -f stage=prod functions=all
+        run: gh workflow run deploy-lambdas --ref main -f stage=prod functions=all
