@@ -8,14 +8,14 @@ const retryAttempts = 3;
 const app = async (event) => {
   try {
     const { token, trackName, year, albumName, artistName } = event;
-
-    // Using the search API to find the track.
-    let tracks = await search(token, `track:${trackName} year:${year} artist:${artistName}`, "track", 1);
+    let query = `track:${trackName} album:${albumName} artist:${artistName}`;
+    if (year) {
+      query = `track:${trackName} album:${albumName} artist:${artistName} year:${year}`;
+    }
+    let tracks = await search(token, query, "track", 1);
     if (tracks.tracks.items.length > 0) {
-      // Check if the track belongs to the given album
       const albumId = tracks.tracks.items[0].album.id;
       const albumTracks = await getAlbumTracks(token, albumId);
-
       const trackInAlbum = albumTracks.find(track => track.id === tracks.tracks.items[0].id);
       if (trackInAlbum) {
         return { statusCode: 200, body: tracks.tracks.items[0] };
@@ -24,7 +24,7 @@ const app = async (event) => {
       }
     }
 
-    return { statusCode: 404, body: `The requested track was not found. Please ensure the provided artist name, track name, album name, and year are correct and try again.` };
+    return { statusCode: 404, body: `The requested track was not found.Please ensure the provided artist name, track name, album name, and year are correct and try again.` };
 
   } catch (error) {
     handleError(error, "searching");
@@ -45,7 +45,7 @@ const search = async (token, query, type, limit) => {
     } catch (error) {
       if (error.response?.status === 429 && error.response?.headers['retry-after']) {
         const delay = parseInt(error.response?.headers['retry-after']) * 1000;
-        console.log(`Rate limited. Retrying after ${delay / 1000} seconds.`);
+        console.log(`Rate limited.Retrying after ${delay / 1000} seconds.`);
         await sleep(delay);
         attempts++;
       } else {

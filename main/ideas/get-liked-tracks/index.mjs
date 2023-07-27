@@ -1,12 +1,12 @@
 // index.mjs
 
-import dotenv from "dotenv";
-dotenv.config();
+import { setEnvironmentVariables } from "./common/setEnvironmentVariables.mjs";
 
 import { app } from "./app.mjs";
 
 const handler = async (event, context) => {
   try {
+    await setEnvironmentVariables();
     const startTime = process.hrtime();
     const result = await app(event);
     const endTime = process.hrtime(startTime);
@@ -19,7 +19,7 @@ const handler = async (event, context) => {
       body: JSON.stringify(result),
     };
   } catch (error) {
-    console.error(`Error handler: ${error}`);
+    console.log(`Error handler: ${error}`);
     return {
       body: JSON.stringify({ error: error }),
 

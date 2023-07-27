@@ -4,7 +4,7 @@ import { CognitoIdentityProviderClient, ConfirmSignUpCommand } from "@aws-sdk/cl
 import { AWS_COGNITO } from "./common/config.mjs";
 import calculateSecretHash from "./common/secretHash.mjs";
 
-const client = new CognitoIdentityProviderClient({ region: "us-east-1" });
+const client = new CognitoIdentityProviderClient({ region: process.env.REGION });
 
 const confirmSignUp = async (email, confirmationCode) => {
     const secretHash = calculateSecretHash(
@@ -38,7 +38,7 @@ const app = async (event) => {
         console.log("Confirmed sign up:", confirmData);
         return { message: "Confirmed", data: confirmData, statusCode: 200 };
     } catch (err) {
-        console.error(err);
+        console.log(err);
         return { message: err.message, statusCode: 400 };
     }
 };

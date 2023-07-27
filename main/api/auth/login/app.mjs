@@ -4,7 +4,7 @@ import { CognitoIdentityProviderClient, InitiateAuthCommand } from "@aws-sdk/cli
 import calculateSecretHash from "./common/secretHash.mjs";
 import { AWS_COGNITO } from "./common/config.mjs";
 
-const client = new CognitoIdentityProviderClient({ region: "us-east-1" });
+const client = new CognitoIdentityProviderClient({ region: process.env.REGION });
 
 const initiateAuth = async (email, password) => {
     const secretHash = calculateSecretHash(
@@ -42,7 +42,7 @@ const app = async (event) => {
         console.log("Authenticated user:", loginData);
         return { message: "Authenticated", data: loginData, statusCode: 200 };
     } catch (err) {
-        console.error(err);
+        console.log(err);
         return { message: err.message, statusCode: 400 };
     }
 };

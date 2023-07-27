@@ -45,7 +45,7 @@ userInterface.on("line", async (input) => {
     previousMessages.push({ role: "assistant", content: response });
   } catch (error) {
     clearLoadingIndicator();
-    console.error("Error:", error.message);
+    console.log("Error:", error.message);
   } finally {
     userInterface.prompt();
   }

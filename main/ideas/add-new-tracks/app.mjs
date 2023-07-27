@@ -1,12 +1,9 @@
-import { config } from "dotenv";
 import { getUserById } from "./common/getUserById.mjs";
 import { Configuration, OpenAIApi } from "openai";
 import { DynamoDB } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
-import { AWS_DYNAMO } from "./common/config.mjs";
-config();
 
-const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
+const documentClient = DynamoDBDocument.from(new DynamoDB({ region: process.env.REGION }));
 const openAi = new OpenAIApi(new Configuration({ apiKey: process.env.OPEN_AI_API_KEY_V2 }));
 
 const app = async (event) => {
@@ -54,7 +51,7 @@ const predictSongLikelihood = async (likedSongs, newSong) => {
         const likelihood = parseFloat(response.data.choices[0].message.content);
         return likelihood;
     } catch (error) {
-        console.error("Error:", error.message);
+        console.log("Error:", error.message);
     }
     return -1;
 };
@@ -73,7 +70,7 @@ const getTableItems = async (tableName) => {
         } while (result.LastEvaluatedKey);
         return items;
     } catch (err) {
-        console.error(`Error fetching items: ${err}`);
+        console.log(`Error fetching items: ${err}`);
         return [];
     }
 };

@@ -8,8 +8,6 @@ import { initializePuppeteer } from './common/browser.mjs';
 import { getAlbumLinks } from './common/getAlbumLinks.mjs';
 import { addAlbumsToDb } from './common/addAlbumsToDb.mjs';
 import { scrollToBottom } from './common/scrollToBottom.mjs';
-import dotenv from "dotenv";
-dotenv.config();
 
 
 const collectAlbumLinks = async (page) => {
@@ -62,7 +60,7 @@ const isValidLink = (link) => {
     try {
         return link.includes("com/album") || link.includes("com/track");
     } catch (error) {
-        console.error(error);
+        console.log(error);
         return false;
     }
 };

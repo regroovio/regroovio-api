@@ -1,9 +1,6 @@
 // local.mjs
 
-import dotenv from 'dotenv';
 import { handler } from './index.mjs';
-
-dotenv.config();
 
 const start = async () => {
     const response = await handler({

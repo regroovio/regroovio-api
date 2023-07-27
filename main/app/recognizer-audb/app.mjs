@@ -1,13 +1,12 @@
 // app.mjs
 
 import axios from 'axios';
-import { AWS_DYNAMO } from "./common/config.mjs";
 import { slackBot } from './common/slackBot.mjs';
 import { DynamoDB } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
 
 const dynamoClient = new DynamoDB({ region: process.env.REGION });
-const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
+const documentClient = DynamoDBDocument.from(new DynamoDB({ region: process.env.REGION }));
 
 class CustomError extends Error {
     constructor(message, functionName, additionalInfo) {
@@ -54,7 +53,7 @@ const app = async () => {
         }
         return { body: { message: "Processed all albums" } };
     } catch (err) {
-        console.error('Error:', err.message);
+        console.log('Error:', err.message);
         await slackBot({
             message: err.message,
             functionName: `regroovio-recognizer-${process.env.STAGE}`,
@@ -66,7 +65,7 @@ const app = async () => {
 
 const getTrackInfo = async (track) => {
     if (!track || !process.env.AUDD_API_KEY) {
-        console.error("getTrackInfo: Invalid parameters");
+        console.log("getTrackInfo: Invalid parameters");
         return null;
     }
 
@@ -83,7 +82,7 @@ const getTrackInfo = async (track) => {
         });
         return response;
     } catch (error) {
-        console.error(error);
+        console.log(error);
         throw new CustomError(error.message, 'getTrackInfo');
     }
 };
@@ -91,7 +90,7 @@ const getTrackInfo = async (track) => {
 const list_tables = async () => {
     const data = await dynamoClient.listTables({});
     const tables = data.TableNames.filter((table) => {
-        return !table.includes("regroovio-users") && !table.includes("regroovio-missing") && table.includes(process.env.STAGE);
+        return !table.includes("regroovio-users") && table.includes(process.env.STAGE);
     });
     return tables;
 }

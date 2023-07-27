@@ -1,10 +1,9 @@
 // addAlbumsToDb.mjs
 
 import { DynamoDB } from "@aws-sdk/client-dynamodb";
-import { AWS_DYNAMO } from "./config.mjs";
 import { createHash } from "crypto";
 
-const dynamoClient = new DynamoDB(AWS_DYNAMO);
+const dynamoClient = new DynamoDB({ region: process.env.REGION });
 
 const addAlbumsToDb = async (table, links) => {
     const chunkSize = 10;

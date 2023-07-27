@@ -2,7 +2,7 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import axios from 'axios';
 
-const client = new S3Client({ region: 'us-east-1' });
+const client = new S3Client({ region: process.env.REGION });
 const bucketName = `regroovio-albums`;
 
 function encodeS3ObjectKey(key) {
@@ -24,7 +24,7 @@ const saveToS3 = async (key, data, contentType) => {
     const command = new PutObjectCommand(input);
     const response = await client.send(command);
     const encodedKey = encodeS3ObjectKey(key);
-    const s3ObjectUrl = `https://${bucketName}.s3.us-east-1.amazonaws.com/${encodedKey}`;
+    const s3ObjectUrl = `https://${bucketName}.s3.${process.env.REGION}.amazonaws.com/${encodedKey}`;
     return s3ObjectUrl;
 }
 
@@ -38,7 +38,7 @@ const saveTrackToS3 = async (item) => {
         console.log(`Saved track to S3: ${s3ObjectUrl}`);
         return s3ObjectUrl;
     } catch (err) {
-        console.error(`Error saving album to S3: ${err}`);
+        console.log(`Error saving album to S3: ${err}`);
         return null;
     }
 };
@@ -53,7 +53,7 @@ const saveImageToS3 = async (item) => {
         console.log(`Saved image to S3: ${s3ObjectUrl}`);
         return s3ObjectUrl;
     } catch (err) {
-        console.error(`Error saving image to S3: ${err}`);
+        console.log(`Error saving image to S3: ${err}`);
         return null;
     }
 };

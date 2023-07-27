@@ -2,38 +2,57 @@
 // app.mjs
 
 import bcfetch from 'bandcamp-fetch';
-import dotenv from 'dotenv';
+import { DynamoDB } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
 import { saveTrackToS3, saveImageToS3 } from './s3.mjs';
-import { DynamoDB } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
 
-dotenv.config();
+const documentClient = DynamoDBDocument.from(new DynamoDB({ region: process.env.REGION }));
 
-const client = new DynamoDB({
-    region: process.env.REGION
-});
-
-const documentClient = DynamoDBDocument.from(client);
-
-const app = async (event, context) => {
-    const { tableName } = event;
-    try {
-        const { Items } = await documentClient.scan({
-            TableName: tableName,
-        });
-        for (const album of Items) {
-            if (!album?.url) {
-                console.log(`Album already processed: ${album.album_id}`);
-                continue;
-            }
-            await processAndSaveAlbum(album, tableName)
-            console.log('Albums processing completed.');
+const app = async () => {
+    while (true) {
+        try {
+            await runProcess();
+            await new Promise(resolve => setTimeout(resolve, 60000));
+        } catch (err) {
+            console.log('Error in app function:', err);
+            throw err;
         }
+    }
+};
+
+const runProcess = async () => {
+    const tableName = process.env.TABLE_NAME;
+    console.log(`\nProcessing table: ${tableName}`);
+    try {
+        const albums = await getUnSaveAlbums(tableName);
+        for (const album of albums) {
+            console.log(`\nProcessing album: ${album.url} | [${albums.indexOf(album) + 1}/${albums.length}]`);
+            await processAndSaveAlbum(album, tableName)
+            console.log('Album processing completed.');
+        }
+        console.log(albums.length ? '\nTable processing completed.' : '\nNo albums found.');
     } catch (err) {
-        console.error('Error in app function:', err);
+        console.log('Error in app function:', err);
         throw err;
     }
 };
+
+const getUnSaveAlbums = async (table) => {
+    const params = {
+        TableName: table,
+        FilterExpression: "attribute_exists(#url)",
+        ExpressionAttributeNames: {
+            "#url": "url"
+        }
+    };
+    try {
+        const albums = await documentClient.scan(params);
+        return albums.Items.length ? albums.Items : [];
+    } catch (err) {
+        console.log('Error in getUnSaveAlbums function:', err);
+        throw err;
+    }
+}
 
 const processAndSaveAlbum = async (album, tableName) => {
     try {
@@ -47,7 +66,7 @@ const processAndSaveAlbum = async (album, tableName) => {
         await saveAlbumToDatabase(tableName, albumWithDetails);
         return albumWithDetails;
     } catch (err) {
-        console.error("Error in processAndSaveAlbum function:", err);
+        console.log("Error in processAndSaveAlbum function:", err);
         throw err;
     }
 };
@@ -92,14 +111,14 @@ const fetchAlbumData = async (album) => {
         }))];
         return { linkInfo, streams };
     } catch (err) {
-        console.error(`Error fetching album data for ${album.album_id}:`, err);
+        console.log(`Error fetching album data for ${album.album_id}:`, err);
         throw err;
     }
 };
 
 const downloadTrack = async (stream, linkInfo) => {
     if (stream.stream) {
-        console.log(`Downloading track: `, stream.name);
+        console.log(`\nDownloading track: `, stream.name);
         const trackUrl = await saveTrackToS3({ ...stream, album: linkInfo.name, artist: linkInfo.artist.name });
         const track = { url: trackUrl, name: stream.name };
         return track;
@@ -116,7 +135,7 @@ const saveAlbumToDatabase = async (tableName, album) => {
             Item: album,
         });
     } catch (err) {
-        console.error(`Error saving album to database:`, err);
+        console.log(`Error saving album to database:`, err);
         console.log('Table:', tableName);
         console.log('Album:', album);
         throw err;

@@ -7,7 +7,7 @@ export const buildHeaders = (token) => ({
 export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const handleError = (error, context) => {
-    console.error(`Error ${context}:`);
+    console.log(`Error ${context}:`);
     console.log(error.message);
     if (error.response) {
         console.log(error.response.data);

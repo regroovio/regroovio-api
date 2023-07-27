@@ -2,7 +2,8 @@
 
 import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
 import { DynamoDB } from "@aws-sdk/client-dynamodb";
-import { AWS_DYNAMO } from "./config.mjs";
+
+const documentClient = DynamoDBDocument.from(new DynamoDB({ region: process.env.REGION }));
 
 const checkCredentials = async (page, username) => {
     try {
@@ -20,7 +21,7 @@ const checkCredentials = async (page, username) => {
             return false;
         }
     } catch (error) {
-        console.error(`Error checkCredentials: ${error}`);
+        console.log(`Error checkCredentials: ${error}`);
         throw error;
     }
 };
@@ -28,11 +29,10 @@ const checkCredentials = async (page, username) => {
 const saveCookies = async (page, user) => {
     try {
         const cookies = await page.cookies();
-        const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
         user.bandcamp_cookies = cookies;
         await documentClient.put({ TableName: `regroovio-users-${process.env.STAGE}`, Item: user });
     } catch (err) {
-        console.error(`Error saveCookies: ${err}`);
+        console.log(`Error saveCookies: ${err}`);
         throw err;
     }
 };
@@ -55,7 +55,7 @@ const login = async (page, username_bandcamp, password_bandcamp) => {
         const { solved, error } = await page.solveRecaptchas();
 
         if (error) {
-            console.error(error);
+            console.log(error);
             throw error;
         }
 

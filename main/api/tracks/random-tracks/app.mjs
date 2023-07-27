@@ -1,10 +1,8 @@
 // app.mjs
 
-import dotenv from 'dotenv';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
 
-dotenv.config();
 
 
 const documentClient = DynamoDBDocument.from(new DynamoDB({
@@ -39,7 +37,7 @@ const app = async (event) => {
         console.log({ message: `Total tracks found. [${allPopularTracks.length}]` });
         return allPopularTracks.slice(0, limit); // Ensure the total result also respects the limit
     } catch (err) {
-        console.error('Error processing albums:', err);
+        console.log('Error processing albums:', err);
         return { message: 'Failed to process albums', err };
     }
 };
@@ -61,7 +59,7 @@ const fetchAllBandcampTables = async () => {
         } while (result.LastEvaluatedTableName);
         return bandcampTables;
     } catch (err) {
-        console.error(`Error listing Bandcamp tables: ${err}`);
+        console.log(`Error listing Bandcamp tables: ${err}`);
         return [];
     }
 };
@@ -82,7 +80,7 @@ const fetchTracks = async (tableName, minPopularity, limit) => {
 
         return processTracks(result.Items);
     } catch (err) {
-        console.error(`Error fetching albums: ${err}`);
+        console.log(`Error fetching albums: ${err}`);
         return [];
     }
 };

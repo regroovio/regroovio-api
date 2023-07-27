@@ -1,9 +1,8 @@
 // createTable.mjs 
 
 import { DynamoDBClient, CreateTableCommand } from "@aws-sdk/client-dynamodb";
-import { AWS_DYNAMO } from "./config.mjs";
 
-const dynamodb = new DynamoDBClient(AWS_DYNAMO);
+const dynamodb = new DynamoDBClient({ region: process.env.REGION });
 
 const createTable = async (TableName) => {
     const params = {
@@ -28,7 +27,7 @@ const createTable = async (TableName) => {
         console.log(`Created DynamoDB table: ${TableName}`);
     } catch (err) {
         if (err.name !== "ResourceInUseException") {
-            console.error(`Error creating DynamoDB table: ${err.message}`);
+            console.log(`Error creating DynamoDB table: ${err.message}`);
             throw err;
         }
     }

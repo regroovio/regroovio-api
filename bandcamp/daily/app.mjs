@@ -4,8 +4,6 @@ import { DAILY } from './common/config.mjs';
 import { initializePuppeteer } from './common/browser.mjs';
 import { getAlbumLinks } from './common/getAlbumLinks.mjs';
 import { addAlbumsToDb } from './common/addAlbumsToDb.mjs';
-import dotenv from "dotenv";
-dotenv.config();
 
 const collectAlbumLinks = async (page) => {
     console.log("getting daily...");
@@ -50,7 +48,7 @@ const isValidLink = (link) => {
     try {
         return link.includes("com/album") || link.includes("com/track");
     } catch (error) {
-        console.error(error);
+        console.log(error);
         return false;
     }
 };

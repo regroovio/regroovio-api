@@ -19,7 +19,7 @@ const removeTrackFromUserLibrary = async (accessToken, trackIds) => {
       console.log("Error removing track(s) from the user's library:", response.status);
     }
   } catch (error) {
-    console.error("Error removing track(s) from the user's library:", error.message);
+    console.log("Error removing track(s) from the user's library:", error.message);
   }
 };
 

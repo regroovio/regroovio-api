@@ -19,7 +19,7 @@ const saveTrackToUserLibrary = async (accessToken, trackIds) => {
       console.log("Error adding track(s) to the user's library:", response.status);
     }
   } catch (error) {
-    console.error("Error adding track(s) to the user's library:", error.message);
+    console.log("Error adding track(s) to the user's library:", error.message);
   }
 };
 

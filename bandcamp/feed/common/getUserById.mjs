@@ -2,11 +2,10 @@
 
 import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
 import { DynamoDB } from "@aws-sdk/client-dynamodb";
-import { AWS_DYNAMO } from "./config.mjs";
 
 const getUserById = async (user_id) => {
     try {
-        const documentClient = DynamoDBDocument.from(new DynamoDB(AWS_DYNAMO));
+        const documentClient = DynamoDBDocument.from(new DynamoDB({ region: process.env.REGION }));
         const params = {
             TableName: `regroovio-users-${process.env.STAGE}`,
             Key: {
