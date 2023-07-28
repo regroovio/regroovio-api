@@ -78,5 +78,5 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           service: ${{ matrix.task }}-service-${{ inputs.stage }}
-          cluster: "${{ inputs.stage }}-ecs-cluster"
+          cluster: "regroovio-${{ inputs.stage }}"
           task-definition: ${{ steps.task.outputs.task-definition }}
