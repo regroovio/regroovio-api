@@ -71,7 +71,7 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: ${{ matrix.task }}-${{ inputs.stage }}.json
-          container-name: regroovio-${{ matrix.task }}
+          container-name: ${{ matrix.task }}-${{ inputs.stage }}
           image: "${{ steps.login.outputs.registry }}/${{ matrix.task }}-${{ inputs.stage }}:${{ github.sha }}"
 
       - name: Deploy Amazon ECS task definition
