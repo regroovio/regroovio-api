@@ -8,4 +8,4 @@ RUN npm install
 
 COPY . .
 
-CMD ["node", "local.mjs"]
+CMD ["npm", "run", "start"]
