@@ -4,6 +4,7 @@
 import bcfetch from 'bandcamp-fetch';
 import { SQS } from "@aws-sdk/client-sqs";
 import { saveTrackToS3, saveImageToS3 } from './s3.mjs';
+import { slackBot } from './common/slackBot.mjs';
 
 const sqs = new SQS({ region: process.env.REGION });
 
@@ -39,10 +40,26 @@ const receiveMessagesFromSQS = async () => {
 };
 
 const runProcess = async (messages) => {
-    for (const message of messages) {
-        const album = JSON.parse(message.Body);
-        const processedAlbum = await downloadAndSaveAlbum(album);
-        await deleteAndSendNewMessage(message, processedAlbum);
+    try {
+        for (const message of messages) {
+            const album = JSON.parse(message.Body);
+            const processedAlbum = await downloadAndSaveAlbum(album);
+            await deleteAndSendNewMessage(message, processedAlbum);
+        }
+        const notification = {
+            status: "SUCCESS",
+            functionName: `downloader-${process.env.STAGE}`,
+            scanned: albumLinks.length,
+            added: albumsAdded.length
+        };
+        await slackBot(notification);
+    } catch (error) {
+        const notification = {
+            status: "FAILURE",
+            functionName: `downloader-${process.env.STAGE}`,
+            message: error.message,
+        };
+        await slackBot(notification);
     }
 };
 

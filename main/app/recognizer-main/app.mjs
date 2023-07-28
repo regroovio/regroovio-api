@@ -4,6 +4,7 @@ import { SQS } from "@aws-sdk/client-sqs";
 import { DynamoDB } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
+import { slackBot } from "./common/slackBot.mjs";
 
 const lambdaClient = new LambdaClient({ region: process.env.REGION });
 const documentClient = DynamoDBDocument.from(new DynamoDB({ region: process.env.REGION }));
@@ -57,15 +58,25 @@ const processAndSaveAlbum = async (messages, admin) => {
             const album = JSON.parse(message.Body);
             const tableName = album.table;
             delete album.table;
-
             console.log(`\nProcessing album: ${album.album_name} | [${messages.indexOf(message) + 1}/${messages.length}]`);
-
             const processedAlbum = await processUnprocessedAlbum(album, admin);
             await putAlbumInDynamodb(tableName, processedAlbum);
             await deleteMessageFromSQS(message);
             console.log('Album processing completed.');
-        } catch (err) {
-            console.error('Error in processAndSaveAlbum function:', err);
+            const notification = {
+                status: "SUCCESS",
+                functionName: `recognizer-${process.env.STAGE}`,
+                scanned: albumLinks.length,
+                added: albumsAdded.length
+            };
+            await slackBot(notification);
+        } catch (error) {
+            const notification = {
+                status: "FAILURE",
+                functionName: `recognizer-${process.env.STAGE}`,
+                message: error.message,
+            };
+            await slackBot(notification);
             throw err;
         }
     }
