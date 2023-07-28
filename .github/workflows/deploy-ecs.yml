@@ -72,7 +72,7 @@ jobs:
         with:
           task-definition: ${{ matrix.task }}-task-definition-${{ inputs.stage }}.json
           container-name: regroovio-${{ matrix.task }}
-          image: $IMAGE
+          image: "${{ steps.login.outputs.registry }}/${{ matrix.task }}:${{ github.sha }}"
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
