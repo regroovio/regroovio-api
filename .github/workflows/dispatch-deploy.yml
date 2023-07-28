@@ -15,6 +15,7 @@ jobs:
 
       - name: Dispatch Deploy
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
+          gh auth login --with-token <<< $GH_TOKEN
           gh workflow run deploy-lambdas.yml --ref main -f stage=prod -f functions=all
