@@ -31,21 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        tasks:
-          [
-            task:
-              {
-                TASK: "downloader-task-definition-${{ inputs.stage }}",
-                SERVICE: "downloader-service-${{ inputs.stage }}",
-                CLUSTER: "${{ inputs.stage }}-ecs-cluster",
-              },
-            task:
-              {
-                TASK: "recognizer-task-definition-${{ inputs.stage }}",
-                SERVICE: "recognizer-service-${{ inputs.stage }}",
-                CLUSTER: "${{ inputs.stage }}-ecs-cluster",
-              },
-          ]
+        task: ["downloader", "recognizer"]
 
     steps:
       - name: Cancel Workflow Action
@@ -66,16 +52,24 @@ jobs:
 
       - name: Build, tag, and push image to Amazon ECR
         run: |
-          echo "IMAGE=${{ steps.login.outputs.registry }}/regroovio:${{ github.sha }}" >> $GITHUB_ENV
+          echo "IMAGE=${{ steps.login.outputs.registry }}/regroovio-${{ matrix.task }}:${{ github.sha }}" >> $GITHUB_ENV
           docker build -t $IMAGE .
           docker push $IMAGE
 
       - name: Download definitions
-        run: aws ecs describe-task-definition --task-definition ${{ matrix.tasks.task.TASK }} | jq '.taskDefinition' > ${{ matrix.tasks.task.TASK }}
+        run: aws ecs describe-task-definition --task-definition ${{ matrix.task }}-task-definition-${{ inputs.stage }} | jq '.taskDefinition' > ${{ matrix.task }}-task-definition-${{ inputs.stage }}.json
 
       - name: Fill in the new image ID in the Amazon ECS task definition
+        id: task
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: ${{ matrix.tasks.task.TASK }}
-          container-name: ${{ matrix.tasks.task.SERVICE }}
+          task-definition: ${{ matrix.task }}-task-definition-${{ inputs.stage }}.json
+          container-name: regroovio-${{ matrix.task }}
           image: ${{ env.IMAGE }}
+
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          service: ${{ matrix.task }}-service-${{ inputs.stage }}
+          cluster: "${{ inputs.stage }}-ecs-cluster"
+          task-definition: ${{ steps.task.outputs.task-definition }}
