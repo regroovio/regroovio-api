@@ -1,4 +1,4 @@
-name: Dispatch Deploy (Lambdas);
+name: Dispatch Deploy;
 on:
   push:
     branches:
