@@ -7,16 +7,18 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - name: Dispatch Deploy
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: |
-          gh workflow run deploy-lambdas.yml --ref main -f stage=prod -f functions=all
-          gh workflow run deploy-ecs.yml --ref main -f stage=prod -f
+      - name: Dispatch Deploy (Lambdas)
+        run: gh workflow run deploy-lambdas.yml --ref main -f stage=prod -f functions=all
+        timeout-minutes: 1
+
+      - name: Dispatch Deploy (ECS)
+        run: gh workflow run deploy-ecs.yml --ref main -f stage=prod
         timeout-minutes: 1
