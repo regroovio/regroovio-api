@@ -6,7 +6,7 @@ import { createTable } from './common/createTable.mjs';
 import { FEED } from './common/config.mjs';
 import { initializePuppeteer } from './common/browser.mjs';
 import { getAlbumLinks } from './common/getAlbumLinks.mjs';
-import { addAlbumsToDb } from './common/addAlbumsToDb.mjs';
+import { addAlbumsToQueue } from './common/addAlbumsToQueue.mjs';
 import { scrollToBottom } from './common/scrollToBottom.mjs';
 
 const collectAlbumLinks = async (page, amount) => {
@@ -83,7 +83,7 @@ const app = async (event) => {
         const albumLinks = await collectAlbumLinks(page, amount);
         await page.close();
         await browser.close();
-        const albumsAdded = await addAlbumsToDb(table, albumLinks);
+        const albumsAdded = await addAlbumsToQueue(table, albumLinks);
         console.log(`Added ${albumsAdded.length} items.`);
         return {
             functionName: `bandcamp-collection-${process.env.STAGE}`,

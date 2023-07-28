@@ -1,66 +1,85 @@
-// app.mjs
+// recognizer/app.mjs
 
+import { SQS } from "@aws-sdk/client-sqs";
 import { DynamoDB } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 
 const lambdaClient = new LambdaClient({ region: process.env.REGION });
 const documentClient = DynamoDBDocument.from(new DynamoDB({ region: process.env.REGION }));
+const sqs = new SQS({ region: process.env.REGION });
 
-const app = async (event) => {
+const app = async () => {
     while (true) {
         try {
-            await runProcess(event);
-            await new Promise(resolve => setTimeout(resolve, 60000));
+            await sleep(15000);
+            const messages = await receiveMessagesFromSQS();
+            if (!messages) continue;
+            const admin = await fetchAdmin();
+            if (!admin) continue;
+            await processAndSaveAlbum(messages, admin);
         } catch (err) {
-            console.log('Error in app function:', err);
+            console.error('Error in app function:', err);
             throw err;
         }
     }
 };
 
-const runProcess = async (event) => {
-    const tableName = process.env.TABLE_NAME;
-    console.log(`\nProcessing table: ${tableName}`);
-    try {
-        const albums = await getUnprocessedAlbums(tableName);
-        const admin = await getUserById(process.env.ADMIN_ID)
-        if (!admin) {
-            console.log("User not found");
-            return;
-        }
-        for (const album of albums) {
-            console.log(`\nProcessing album: ${album.album_name} - [${album.album_id}] | [${albums.indexOf(album) + 1}/${albums.length}]`);
-            await processUnprocessedAlbum(album, admin)
-            console.log('Album processing completed.');
-        }
-        console.log(albums.length ? '\nTable processing completed.' : '\nNo albums found.');
-    } catch (err) {
-        console.log('Error in runProcess function:', err);
-        throw err;
+const receiveMessagesFromSQS = async () => {
+    const params = {
+        QueueUrl: process.env.SQS_QUEUE_PROCESS,
+        MaxNumberOfMessages: 10,
+        VisibilityTimeout: 900,
+        WaitTimeSeconds: 0
+    };
+    const response = await sqs.receiveMessage(params);
+    if (!response.Messages) {
+        console.log('No messages to process');
+        return null;
     }
+
+    console.log(`Received ${response.Messages.length} messages from SQS`);
+    return response.Messages;
 };
 
-const getUnprocessedAlbums = async (table) => {
-    const params = {
-        TableName: table,
-        FilterExpression: "(attribute_not_exists(#pr) or #pr = :p) and attribute_not_exists(#url)",
-        ExpressionAttributeNames: {
-            "#pr": "processed",
-            "#url": "url"
-        },
-        ExpressionAttributeValues: {
-            ":p": false
-        }
-    };
-    try {
-        const albums = await documentClient.scan(params);
-        return albums.Items.length ? albums.Items : [];
-    } catch (err) {
-        console.log('Error in getUnprocessedAlbums function:', err);
-        throw err;
+const fetchAdmin = async () => {
+    const admin = await getUserById(process.env.ADMIN_ID);
+    if (!admin) {
+        console.error("Admin user not found");
+        return null;
     }
-}
+    return admin;
+};
+
+const processAndSaveAlbum = async (messages, admin) => {
+    for (const message of messages) {
+        try {
+            const album = JSON.parse(message.Body);
+            const tableName = album.table;
+            delete album.table;
+
+            console.log(`\nProcessing album: ${album.album_name} | [${messages.indexOf(message) + 1}/${messages.length}]`);
+
+            const processedAlbum = await processUnprocessedAlbum(album, admin);
+            await putAlbumInDynamodb(tableName, processedAlbum);
+            await deleteMessageFromSQS(message);
+            console.log('Album processing completed.');
+        } catch (err) {
+            console.error('Error in processAndSaveAlbum function:', err);
+            throw err;
+        }
+    }
+
+    console.log(messages.length ? '\nQueue processing completed.' : '\nNo albums found.');
+};
+
+const deleteMessageFromSQS = async (message) => {
+    const params = {
+        QueueUrl: process.env.SQS_QUEUE_PROCESS,
+        ReceiptHandle: message.ReceiptHandle
+    };
+    await sqs.deleteMessage(params);
+};
 
 const processUnprocessedAlbum = async (album, admin) => {
     const newAdmin = await checkAndUpdateTokenIfExpired(admin.user_id, admin);
@@ -84,7 +103,7 @@ const processUnprocessedAlbum = async (album, admin) => {
             track.spotify = null;
         }
     }
-    await updateAlbumInDynamodb(table, album);
+    return album
 }
 
 const getUserById = async (user_id) => {
@@ -93,6 +112,7 @@ const getUserById = async (user_id) => {
             TableName: `regroovio-users-${process.env.STAGE}`,
             Key: { user_id: user_id }
         };
+        console.log(params);
         const users = await documentClient.scan(params);
         if (users.Items.length === 0) {
             throw new Error(`No user with id ${user_id} found`);
@@ -151,6 +171,7 @@ const updateUserTokens = async (admin, tokens) => {
             ":et": tokens.expiration_timestamp
         },
     };
+    console.log(params);
     try {
         await documentClient.update(params);
         return { ...admin, ...tokens };
@@ -172,32 +193,25 @@ const processTrack = async (token, track, album) => {
             year: track.release_year
         })
     });
+    console.log(targetTrack);
     return targetTrack;
 }
 
-const updateAlbumInDynamodb = async (table_name, album) => {
+const putAlbumInDynamodb = async (tableName, album) => {
     try {
         const params = {
-            TableName: table_name,
-            Key: {
-                album_id: album.album_id
-            },
-            UpdateExpression: "set tracks=:t, #pr=:p",
-            ExpressionAttributeValues: {
-                ':t': album.tracks,
-                ':p': 'true'
-            },
-            ExpressionAttributeNames: {
-                "#pr": "processed"
-            },
-            ReturnValues: "UPDATED_NEW"
+            TableName: tableName,
+            Item: album
         };
-        const response = await documentClient.update(params);
-        return response;
+        await documentClient.put(params);
     } catch (err) {
-        console.log(`Error updating album in DynamoDB: ${err}`);
-        return null;
+        console.log(`Error putAlbumInDynamodb:`, err);
+        console.log('Table:', tableName);
+        console.log('Album:', album);
+        throw err;
     }
-}
+};
+
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 export { app };

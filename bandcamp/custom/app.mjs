@@ -3,7 +3,7 @@
 import { CUSTOM } from './common/config.mjs';
 import { initializePuppeteer } from './common/browser.mjs';
 import { getAlbumLinks } from './common/getAlbumLinks.mjs';
-import { addAlbumsToDb } from './common/addAlbumsToDb.mjs';
+import { addAlbumsToQueue } from './common/addAlbumsToQueue.mjs';
 
 const collectAlbumLinks = async (page, genre) => {
     console.log(`getting ${genre}...`);
@@ -67,7 +67,7 @@ const app = async (event) => {
         const albumLinks = await collectAlbumLinks(page, genre);
         await page.close();
         await browser.close();
-        const albumsAdded = await addAlbumsToDb(table, albumLinks);
+        const albumsAdded = await addAlbumsToQueue(table, albumLinks);
         console.log(`Added ${albumsAdded.length} items.`);
         return {
             functionName: `bandcamp-${genre}-${process.env.STAGE}`,

@@ -1,92 +1,88 @@
 
-// app.mjs
+// downloader/app.mjs
 
 import bcfetch from 'bandcamp-fetch';
-import { DynamoDB } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
+import { SQS } from "@aws-sdk/client-sqs";
 import { saveTrackToS3, saveImageToS3 } from './s3.mjs';
 
-const documentClient = DynamoDBDocument.from(new DynamoDB({ region: process.env.REGION }));
+const sqs = new SQS({ region: process.env.REGION });
 
 const app = async () => {
     while (true) {
         try {
-            await runProcess();
-            await new Promise(resolve => setTimeout(resolve, 60000));
+            await sleep(15000);
+            const messages = await receiveMessagesFromSQS();
+            if (!messages) continue;
+            await runProcess(messages);
         } catch (err) {
-            console.log('Error in app function:', err);
+            console.error('Error in app function:', err);
             throw err;
         }
     }
 };
 
-const runProcess = async () => {
-    const tableName = process.env.TABLE_NAME;
-    console.log(`\nProcessing table: ${tableName}`);
-    try {
-        const albums = await getUnSaveAlbums(tableName);
-        for (const album of albums) {
-            console.log(`\nProcessing album: ${album.url} | [${albums.indexOf(album) + 1}/${albums.length}]`);
-            await processAndSaveAlbum(album, tableName)
-            console.log('Album processing completed.');
-        }
-        console.log(albums.length ? '\nTable processing completed.' : '\nNo albums found.');
-    } catch (err) {
-        console.log('Error in app function:', err);
-        throw err;
+const receiveMessagesFromSQS = async () => {
+    const params = {
+        QueueUrl: process.env.SQS_QUEUE_DOWNLOAD,
+        MaxNumberOfMessages: 10,
+        VisibilityTimeout: 900,
+        WaitTimeSeconds: 0
+    };
+    const response = await sqs.receiveMessage(params);
+    if (!response.Messages) {
+        console.log('No messages to process');
+        return null;
+    }
+
+    console.log(`Received ${response.Messages.length} messages from SQS`);
+    return response.Messages;
+};
+
+const runProcess = async (messages) => {
+    for (const message of messages) {
+        const album = JSON.parse(message.Body);
+        const processedAlbum = await downloadAndSaveAlbum(album);
+        await deleteAndSendNewMessage(message, processedAlbum);
     }
 };
 
-const getUnSaveAlbums = async (table) => {
-    const params = {
-        TableName: table,
-        FilterExpression: "attribute_exists(#url)",
-        ExpressionAttributeNames: {
-            "#url": "url"
-        }
-    };
-    try {
-        const albums = await documentClient.scan(params);
-        return albums.Items.length ? albums.Items : [];
-    } catch (err) {
-        console.log('Error in getUnSaveAlbums function:', err);
-        throw err;
-    }
-}
-
-const processAndSaveAlbum = async (album, tableName) => {
+const downloadAndSaveAlbum = async (album) => {
     try {
         const data = await fetchAlbumData(album.url);
         if (!data || !data.linkInfo || !data.streams) return;
         const { linkInfo, streams } = data;
         const tracksS3 = (await Promise.all(streams.map(stream => downloadTrack(stream, linkInfo)))).filter(track => track !== undefined);
         console.log(tracksS3);
-        const albumWithDetails = await generatealbumWithDetails(linkInfo, tracksS3, album);
-        console.log('Adding album:', albumWithDetails.album_name);
-        await saveAlbumToDatabase(tableName, albumWithDetails);
-        return albumWithDetails;
+        const processedAlbum = await generatealbumWithDetails(linkInfo, tracksS3, album);
+        console.log('Adding album:', processedAlbum.album_name);
+        return processedAlbum;
     } catch (err) {
-        console.log("Error in processAndSaveAlbum function:", err);
+        console.log("Error in downloadAndSaveAlbum function:", err);
         throw err;
     }
 };
 
+const deleteAndSendNewMessage = async (message, processedAlbum) => {
+    await sqs.deleteMessage({
+        QueueUrl: process.env.SQS_QUEUE_DOWNLOAD,
+        ReceiptHandle: message.ReceiptHandle
+    });
+    await sqs.sendMessage({
+        QueueUrl: process.env.SQS_QUEUE_PROCESS,
+        MessageBody: JSON.stringify(processedAlbum)
+    });
+};
+
 const generatealbumWithDetails = async (linkInfo, tracksS3, album) => {
     let imageId = await saveImageToS3({ imageUrl: linkInfo.imageUrl, album: linkInfo.name, artist: linkInfo.artist.name });
+    let failed = false
     const d = linkInfo.releaseDate?.split(' ')[0]
     const m = linkInfo.releaseDate?.split(' ')[1]
     const y = linkInfo.releaseDate?.split(' ')[2]
     const release_date = d && m && y ? `${d}-${m}-${y}` : null
-    if (!imageId) {
+    if (!imageId || !tracksS3.length) {
         failed = true
         imageId = null
-    }
-    if (!tracksS3.length) {
-        failed = true
-        tracksS3 = null
-    }
-    if (tracksS3.length && imageId) {
-        delete album.url;
     }
     return {
         ...album,
@@ -95,7 +91,8 @@ const generatealbumWithDetails = async (linkInfo, tracksS3, album) => {
         release_date: release_date,
         album_name: linkInfo.name,
         image: imageId,
-        tracks: tracksS3
+        tracks: tracksS3,
+        status: failed ? 'download failed' : 'download success'
     };
 };
 
@@ -128,18 +125,6 @@ const downloadTrack = async (stream, linkInfo) => {
     }
 };
 
-const saveAlbumToDatabase = async (tableName, album) => {
-    try {
-        await documentClient.put({
-            TableName: tableName,
-            Item: album,
-        });
-    } catch (err) {
-        console.log(`Error saving album to database:`, err);
-        console.log('Table:', tableName);
-        console.log('Album:', album);
-        throw err;
-    }
-};
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 export { app }

@@ -24,7 +24,7 @@ const parseEnvironmentVariables = (envString) => {
 const setEnvironmentVariables = async () => {
     const params =
     {
-        Name: `parameters-${process.env.STAGE}`,
+        Name: `/${process.env.STAGE}/lambda`,
         WithDecryption: true
     };
     const command = new GetParameterCommand(params);
