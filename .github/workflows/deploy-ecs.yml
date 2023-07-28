@@ -52,6 +52,7 @@ jobs:
 
       - name: Build, tag, and push image to Amazon ECR
         run: |
+          ls
           cd main/app/${{ matrix.task }}
           echo "IMAGE=${{ steps.login.outputs.registry }}/regroovio-${{ matrix.task }}:${{ github.sha }}" >> $GITHUB_ENV
           docker build -t ${{ env.IMAGE }} .
