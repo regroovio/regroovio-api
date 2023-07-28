@@ -52,9 +52,10 @@ jobs:
 
       - name: Build, tag, and push image to Amazon ECR
         run: |
+          cd main/app/${{ matrix.task }}
           echo "IMAGE=${{ steps.login.outputs.registry }}/regroovio-${{ matrix.task }}:${{ github.sha }}" >> $GITHUB_ENV
-          docker build -t $IMAGE .
-          docker push $IMAGE
+          docker build -t ${{ env.IMAGE }} .
+          docker push ${{ env.IMAGE }}
 
       - name: Download definitions
         run: aws ecs describe-task-definition --task-definition ${{ matrix.task }}-task-definition-${{ inputs.stage }} | jq '.taskDefinition' > ${{ matrix.task }}-task-definition-${{ inputs.stage }}.json
