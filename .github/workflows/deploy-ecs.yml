@@ -58,7 +58,7 @@ jobs:
       - name: Build, tag, and push image to Amazon ECR
         run: |
           cd main/app/${{ matrix.task }}
-          IMAGE=${{ steps.login.outputs.registry }}/${{ matrix.task }}:${{ github.sha }}"
+          IMAGE=""${{ steps.login.outputs.registry }}/${{ matrix.task }}:${{ github.sha }}"
           echo $IMAGE
           docker build -t $IMAGE .
           docker push $IMAGE
