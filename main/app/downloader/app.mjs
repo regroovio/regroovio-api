@@ -24,7 +24,7 @@ const app = async () => {
 
 const receiveMessagesFromSQS = async () => {
     const params = {
-        QueueUrl: process.env.SQS_QUEUE_DOWNLOAD,
+        QueueUrl: process.env.SQS_QUEUE_DOWNLOADS,
         MaxNumberOfMessages: 10,
         VisibilityTimeout: 900,
         WaitTimeSeconds: 0
@@ -60,6 +60,7 @@ const runProcess = async (messages) => {
             message: error.message,
         };
         await slackBot(notification);
+        throw err;
     }
 };
 
@@ -81,7 +82,7 @@ const downloadAndSaveAlbum = async (album) => {
 
 const deleteAndSendNewMessage = async (message, processedAlbum) => {
     await sqs.deleteMessage({
-        QueueUrl: process.env.SQS_QUEUE_DOWNLOAD,
+        QueueUrl: process.env.SQS_QUEUE_DOWNLOADS,
         ReceiptHandle: message.ReceiptHandle
     });
     await sqs.sendMessage({

@@ -27,7 +27,7 @@ const addAlbumsToQueue = async (table, links) => {
             itemsAdded.push(album);
 
             await sqs.sendMessage({
-                QueueUrl: process.env.SQS_QUEUE_DOWNLOAD,
+                QueueUrl: process.env.SQS_QUEUE_DOWNLOADS,
                 MessageBody: JSON.stringify(album)
             });
 

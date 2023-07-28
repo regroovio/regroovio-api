@@ -18,4 +18,5 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           gh workflow run deploy-lambdas.yml --ref main -f stage=prod -f functions=all
+          gh workflow run deploy-ecs.yml --ref main -f stage=prod -f
         timeout-minutes: 1
