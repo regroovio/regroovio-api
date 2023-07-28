@@ -64,13 +64,13 @@ jobs:
           docker push $IMAGE
 
       - name: Download definitions
-        run: aws ecs describe-task-definition --task-definition ${{ matrix.task }}-task-definition-${{ inputs.stage }} | jq '.taskDefinition' > ${{ matrix.task }}-task-definition-${{ inputs.stage }}.json
+        run: aws ecs describe-task-definition --task-definition ${{ matrix.task }}-${{ inputs.stage }} | jq '.taskDefinition' > ${{ matrix.task }}-${{ inputs.stage }}.json
 
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: ${{ matrix.task }}-task-definition-${{ inputs.stage }}.json
+          task-definition: ${{ matrix.task }}-${{ inputs.stage }}.json
           container-name: regroovio-${{ matrix.task }}
           image: "${{ steps.login.outputs.registry }}/${{ matrix.task }}-${{ inputs.stage }}:${{ github.sha }}"
 
