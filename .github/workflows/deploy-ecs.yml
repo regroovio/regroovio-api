@@ -59,9 +59,10 @@ jobs:
         run: |
           cd main/app/${{ matrix.task }}
           IMAGE="${{ steps.login.outputs.registry }}/${{ matrix.task }}-${{ inputs.stage }}:${{ github.sha }}"
-          echo $IMAGE
-          docker build -t $IMAGE .
+          LATEST_IMAGE="$IMAGE:latest"
+          docker build -t $IMAGE -t $LATEST_IMAGE .
           docker push $IMAGE
+          docker push $LATEST_IMAGE
 
       - name: Download definitions
         run: aws ecs describe-task-definition --task-definition ${{ matrix.task }}-${{ inputs.stage }} | jq '.taskDefinition' > ${{ matrix.task }}-${{ inputs.stage }}.json
@@ -72,7 +73,7 @@ jobs:
         with:
           task-definition: ${{ matrix.task }}-${{ inputs.stage }}.json
           container-name: ${{ matrix.task }}-${{ inputs.stage }}
-          image: "${{ steps.login.outputs.registry }}/${{ matrix.task }}-${{ inputs.stage }}:${{ github.sha }}"
+          image: "${{ steps.login.outputs.registry }}/${{ matrix.task }}-${{ inputs.stage }}:latest"
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
