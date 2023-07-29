@@ -53,11 +53,11 @@ const runProcess = async (messages) => {
             added: albumsAdded.length
         };
         await slackBot(notification);
-    } catch (error) {
+    } catch (err) {
         const notification = {
             status: "FAILURE",
             functionName: `downloader-${process.env.STAGE}`,
-            message: error.message,
+            message: err.message,
         };
         await slackBot(notification);
         throw err;
