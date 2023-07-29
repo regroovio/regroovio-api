@@ -45,14 +45,13 @@ const runProcess = async (messages) => {
             const album = JSON.parse(message.Body);
             const processedAlbum = await downloadAndSaveAlbum(album);
             await deleteAndSendNewMessage(message, processedAlbum);
+            const notification = {
+                status: "SUCCESS",
+                functionName: `downloader-${process.env.STAGE}`,
+                message: `Processed [${messages.indexOf(message) + 1}/${messages.length}] albums`,
+            };
+            await slackBot(notification);
         }
-        const notification = {
-            status: "SUCCESS",
-            functionName: `downloader-${process.env.STAGE}`,
-            scanned: albumLinks.length,
-            added: albumsAdded.length
-        };
-        await slackBot(notification);
     } catch (err) {
         const notification = {
             status: "FAILURE",
@@ -70,9 +69,7 @@ const downloadAndSaveAlbum = async (album) => {
         if (!data || !data.linkInfo || !data.streams) return;
         const { linkInfo, streams } = data;
         const tracksS3 = (await Promise.all(streams.map(stream => downloadTrack(stream, linkInfo)))).filter(track => track !== undefined);
-        console.log(tracksS3);
         const processedAlbum = await generatealbumWithDetails(linkInfo, tracksS3, album);
-        console.log('Adding album:', processedAlbum.album_name);
         return processedAlbum;
     } catch (err) {
         console.log("Error in downloadAndSaveAlbum function:", err);

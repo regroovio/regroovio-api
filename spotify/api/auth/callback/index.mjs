@@ -2,7 +2,7 @@ import axios from 'axios';
 import serverless from 'serverless-http';
 import express from 'express';
 import querystring from 'querystring';
-import { setEnvironmentVariables } from './setEnvironmentVariables.mjs';
+import { setEnvironmentVariables } from "./common/setEnvironmentVariables.mjs";
 
 const app = express();
 app.use(express.urlencoded({ extended: true }));

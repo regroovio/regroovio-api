@@ -2,28 +2,26 @@
 
 import axios from 'axios';
 
-const slackBot = async (error) => {
+const slackBot = async (alert) => {
     try {
-        const { message, functionName, additionalInfo } = error;
-        const parsedAdditionalInfo = JSON.stringify(additionalInfo);
-        const errorBlocks = [
+        const { status, message, functionName } = alert;
+        const blocks = [
             {
                 'type': 'section',
                 'text': {
                     'type': 'mrkdwn',
-                    'text': `*FAILURE*`
+                    'text': `*${status}*`
                 }
             },
             {
                 'type': 'section',
                 'text': {
                     'type': 'mrkdwn',
-                    'text': `*Function:* \`${functionName}\`\n*Message:* \`${message}\`${additionalInfo ? `\n*Additional Info:* \`${parsedAdditionalInfo}\`` : ''}`
+                    'text': `*Function:* \`${functionName}\`\n*Message:* \`${message}\`}`
                 }
             }
         ];
-
-        await axios.post(process.env.SLACK_ENDPOINT, { blocks: errorBlocks });
+        await axios.post(process.env.SLACK_ENDPOINT, { blocks });
     } catch (error) {
         console.log('Error sending notification to Slack:', error);
     }

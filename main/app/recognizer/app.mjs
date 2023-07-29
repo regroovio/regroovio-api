@@ -65,22 +65,20 @@ const processAndSaveAlbum = async (messages, admin) => {
             console.log('Album processing completed.');
             const notification = {
                 status: "SUCCESS",
-                functionName: `recognizer-${process.env.STAGE}`,
-                scanned: albumLinks.length,
-                added: albumsAdded.length
+                functionName: `downloader-${process.env.STAGE}`,
+                message: `Processed [${messages.indexOf(message) + 1}/${messages.length}] albums`,
             };
             await slackBot(notification);
-        } catch (error) {
+        } catch (err) {
             const notification = {
                 status: "FAILURE",
-                functionName: `recognizer-${process.env.STAGE}`,
-                message: error.message,
+                functionName: `downloader-${process.env.STAGE}`,
+                message: err.message,
             };
             await slackBot(notification);
             throw err;
         }
     }
-
     console.log(messages.length ? '\nQueue processing completed.' : '\nNo albums found.');
 };
 

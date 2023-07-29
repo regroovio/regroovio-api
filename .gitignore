@@ -3,3 +3,4 @@
 node_modules
 main/engine/download/data
 __pycache__
+docker-compose.yml
