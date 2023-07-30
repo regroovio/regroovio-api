@@ -31,9 +31,7 @@ const app = async (event) => {
         }
 
         await saveTokens(user, tokens);
-
-        console.log(tokens);
-        return tokens
+        return { statusCode: 200, body: tokens };
     } catch (err) {
         throw new Error(`Error retrieving token: ${err}`);
     }
