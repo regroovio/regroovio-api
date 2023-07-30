@@ -28,13 +28,13 @@ const app = async (event) => {
         await browser.close();
 
         if (!tokens?.access_token) {
-            throw new Error('No access token found');
+            return { statusCode: 500, error: 'No access token found' };
         }
 
         await saveTokens(user, tokens);
         return { statusCode: 200, tokens };
     } catch (err) {
-        throw new Error(`Error retrieving token: ${err}`);
+        return { statusCode: 500, error: err };
     }
 };
 

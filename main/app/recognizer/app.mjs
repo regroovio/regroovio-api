@@ -65,9 +65,8 @@ const processAndSaveAlbum = async (messages, admin) => {
             const tableName = album.table;
             delete album.table;
             console.log(`\nProcessing album: ${album.album_name} | [${messages.indexOf(message) + 1}/${messages.length}]`);
-            await refreshTokenIfExpired(admin.user_id, admin);
-            // const admin1 = await fetchAdmin();
-            // if (!admin1) continue;
+            admin = await refreshTokenIfExpired(admin.user_id, admin);
+            console.log(admin);
             return
             const processedAlbum = await processUnprocessedAlbum(album);
             if (processedAlbum === null) {
@@ -148,12 +147,19 @@ const invokeLambda = async (params) => {
         const command = new InvokeCommand(params);
         const data = await lambdaClient.send(command);
         const rawPayload = new TextDecoder().decode(data.Payload);
-        const cleanedPayload = JSON.parse(rawPayload.replace(/^"|"$/g, ''));
+        const cleanedPayload = JSON.parse(rawPayload)
+        console.log(cleanedPayload);
+        if (cleanedPayload.body.statusCode !== 200) {
+            console.log(cleanedPayload);
+            throw new Error("Error invoking Lambda function");
+        }
         return cleanedPayload.body;
     } catch (error) {
         console.log('Error invoking Lambda function:', error);
+        throw error;
     }
 };
+
 
 const refreshTokenIfExpired = async (adminId, admin) => {
     if (!admin) throw new Error("Admin not found");
@@ -163,7 +169,6 @@ const refreshTokenIfExpired = async (adminId, admin) => {
     console.log("Token expires in: ", minutes, " minutes");
     if (minutes <= 15) {
         console.log("getting token...");
-        console.log({ FunctionName: `spotify-scrap-token-${process.env.STAGE}`, Payload: JSON.stringify({ "user_id": adminId }) });
         const response = await invokeLambda({
             FunctionName: `spotify-scrap-token-${process.env.STAGE}`,
             Payload: JSON.stringify({ "user_id": adminId })
