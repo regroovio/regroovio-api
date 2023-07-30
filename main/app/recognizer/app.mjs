@@ -77,7 +77,7 @@ const processAndSaveAlbum = async (messages, admin) => {
                 continue;
             }
             await putAlbumInDynamodb(tableName, processedAlbum);
-            await deleteMessageFromSQS(message);
+            // await deleteMessageFromSQS(message);
             console.log('Album processing completed.');
             const notification = {
                 status: "SUCCESS",
@@ -98,6 +98,14 @@ const processAndSaveAlbum = async (messages, admin) => {
     console.log(messages.length ? '\nQueue processing completed.' : '\nNo albums found.');
 };
 
+const deleteMessageFromSQS = async (message) => {
+    const params = {
+        QueueUrl: process.env.SQS_QUEUE_PROCESS,
+        ReceiptHandle: message.ReceiptHandle
+    };
+    await sqs.deleteMessage(params);
+};
+
 const processUnprocessedAlbum = async (album, admin) => {
     const newAdmin = await checkAndUpdateTokenIfExpired(admin.user_id, admin);
     if (newAdmin) {
@@ -108,7 +116,6 @@ const processUnprocessedAlbum = async (album, admin) => {
         console.log("Error: Token not found");
         return null;
     }
-    return
     console.log(`\nSearching: ${album.artist_name} - ${album.album_name}`);
     for (const track of album.tracks) {
         console.log(`\nSearching track: ${track.name} - [${album.tracks.indexOf(track) + 1}/${album.tracks.length}]`);
@@ -157,6 +164,7 @@ const invokeLambda = async (params) => {
 };
 
 const checkAndUpdateTokenIfExpired = async (adminId, admin) => {
+    console.log(adminId, admin);
     if (!admin) throw new Error("Admin not found");
     const remainingTimeInMinutes = ('expiration_timestamp_spotify' in admin) ?
         (parseFloat(admin.expiration_timestamp_spotify) / 1000 - Date.now() / 1000) / 60 : -1;
@@ -178,7 +186,6 @@ const checkAndUpdateTokenIfExpired = async (adminId, admin) => {
 }
 
 const updateUserTokens = async (admin, tokens) => {
-    console.log(tokens);
     const params = {
         TableName: `regroovio-users-${process.env.STAGE}`,
         Key: { user_id: admin.user_id },
@@ -188,7 +195,6 @@ const updateUserTokens = async (admin, tokens) => {
             ":et": tokens.expiration_timestamp
         },
     };
-    console.log(params);
     try {
         await documentClient.update(params);
         return { ...admin, ...tokens };
