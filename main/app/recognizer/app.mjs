@@ -27,7 +27,7 @@ const app = async () => {
                 message: err.message,
             };
             await slackBot(notification);
-            continue; // continue the loop instead of throwing, so it doesn't stop the whole process
+            continue;
         }
     }
 };
@@ -65,7 +65,11 @@ const processAndSaveAlbum = async (messages, admin) => {
             const tableName = album.table;
             delete album.table;
             console.log(`\nProcessing album: ${album.album_name} | [${messages.indexOf(message) + 1}/${messages.length}]`);
-            const processedAlbum = await processUnprocessedAlbum(album, admin);
+            await refreshTokenIfExpired(admin.user_id, admin);
+            // const admin1 = await fetchAdmin();
+            // if (!admin1) continue;
+            return
+            const processedAlbum = await processUnprocessedAlbum(album);
             if (processedAlbum === null) {
                 console.log('Skipped processing album due to missing token.');
                 const notification = {
@@ -106,16 +110,7 @@ const deleteMessageFromSQS = async (message) => {
     await sqs.deleteMessage(params);
 };
 
-const processUnprocessedAlbum = async (album, admin) => {
-    const newAdmin = await checkAndUpdateTokenIfExpired(admin.user_id, admin);
-    if (newAdmin) {
-        admin = newAdmin;
-    }
-    const token = admin.access_token_spotify;
-    if (!token) {
-        console.log("Error: Token not found");
-        return null;
-    }
+const processUnprocessedAlbum = async (album) => {
     console.log(`\nSearching: ${album.artist_name} - ${album.album_name}`);
     for (const track of album.tracks) {
         console.log(`\nSearching track: ${track.name} - [${album.tracks.indexOf(track) + 1}/${album.tracks.length}]`);
@@ -163,46 +158,22 @@ const invokeLambda = async (params) => {
     }
 };
 
-const checkAndUpdateTokenIfExpired = async (adminId, admin) => {
-    console.log(adminId, admin);
+const refreshTokenIfExpired = async (adminId, admin) => {
     if (!admin) throw new Error("Admin not found");
     const remainingTimeInMinutes = ('expiration_timestamp_spotify' in admin) ?
         (parseFloat(admin.expiration_timestamp_spotify) / 1000 - Date.now() / 1000) / 60 : -1;
     const minutes = parseInt(remainingTimeInMinutes);
+    console.log("Token expires in: ", minutes, " minutes");
     if (minutes <= 15) {
         console.log("getting token...");
-        const tokens = await invokeLambda({
+        const response = await invokeLambda({
             FunctionName: `spotify-scrap-token-${process.env.STAGE}`,
             Payload: JSON.stringify({ "user_id": adminId }),
         });
-        if (tokens?.access_token) {
-            const admin = await updateUserTokens(admin, tokens);
-            return admin;
-        }
-        throw new Error("Failed to refresh token");
+        console.log(response);
     }
-    console.log("Token expires in: ", minutes, " minutes");
     return admin;
 }
-
-const updateUserTokens = async (admin, tokens) => {
-    const params = {
-        TableName: `regroovio-users-${process.env.STAGE}`,
-        Key: { user_id: admin.user_id },
-        UpdateExpression: "set access_token_spotify = :at, expiration_timestamp_spotify = :et",
-        ExpressionAttributeValues: {
-            ":at": tokens.access_token,
-            ":et": tokens.expiration_timestamp
-        },
-    };
-    try {
-        await documentClient.update(params);
-        return { ...admin, ...tokens };
-    } catch (err) {
-        console.log(`Error updateUserTokens: ${err}`);
-        throw err;
-    }
-};
 
 const processTrack = async (token, track, album) => {
     track.release_year = album.release_date ? album.release_date.split("-")[2] : null;
