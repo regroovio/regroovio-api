@@ -146,16 +146,14 @@ const invokeLambda = async (params) => {
     try {
         const command = new InvokeCommand(params);
         const data = await lambdaClient.send(command);
-        const rawPayload = new TextDecoder().decode(data.Payload);
-        const cleanedPayload = JSON.parse(rawPayload)
+        const payloadString = Buffer.from(data.Payload).toString();
+        const cleanedPayload = JSON.parse(payloadString);
         console.log(cleanedPayload);
         if (cleanedPayload.body.statusCode !== 200) {
-            console.log(cleanedPayload);
             throw new Error("Error invoking Lambda function");
         }
         return cleanedPayload.body;
     } catch (error) {
-        console.log('Error invoking Lambda function:', error);
         throw error;
     }
 };
