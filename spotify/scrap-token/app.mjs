@@ -6,6 +6,7 @@ import { getUserById } from './common/getUserById.mjs';
 import { initializePuppeteer } from "./common/browser.mjs";
 
 const app = async (event) => {
+    console.log(event);
     const user_id = event.user_id
     let user;
 

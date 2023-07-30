@@ -149,10 +149,7 @@ const invokeLambda = async (params) => {
         const data = await lambdaClient.send(command);
         const rawPayload = new TextDecoder().decode(data.Payload);
         const cleanedPayload = JSON.parse(rawPayload.replace(/^"|"$/g, ''));
-        if (cleanedPayload.statusCode !== 200) {
-            return null;
-        }
-        return JSON.parse(cleanedPayload.body);
+        return cleanedPayload.body;
     } catch (error) {
         console.log('Error invoking Lambda function:', error);
     }
@@ -166,9 +163,10 @@ const refreshTokenIfExpired = async (adminId, admin) => {
     console.log("Token expires in: ", minutes, " minutes");
     if (minutes <= 15) {
         console.log("getting token...");
+        console.log({ FunctionName: `spotify-scrap-token-${process.env.STAGE}`, Payload: JSON.stringify({ "user_id": adminId }) });
         const response = await invokeLambda({
             FunctionName: `spotify-scrap-token-${process.env.STAGE}`,
-            Payload: JSON.stringify({ "user_id": adminId }),
+            Payload: JSON.stringify({ "user_id": adminId })
         });
         console.log(response);
     }
