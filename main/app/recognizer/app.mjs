@@ -207,6 +207,7 @@ const processTrack = async (token, track, album) => {
 }
 
 const putAlbumInDynamodb = async (tableName, album) => {
+    console.log(tableName, album);
     try {
         const params = {
             TableName: tableName,

@@ -5,11 +5,12 @@ import { saveCookies } from "./common/saveCookies.mjs";
 import { getUserById } from './common/getUserById.mjs';
 import { initializePuppeteer } from "./common/browser.mjs";
 
-const app = async (event, context) => {
+const app = async (event) => {
     const user_id = event.user_id
     let user;
 
     try {
+        console.log(`Retrieving user with id ${user_id}`);
         user = await getUserById(user_id);
         if (!user) {
             throw new Error(`User not found with id ${user_id}`);

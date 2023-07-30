@@ -1,5 +1,8 @@
 // setEnvironmentVariables.mjs
 
+import dotenv from "dotenv";
+dotenv.config();
+
 import { SSMClient, GetParameterCommand } from "@aws-sdk/client-ssm";
 
 const client = new SSMClient({ region: process.env.REGION });
@@ -21,7 +24,7 @@ const parseEnvironmentVariables = (envString) => {
 const setEnvironmentVariables = async () => {
     const params =
     {
-        Name: `parameters-${process.env.STAGE}`,
+        Name: `/${process.env.STAGE}/lambda`,
         WithDecryption: true
     };
     const command = new GetParameterCommand(params);
