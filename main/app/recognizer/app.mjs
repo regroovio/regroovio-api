@@ -21,7 +21,13 @@ const app = async () => {
             await processAndSaveAlbum(messages, admin);
         } catch (err) {
             console.error('Error in app function:', err);
-            throw err;
+            const notification = {
+                status: "FAILURE",
+                functionName: `recognizer-${process.env.STAGE}`,
+                message: err.message,
+            };
+            await slackBot(notification);
+            continue; // continue the loop instead of throwing, so it doesn't stop the whole process
         }
     }
 };
@@ -60,19 +66,29 @@ const processAndSaveAlbum = async (messages, admin) => {
             delete album.table;
             console.log(`\nProcessing album: ${album.album_name} | [${messages.indexOf(message) + 1}/${messages.length}]`);
             const processedAlbum = await processUnprocessedAlbum(album, admin);
+            if (processedAlbum === null) {
+                console.log('Skipped processing album due to missing token.');
+                const notification = {
+                    status: "FAILURE",
+                    functionName: `recognizer-${process.env.STAGE}`,
+                    message: `Skipped processing album due to missing token.`,
+                };
+                await slackBot(notification);
+                continue;
+            }
             await putAlbumInDynamodb(tableName, processedAlbum);
             await deleteMessageFromSQS(message);
             console.log('Album processing completed.');
             const notification = {
                 status: "SUCCESS",
-                functionName: `downloader-${process.env.STAGE}`,
+                functionName: `recognizer-${process.env.STAGE}`,
                 message: `Processed [${messages.indexOf(message) + 1}/${messages.length}] albums`,
             };
             await slackBot(notification);
         } catch (err) {
             const notification = {
                 status: "FAILURE",
-                functionName: `downloader-${process.env.STAGE}`,
+                functionName: `recognizer-${process.env.STAGE}`,
                 message: err.message,
             };
             await slackBot(notification);
@@ -80,14 +96,6 @@ const processAndSaveAlbum = async (messages, admin) => {
         }
     }
     console.log(messages.length ? '\nQueue processing completed.' : '\nNo albums found.');
-};
-
-const deleteMessageFromSQS = async (message) => {
-    const params = {
-        QueueUrl: process.env.SQS_QUEUE_PROCESS,
-        ReceiptHandle: message.ReceiptHandle
-    };
-    await sqs.deleteMessage(params);
 };
 
 const processUnprocessedAlbum = async (album, admin) => {
@@ -98,8 +106,9 @@ const processUnprocessedAlbum = async (album, admin) => {
     const token = admin.access_token_spotify;
     if (!token) {
         console.log("Error: Token not found");
-        return;
+        return null;
     }
+    return
     console.log(`\nSearching: ${album.artist_name} - ${album.album_name}`);
     for (const track of album.tracks) {
         console.log(`\nSearching track: ${track.name} - [${album.tracks.indexOf(track) + 1}/${album.tracks.length}]`);
@@ -121,7 +130,6 @@ const getUserById = async (user_id) => {
             TableName: `regroovio-users-${process.env.STAGE}`,
             Key: { user_id: user_id }
         };
-        console.log(params);
         const users = await documentClient.scan(params);
         if (users.Items.length === 0) {
             throw new Error(`No user with id ${user_id} found`);
@@ -163,7 +171,7 @@ const checkAndUpdateTokenIfExpired = async (adminId, admin) => {
             const admin = await updateUserTokens(admin, tokens);
             return admin;
         }
-        return null;
+        throw new Error("Failed to refresh token");
     }
     console.log("Token expires in: ", minutes, " minutes");
     return admin;
@@ -207,18 +215,23 @@ const processTrack = async (token, track, album) => {
 }
 
 const putAlbumInDynamodb = async (tableName, album) => {
-    console.log(tableName, album);
     try {
+        if (!tableName) throw new Error("Table name is undefined");
+        if (!album) throw new Error("Album is undefined");
+
         const params = {
             TableName: tableName,
             Item: album
         };
         await documentClient.put(params);
     } catch (err) {
-        console.log(`Error putAlbumInDynamodb:`, err);
-        console.log('Table:', tableName);
-        console.log('Album:', album);
-        throw err;
+        const notification = {
+            status: "FAILURE",
+            functionName: `recognizer-${process.env.STAGE}`,
+            message: `Error while trying to put album in DynamoDB: ${err.message}`,
+        };
+        console.log(notification);
+        await slackBot(notification);
     }
 };
 

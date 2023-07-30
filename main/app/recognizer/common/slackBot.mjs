@@ -17,7 +17,7 @@ const slackBot = async (alert) => {
                 'type': 'section',
                 'text': {
                     'type': 'mrkdwn',
-                    'text': `*Function:* \`${functionName}\`\n*Message:* \`${message}\`}`
+                    'text': `*Function:* \`${functionName}\`\n*Message:* \`${message}\``
                 }
             }
         ];

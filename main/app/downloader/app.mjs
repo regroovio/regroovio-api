@@ -1,4 +1,3 @@
-
 // downloader/app.mjs
 
 import bcfetch from 'bandcamp-fetch';
@@ -17,7 +16,12 @@ const app = async () => {
             await runProcess(messages);
         } catch (err) {
             console.error('Error in app function:', err);
-            throw err;
+            const notification = {
+                status: "FAILURE",
+                functionName: `downloader-${process.env.STAGE}`,
+                message: `Error in app function: ${err.message}`,
+            };
+            await slackBot(notification);
         }
     }
 };
@@ -40,8 +44,8 @@ const receiveMessagesFromSQS = async () => {
 };
 
 const runProcess = async (messages) => {
-    try {
-        for (const message of messages) {
+    for (const message of messages) {
+        try {
             const album = JSON.parse(message.Body);
             const processedAlbum = await downloadAndSaveAlbum(album);
             await deleteAndSendNewMessage(message, processedAlbum);
@@ -51,15 +55,14 @@ const runProcess = async (messages) => {
                 message: `Processed [${messages.indexOf(message) + 1}/${messages.length}] albums`,
             };
             await slackBot(notification);
+        } catch (err) {
+            const notification = {
+                status: "FAILURE",
+                functionName: `downloader-${process.env.STAGE}`,
+                message: `Error in runProcess function for message ${message.MessageId}: ${err.message}`,
+            };
+            await slackBot(notification);
         }
-    } catch (err) {
-        const notification = {
-            status: "FAILURE",
-            functionName: `downloader-${process.env.STAGE}`,
-            message: err.message,
-        };
-        await slackBot(notification);
-        throw err;
     }
 };
 
@@ -78,14 +81,19 @@ const downloadAndSaveAlbum = async (album) => {
 };
 
 const deleteAndSendNewMessage = async (message, processedAlbum) => {
-    await sqs.deleteMessage({
-        QueueUrl: process.env.SQS_QUEUE_DOWNLOADS,
-        ReceiptHandle: message.ReceiptHandle
-    });
-    await sqs.sendMessage({
-        QueueUrl: process.env.SQS_QUEUE_PROCESS,
-        MessageBody: JSON.stringify(processedAlbum)
-    });
+    try {
+        await sqs.deleteMessage({
+            QueueUrl: process.env.SQS_QUEUE_DOWNLOADS,
+            ReceiptHandle: message.ReceiptHandle
+        });
+        await sqs.sendMessage({
+            QueueUrl: process.env.SQS_QUEUE_PROCESS,
+            MessageBody: JSON.stringify(processedAlbum)
+        });
+    } catch (err) {
+        console.log("Error in deleteAndSendNewMessage function:", err);
+        throw err;
+    }
 };
 
 const generatealbumWithDetails = async (linkInfo, tracksS3, album) => {
