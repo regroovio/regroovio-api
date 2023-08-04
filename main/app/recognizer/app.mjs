@@ -149,7 +149,7 @@ const invokeLambda = async (params) => {
         const { body } = JSON.parse(payloadString);
         const parsedBody = JSON.parse(body);
         if (parsedBody.statusCode !== 200) {
-            throw new Error("Error invoking Lambda function");
+            throw new Error(parsedBody.body || "Error invoking Lambda function");
         }
         return parsedBody;
     } catch (error) {
@@ -157,7 +157,6 @@ const invokeLambda = async (params) => {
         throw error;
     }
 };
-
 
 const refreshTokenIfExpired = async (adminId, admin) => {
     if (!admin) throw new Error("Admin not found");
@@ -188,7 +187,6 @@ const processTrack = async (token, track, album) => {
             year: track.release_year
         })
     });
-    console.log(targetTrack);
     return targetTrack;
 }
 

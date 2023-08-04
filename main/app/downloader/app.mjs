@@ -49,12 +49,6 @@ const runProcess = async (messages) => {
             const album = JSON.parse(message.Body);
             const processedAlbum = await downloadAndSaveAlbum(album);
             await deleteAndSendNewMessage(message, processedAlbum);
-            const notification = {
-                status: "SUCCESS",
-                functionName: `downloader-${process.env.STAGE}`,
-                message: `Processed [${messages.indexOf(message) + 1}/${messages.length}] albums`,
-            };
-            await slackBot(notification);
         } catch (err) {
             const notification = {
                 status: "FAILURE",
