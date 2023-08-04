@@ -65,10 +65,8 @@ const processAndSaveAlbum = async (messages, admin) => {
             const tableName = album.table;
             delete album.table;
             console.log(`\nProcessing album: ${album.album_name} | [${messages.indexOf(message) + 1}/${messages.length}]`);
-            admin = await refreshTokenIfExpired(admin.user_id, admin);
-            console.log(admin);
-            return
-            const processedAlbum = await processUnprocessedAlbum(album);
+            const token = await refreshTokenIfExpired(admin.user_id, admin);
+            const processedAlbum = await processUnprocessedAlbum(album, token);
             if (processedAlbum === null) {
                 console.log('Skipped processing album due to missing token.');
                 const notification = {
@@ -109,7 +107,7 @@ const deleteMessageFromSQS = async (message) => {
     await sqs.deleteMessage(params);
 };
 
-const processUnprocessedAlbum = async (album) => {
+const processUnprocessedAlbum = async (album, token) => {
     console.log(`\nSearching: ${album.artist_name} - ${album.album_name}`);
     for (const track of album.tracks) {
         console.log(`\nSearching track: ${track.name} - [${album.tracks.indexOf(track) + 1}/${album.tracks.length}]`);
@@ -145,15 +143,17 @@ const getUserById = async (user_id) => {
 const invokeLambda = async (params) => {
     try {
         const command = new InvokeCommand(params);
-        const data = await lambdaClient.send(command);
-        const payloadString = Buffer.from(data.Payload).toString();
-        const cleanedPayload = JSON.parse(payloadString);
-        console.log(cleanedPayload);
-        if (cleanedPayload.body.statusCode !== 200) {
+        const { Payload } = await lambdaClient.send(command);
+
+        const payloadString = Buffer.from(Payload).toString();
+        const { body } = JSON.parse(payloadString);
+        const parsedBody = JSON.parse(body);
+        if (parsedBody.statusCode !== 200) {
             throw new Error("Error invoking Lambda function");
         }
-        return cleanedPayload.body;
+        return parsedBody;
     } catch (error) {
+        console.error("Error invoking Lambda function:", error);
         throw error;
     }
 };
@@ -171,9 +171,9 @@ const refreshTokenIfExpired = async (adminId, admin) => {
             FunctionName: `spotify-scrap-token-${process.env.STAGE}`,
             Payload: JSON.stringify({ "user_id": adminId })
         });
-        console.log(response);
+        return response.tokens.access_token;
     }
-    return admin;
+    return admin.access_token_spotify;
 }
 
 const processTrack = async (token, track, album) => {
