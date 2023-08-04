@@ -11,6 +11,13 @@ const app = async (event) => {
     let message = "";
     console.log(event);
 
+    // Search the track directly with Spotify API
+    const trackData = await search(token, `track:${trackName}`, "track", 1);
+    if (trackData.tracks && trackData.tracks.items && trackData.tracks.items.length > 0) {
+      const trackInSpotify = trackData.tracks.items[0];
+      return { statusCode: 200, body: trackInSpotify };
+    }
+
     const individualArtists = splitArtists(artistName);
     for (const individualArtist of individualArtists) {
       if (!isVariousArtist(individualArtist)) {
