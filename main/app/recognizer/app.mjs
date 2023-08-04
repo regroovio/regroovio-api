@@ -102,7 +102,7 @@ const deleteMessageFromSQS = async (message) => {
 
 const processUnprocessedAlbum = async (album, token) => {
     console.log(`\nSearching: ${album.artist_name} - ${album.album_name}`);
-    album.missingTracks = [];
+    album.missing_tracks = [];
     for (const track of album.tracks) {
         console.log(`\nSearching track: ${track.name} - [${album.tracks.indexOf(track) + 1}/${album.tracks.length}]`);
         const processedTrack = await processTrack(token, track, album);
@@ -112,7 +112,7 @@ const processUnprocessedAlbum = async (album, token) => {
         } else {
             console.log(`Track not found`);
             track.spotify = null;
-            album.missingTracks.push(track.name);
+            album.missing_tracks.push({ name: track.name, url: track.url });
         }
     }
     return album
