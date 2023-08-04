@@ -21,15 +21,19 @@ const app = async () => {
             await processAndSaveAlbum(messages, admin);
         } catch (err) {
             console.error('Error in app function:', err);
-            const notification = {
-                status: "FAILURE",
-                functionName: `recognizer-${process.env.STAGE}`,
-                message: err.message,
-            };
-            await slackBot(notification);
+            await alertError(err, 'Error in app function');
             continue;
         }
     }
+};
+
+const alertError = async (err, context) => {
+    const notification = {
+        status: "FAILURE",
+        functionName: `recognizer-${process.env.STAGE}`,
+        message: `${context}: ${err.message}`,
+    };
+    await slackBot(notification);
 };
 
 const receiveMessagesFromSQS = async () => {
@@ -66,33 +70,22 @@ const processAndSaveAlbum = async (messages, admin) => {
             delete album.table;
             console.log(`\nProcessing album: ${album.album_name} | [${messages.indexOf(message) + 1}/${messages.length}]`);
             const token = await refreshTokenIfExpired(admin.user_id, admin);
-            const processedAlbum = await processUnprocessedAlbum(album, token);
-            if (processedAlbum === null) {
+            if (!token) {
                 console.log('Skipped processing album due to missing token.');
-                const notification = {
-                    status: "FAILURE",
-                    functionName: `recognizer-${process.env.STAGE}`,
-                    message: `Skipped processing album due to missing token.`,
-                };
-                await slackBot(notification);
+                await alertError(new Error('Missing token'), 'Skipped processing album');
+                continue;
+            }
+            const processedAlbum = await processUnprocessedAlbum(album, token);
+            if (!processedAlbum || !processedAlbum.tracks || !processedAlbum.tracks.length) {
+                console.log('Skipped processing album due to missing tracks.');
+                await alertError(new Error('Missing tracks'), 'Skipped processing album');
                 continue;
             }
             await putAlbumInDynamodb(tableName, processedAlbum);
-            // await deleteMessageFromSQS(message);
             console.log('Album processing completed.');
-            const notification = {
-                status: "SUCCESS",
-                functionName: `recognizer-${process.env.STAGE}`,
-                message: `Processed [${messages.indexOf(message) + 1}/${messages.length}] albums`,
-            };
-            await slackBot(notification);
+            await deleteMessageFromSQS(message);
         } catch (err) {
-            const notification = {
-                status: "FAILURE",
-                functionName: `recognizer-${process.env.STAGE}`,
-                message: err.message,
-            };
-            await slackBot(notification);
+            await alertError(err, 'Error during album processing');
             throw err;
         }
     }
@@ -109,6 +102,7 @@ const deleteMessageFromSQS = async (message) => {
 
 const processUnprocessedAlbum = async (album, token) => {
     console.log(`\nSearching: ${album.artist_name} - ${album.album_name}`);
+    album.missingTracks = [];
     for (const track of album.tracks) {
         console.log(`\nSearching track: ${track.name} - [${album.tracks.indexOf(track) + 1}/${album.tracks.length}]`);
         const processedTrack = await processTrack(token, track, album);
@@ -118,6 +112,7 @@ const processUnprocessedAlbum = async (album, token) => {
         } else {
             console.log(`Track not found`);
             track.spotify = null;
+            album.missingTracks.push(track.name);
         }
     }
     return album
@@ -184,37 +179,35 @@ const processTrack = async (token, track, album) => {
         artistName: album.artist_name,
         year: track.release_year
     });
-    const targetTrack = await invokeLambda({
-        FunctionName: `spotify-search-track-${process.env.STAGE}`,
-        Payload: JSON.stringify({
-            token,
-            trackName: track.name,
-            albumName: album.album_name,
-            artistName: album.artist_name,
-            year: track.release_year
-        })
-    });
-    return targetTrack;
+    try {
+        const targetTrack = await invokeLambda({
+            FunctionName: `spotify-search-track-${process.env.STAGE}`,
+            Payload: JSON.stringify({
+                token,
+                trackName: track.name,
+                albumName: album.album_name,
+                artistName: album.artist_name,
+                year: track.release_year
+            })
+        });
+        return targetTrack;
+    } catch (error) {
+        console.error("Error invoking Lambda function:", error.message);
+        return null;
+    }
 }
 
 const putAlbumInDynamodb = async (tableName, album) => {
     try {
         if (!tableName) throw new Error("Table name is undefined");
         if (!album) throw new Error("Album is undefined");
-
         const params = {
             TableName: tableName,
             Item: album
         };
         await documentClient.put(params);
     } catch (err) {
-        const notification = {
-            status: "FAILURE",
-            functionName: `recognizer-${process.env.STAGE}`,
-            message: `Error while trying to put album in DynamoDB: ${err.message}`,
-        };
-        console.log(notification);
-        await slackBot(notification);
+        await alertError(err, 'Error while trying to put album in DynamoDB');
     }
 };
 
