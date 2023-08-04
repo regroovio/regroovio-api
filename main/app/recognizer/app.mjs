@@ -177,6 +177,13 @@ const refreshTokenIfExpired = async (adminId, admin) => {
 
 const processTrack = async (token, track, album) => {
     track.release_year = album.release_date ? album.release_date.split("-")[2] : null;
+    console.log({
+        token,
+        trackName: track.name,
+        albumName: album.album_name,
+        artistName: album.artist_name,
+        year: track.release_year
+    });
     const targetTrack = await invokeLambda({
         FunctionName: `spotify-search-track-${process.env.STAGE}`,
         Payload: JSON.stringify({

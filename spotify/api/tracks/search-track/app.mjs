@@ -24,7 +24,7 @@ const app = async (event) => {
       }
     }
 
-    return { statusCode: 404, body: `The requested track was not found. Please ensure the provided artist name, track name, album name, and year are correct and try again.` };
+    return { statusCode: 404, body: `The requested track '${trackName}' by '${artistName}' from the album '${albumName}' (${year}) was not found. Please ensure the provided artist name, track name, album name, and year are correct and try again.` };
 
   } catch (error) {
     handleError(error, "searching");
