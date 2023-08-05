@@ -53,7 +53,7 @@ const fetchAllBandcampTables = async () => {
         do {
             result = await dynamoDB.listTables(params);
             bandcampTables.push(...result.TableNames.filter(name => {
-                return name.includes("regroovio") && !name.includes("regroovio-users");
+                return !name.includes("regroovio-users") && name.includes(process.env.STAGE);
             }));
             params.ExclusiveStartTableName = result.LastEvaluatedTableName;
         } while (result.LastEvaluatedTableName);
@@ -68,30 +68,19 @@ const fetchTracks = async (tableName, minPopularity, limit) => {
     try {
         const params = {
             TableName: tableName,
-            KeyConditionExpression: "spotify.popularity >= :minPopularity",
+            FilterExpression: "popularity >= :minPopularity",
             ExpressionAttributeValues: {
                 ":minPopularity": minPopularity
             },
             ScanIndexForward: false, // this sorts results by sort key (popularity) in descending order
             Limit: limit
         };
-
-        const result = await documentClient.query(params);
-
+        const result = await documentClient.scan(params);
         return processTracks(result.Items);
     } catch (err) {
         console.log(`Error fetching albums: ${err}`);
         return [];
     }
-};
-
-
-const shuffleArray = (array) => {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
 };
 
 const processTracks = (items, uniqueTrackIds) => {

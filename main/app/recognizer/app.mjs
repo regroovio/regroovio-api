@@ -108,6 +108,7 @@ const processUnprocessedAlbum = async (album, token) => {
         console.log(`\nSearching track: ${track.name} - [${album.tracks.indexOf(track) + 1}/${album.tracks.length}]`);
         const processedTrack = await processTrack(token, track, album);
         if (processedTrack) {
+            console.log(processedTrack);
             console.log(`Found track: ${processedTrack.name}`);
             track.spotify = processedTrack;
         } else {
