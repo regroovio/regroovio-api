@@ -5,6 +5,7 @@ import { DynamoDB } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { slackBot } from "./common/slackBot.mjs";
+import { search } from "./search.mjs";
 
 const lambdaClient = new LambdaClient({ region: process.env.REGION });
 const documentClient = DynamoDBDocument.from(new DynamoDB({ region: process.env.REGION }));
@@ -81,9 +82,9 @@ const processAndSaveAlbum = async (messages, admin) => {
                 await alertError(new Error('Missing tracks'), 'Skipped processing album');
                 continue;
             }
-            await putAlbumInDynamodb(tableName, processedAlbum);
-            console.log('Album processing completed.');
-            await deleteMessageFromSQS(message);
+            // await putAlbumInDynamodb(tableName, processedAlbum);
+            // console.log('Album processing completed.');
+            // await deleteMessageFromSQS(message);
         } catch (err) {
             await alertError(err, 'Error during album processing');
             throw err;
@@ -107,8 +108,8 @@ const processUnprocessedAlbum = async (album, token) => {
         console.log(`\nSearching track: ${track.name} - [${album.tracks.indexOf(track) + 1}/${album.tracks.length}]`);
         const processedTrack = await processTrack(token, track, album);
         if (processedTrack) {
-            console.log(`Found track: ${processedTrack.body.name}`);
-            track.spotify = processedTrack.body;
+            console.log(`Found track: ${processedTrack.name}`);
+            track.spotify = processedTrack;
         } else {
             console.log(`Track not found`);
             track.spotify = null;
@@ -144,11 +145,11 @@ const invokeLambda = async (params) => {
         const { body } = JSON.parse(payloadString);
         const parsedBody = JSON.parse(body);
         if (parsedBody.statusCode !== 200) {
-            throw new Error(parsedBody.body || "Error invoking Lambda function");
+            throw new Error(parsedBody.body);
         }
         return parsedBody;
     } catch (error) {
-        console.error("Error invoking Lambda function:", error);
+        console.error("Invoking Lambda function:", error);
         throw error;
     }
 };
@@ -180,16 +181,13 @@ const processTrack = async (token, track, album) => {
         year: track.release_year
     });
     try {
-        const targetTrack = await invokeLambda({
-            FunctionName: `spotify-search-track-${process.env.STAGE}`,
-            Payload: JSON.stringify({
-                token,
-                trackName: track.name,
-                albumName: album.album_name,
-                artistName: album.artist_name,
-                year: track.release_year
-            })
-        });
+        const targetTrack = await search({
+            token,
+            trackName: track.name,
+            albumName: album.album_name,
+            artistName: album.artist_name,
+            year: track.release_year
+        })
         return targetTrack;
     } catch (error) {
         console.error("Error invoking Lambda function:", error.message);
