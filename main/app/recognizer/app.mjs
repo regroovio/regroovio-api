@@ -103,14 +103,15 @@ const deleteMessageFromSQS = async (message) => {
 
 const processUnprocessedAlbum = async (album, token) => {
     console.log(`\nSearching: ${album.artist_name} - ${album.album_name}`);
+    album.popularity = 0
     album.missing_tracks = [];
     for (const track of album.tracks) {
         console.log(`\nSearching track: ${track.name} - [${album.tracks.indexOf(track) + 1}/${album.tracks.length}]`);
         const processedTrack = await processTrack(token, track, album);
         if (processedTrack) {
-            console.log(processedTrack);
             console.log(`Found track: ${processedTrack.name}`);
             track.spotify = processedTrack;
+            album.popularity += processedTrack.popularity;
         } else {
             console.log(`Track not found`);
             track.spotify = null;
@@ -174,13 +175,6 @@ const refreshTokenIfExpired = async (adminId, admin) => {
 
 const processTrack = async (token, track, album) => {
     track.release_year = album.release_date ? album.release_date.split("-")[2] : null;
-    console.log({
-        token,
-        trackName: track.name,
-        albumName: album.album_name,
-        artistName: album.artist_name,
-        year: track.release_year
-    });
     try {
         const targetTrack = await search({
             token,

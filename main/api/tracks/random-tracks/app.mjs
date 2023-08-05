@@ -3,30 +3,21 @@
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
 
-
-
-const documentClient = DynamoDBDocument.from(new DynamoDB({
-    region: process.env.REGION
-}));
+const dynamoDB = new DynamoDB({ region: process.env.REGION });
+const documentClient = DynamoDBDocument.from(dynamoDB);
 
 const app = async (event) => {
     console.log(event);
     const minPopularity = event.queryStringParameters?.popularity || 0;
-    const limit = event.queryStringParameters?.limit || 10; // Default limit of 10 if not specified
     try {
-        const bandcampTables = await fetchAllBandcampTables();
+        let bandcampTables = await fetchBandcampTables();
         let allPopularTracks = [];
-        const uniqueTrackIds = new Set();
 
         const fetchTracksPromises = bandcampTables.map(async (tableName) => {
             console.log(tableName);
-            let items = await fetchTracks(tableName, minPopularity, limit);
-            if (!items?.length) {
-                console.log({ message: 'No tracks found.' });
-                return [];
-            }
-            console.log({ message: `Tracks found. [${items.length}]` });
-            return processTracks(items, uniqueTrackIds);
+            const albums = await fetchAlbums(tableName, minPopularity);
+            console.log({ message: `Albums found. [${albums.length}]` });
+            return processTracks(albums);
         });
 
         const allTracks = await Promise.all(fetchTracksPromises);
@@ -35,17 +26,14 @@ const app = async (event) => {
         });
 
         console.log({ message: `Total tracks found. [${allPopularTracks.length}]` });
-        return allPopularTracks.slice(0, limit); // Ensure the total result also respects the limit
+        return allPopularTracks
     } catch (err) {
         console.log('Error processing albums:', err);
         return { message: 'Failed to process albums', err };
     }
 };
 
-const fetchAllBandcampTables = async () => {
-    const dynamoDB = new DynamoDB({
-        region: process.env.REGION
-    });
+const fetchBandcampTables = async () => {
     try {
         let result;
         let bandcampTables = [];
@@ -64,7 +52,7 @@ const fetchAllBandcampTables = async () => {
     }
 };
 
-const fetchTracks = async (tableName, minPopularity, limit) => {
+const fetchAlbums = async (tableName, minPopularity) => {
     try {
         const params = {
             TableName: tableName,
@@ -72,33 +60,35 @@ const fetchTracks = async (tableName, minPopularity, limit) => {
             ExpressionAttributeValues: {
                 ":minPopularity": minPopularity
             },
-            ScanIndexForward: false, // this sorts results by sort key (popularity) in descending order
-            Limit: limit
+            ScanIndexForward: false,
         };
         const result = await documentClient.scan(params);
-        return processTracks(result.Items);
+        return result.Items
     } catch (err) {
         console.log(`Error fetching albums: ${err}`);
         return [];
     }
 };
 
-const processTracks = (items, uniqueTrackIds) => {
+const processTracks = (albums) => {
     const tracks = [];
-    for (const item of items) {
-        const id = item.track.url;
-        if (uniqueTrackIds.has(id)) {
-            continue;
+    for (const albumItem of albums) {
+        if (albumItem.tracks.length > 0) {
+            const track = albumItem.tracks.sort((a, b) => {
+                const popularityA = a.spotify?.popularity || 0;
+                const popularityB = b.spotify?.popularity || 0;
+                return popularityB - popularityA;
+            })[0];
+            const id = track.url;
+            const popularity = track?.spotify?.popularity || null;
+            const artist = albumItem.artist_name;
+            const album_id = albumItem.album_id;
+            const album = albumItem.album_name;
+            const title = track.name;
+            const url = track.url;
+            const image = albumItem.image;
+            tracks.push({ album_id, url, id, title, artist, popularity, album, image });
         }
-        uniqueTrackIds.add(id);
-        const popularity = item.track?.spotify?.popularity || null;
-        const artist = item.artist_name;
-        const album_id = item.album_id;
-        const album = item.album_name;
-        const title = item.track.name;
-        const url = item.track.url;
-        const image = item.image;
-        tracks.push({ album_id, url, id, title, artist, popularity, album, image });
     }
     return tracks;
 };

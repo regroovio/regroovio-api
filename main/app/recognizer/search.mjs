@@ -9,13 +9,11 @@ const search = async (event) => {
   try {
     const { token, trackName, year, albumName, artistName } = event;
     let message = "";
-    console.log(event);
-
     // Search the track directly with Spotify API
     const trackData = await spotifySearch(token, `track:${trackName}`, "track", 1);
     if (trackData.tracks && trackData.tracks.items && trackData.tracks.items.length > 0) {
       const trackInSpotify = trackData.tracks.items[0];
-      return { statusCode: 200, body: trackInSpotify };
+      return trackInSpotify
     }
 
     const individualArtists = splitArtists(artistName);
@@ -25,7 +23,7 @@ const search = async (event) => {
         if (artistData) {
           const trackInArtistAlbums = await findTrackInArtistAlbums(token, artistData, trackName, artistName, year);
           if (trackInArtistAlbums) {
-            return { statusCode: 200, body: trackInArtistAlbums };
+            return trackInArtistAlbums;
           }
         }
         // then the track might not be owned by the artist
@@ -38,14 +36,14 @@ const search = async (event) => {
       for (const album of albums) {
         const trackInAlbum = await findTrackInAlbum(token, album, trackName, album);
         if (trackInAlbum) {
-          return { statusCode: 200, body: trackInAlbum };
+          return trackInAlbum
         }
       }
     }
-    return { statusCode: 404, body: "Track not found." };
+    return null
   } catch (error) {
     handleError(error, "searching");
-    return { statusCode: error.response?.status || 500, body: error.message };
+    return error;
   }
 };
 
