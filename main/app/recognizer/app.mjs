@@ -82,9 +82,9 @@ const processAndSaveAlbum = async (messages, admin) => {
                 await alertError(new Error('Missing tracks'), 'Skipped processing album');
                 continue;
             }
-            // await putAlbumInDynamodb(tableName, processedAlbum);
-            // console.log('Album processing completed.');
-            // await deleteMessageFromSQS(message);
+            await putAlbumInDynamodb(tableName, processedAlbum);
+            console.log('Album processing completed.');
+            await deleteMessageFromSQS(message);
         } catch (err) {
             await alertError(err, 'Error during album processing');
             throw err;
