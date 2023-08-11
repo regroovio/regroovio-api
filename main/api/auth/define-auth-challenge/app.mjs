@@ -19,7 +19,7 @@ const app = async (event) => {
         return event;
     } catch (err) {
         console.log(err);
-        return { message: err.message, statusCode: 400 };
+        throw err;
     }
 };
 
