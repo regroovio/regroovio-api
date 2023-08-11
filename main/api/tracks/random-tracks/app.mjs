@@ -87,7 +87,9 @@ const processTracks = (albums) => {
             const title = track.name;
             const url = track.url;
             const image = albumItem.image;
-            tracks.push({ album_id, url, id, title, artist, popularity, album, image });
+            const key_words = albumItem.key_words;
+            const release_date = albumItem.release_date;
+            tracks.push({ album_id, url, id, title, artist, popularity, album, image, key_words, release_date });
         }
     }
     return tracks;
