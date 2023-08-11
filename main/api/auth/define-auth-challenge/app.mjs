@@ -3,7 +3,10 @@
 const app = async (event) => {
     console.log(event);
     try {
-        if (event.request.session &&
+        if (event.request.userNotFound) {
+            event.response.issueTokens = false;
+            event.response.failAuthentication = true;
+        } else if (event.request.session &&
             event.request.session.find(attempt => attempt.challengeName === 'CUSTOM_CHALLENGE' && attempt.challengeResult === true)) {
             event.response.issueTokens = true;
             event.response.failAuthentication = false;

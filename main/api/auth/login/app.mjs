@@ -5,6 +5,13 @@ import calculateSecretHash from "./common/secretHash.mjs";
 
 const client = new CognitoIdentityProviderClient({ region: process.env.REGION });
 
+const formatPhoneNumber = (number) => {
+    if (number.startsWith('+')) {
+        return number;
+    }
+    return '+972' + number;
+};
+
 const initiateAuth = async (phoneNumber) => {
     const secretHash = calculateSecretHash(
         phoneNumber,
@@ -35,8 +42,9 @@ const initiateAuth = async (phoneNumber) => {
 
 const app = async (event) => {
     const { phoneNumber } = event;
+    const formattedPhoneNumber = formatPhoneNumber(phoneNumber);
     try {
-        const loginData = await initiateAuth(phoneNumber);
+        const loginData = await initiateAuth(formattedPhoneNumber);
         if (!loginData.$metadata || loginData.$metadata.httpStatusCode !== 200) {
             throw new Error(loginData.message || 'Unexpected response format from Cognito');
         }
