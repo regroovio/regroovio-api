@@ -24,9 +24,11 @@ const signUp = async (phoneNumber, username) => {
     const params = {
         ClientId: process.env.COGNITO_CLIENT_ID,
         Username: phoneNumber,
+        Password: "dummyPassword#123",
         SecretHash: secretHash,
         UserAttributes: userAttributes,
     };
+
 
     const command = new SignUpCommand(params);
 
