@@ -58,6 +58,7 @@ const app = async (event) => {
     console.log(event);
     const { phoneNumber, username } = event;
     const formattedPhoneNumber = formatPhoneNumber(phoneNumber);
+    console.log(formattedPhoneNumber);
     try {
         const signupData = await signUp(formattedPhoneNumber, username);
         if (signupData.$metadata.httpStatusCode !== 200) {
