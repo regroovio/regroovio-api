@@ -5,6 +5,9 @@ import { SNSClient, PublishCommand } from "@aws-sdk/client-sns";
 const snsClient = new SNSClient({ region: process.env.REGION });
 
 const app = async (event) => {
+    console.log(event);
+    console.log(process.env.STAGE);
+    console.log(process.env.REGION);
     try {
         const secretLoginCode = Math.floor(Math.random() * (9999 - 1000) + 1000);
         const phoneNumber = event.request.userAttributes.phone_number;

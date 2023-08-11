@@ -2,6 +2,8 @@
 
 const app = async (event) => {
     console.log(event);
+    console.log(process.env.REGION);
+    console.log(process.env.STAGE);
     try {
         if (event.request.userNotFound) {
             event.response.issueTokens = false;

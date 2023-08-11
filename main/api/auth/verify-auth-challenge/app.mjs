@@ -1,6 +1,9 @@
 // verify-auth-challenge/app.mjs
 
 const app = async (event) => {
+    console.log(event);
+    console.log(process.env.STAGE);
+    console.log(process.env.REGION);
     try {
         if (event.request.privateChallengeParameters.secretLoginCode === event.request.challengeAnswer) {
             event.response.answerCorrect = true;
