@@ -7,10 +7,10 @@ const app = async (event) => {
         } else {
             event.response.answerCorrect = false;
         }
-        return event;
+        return event;  // Return the complete event source
     } catch (err) {
         console.log(err);
-        return { message: err.message, statusCode: 400 };
+        throw err;  // Propagate the error
     }
 };
 

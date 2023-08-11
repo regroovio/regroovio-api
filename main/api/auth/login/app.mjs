@@ -18,10 +18,12 @@ const initiateAuth = async (phoneNumber) => {
         process.env.COGNITO_CLIENT_ID,
         process.env.COGNITO_CLIENT_SECRET
     );
+
     const authParams = {
         USERNAME: phoneNumber,
         SECRET_HASH: secretHash,
     };
+
     const params = {
         ClientId: process.env.COGNITO_CLIENT_ID,
         AuthFlow: "CUSTOM_AUTH",
@@ -41,6 +43,7 @@ const initiateAuth = async (phoneNumber) => {
 };
 
 const app = async (event) => {
+    console.log(event);
     const { phoneNumber } = event;
     const formattedPhoneNumber = formatPhoneNumber(phoneNumber);
     try {

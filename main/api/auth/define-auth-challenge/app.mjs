@@ -19,10 +19,10 @@ const app = async (event) => {
             event.response.failAuthentication = false;
             event.response.challengeName = 'CUSTOM_CHALLENGE';
         }
-        return event;
+        return event;  // Return the complete event source
     } catch (err) {
         console.log(err);
-        throw err;
+        throw err;  // Propagate the error
     }
 };
 

@@ -55,6 +55,7 @@ const signUp = async (phoneNumber, username) => {
 };
 
 const app = async (event) => {
+    console.log(event);
     const { phoneNumber, username } = event;
     const formattedPhoneNumber = formatPhoneNumber(phoneNumber);
     try {
