@@ -1,6 +1,7 @@
 // define-auth-challenge/app.mjs
 
 const app = async (event) => {
+    console.log(event);
     try {
         if (event.request.session &&
             event.request.session.find(attempt => attempt.challengeName === 'CUSTOM_CHALLENGE' && attempt.challengeResult === true)) {

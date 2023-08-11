@@ -24,9 +24,12 @@ const initiateAuth = async (phoneNumber) => {
     const command = new InitiateAuthCommand(params);
 
     try {
-        return await client.send(command);
+        const response = await client.send(command);
+        console.log("Response from Cognito:", response);  // Logging the entire response
+        return response;
     } catch (err) {
-        return err;
+        console.log("Error from Cognito:", err);  // Logging the error
+        throw err;  // Throwing the error instead of returning it
     }
 };
 
@@ -34,14 +37,13 @@ const app = async (event) => {
     const { phoneNumber } = event;
     try {
         const loginData = await initiateAuth(phoneNumber);
-        if (loginData.$metadata.httpStatusCode !== 200) {
-            throw new Error(loginData.message);
+        if (!loginData.$metadata || loginData.$metadata.httpStatusCode !== 200) {
+            throw new Error(loginData.message || 'Unexpected response format from Cognito');
         }
-
         console.log("Authentication started:", loginData);
         return { message: "Authentication started", data: loginData, statusCode: 200 };
     } catch (err) {
-        console.log(err);
+        console.log("Error in app function:", err);  // Logging the error in the app function
         return { message: err.message, statusCode: 400 };
     }
 };

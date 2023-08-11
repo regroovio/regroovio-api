@@ -1,4 +1,4 @@
-name: Dispatch Deploy
+name: Dispatch Deploy;
 on:
   push:
     branches:
@@ -15,48 +15,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Determine Changed Functions
-        id: changed_functions
-        run: |
-          changed_files=$(git show --name-only --pretty="")
-          functions_to_deploy="all"
-          for file in $changed_files; do
-            function_name=$(basename $file | cut -d'.' -f1)
-            if [[ "regroovio-signup regroovio-confirm ... spotify-refresh" =~ "$function_name" ]]; then
-              functions_to_deploy="$functions_to_deploy $function_name"
-            fi
-          done
-          echo "Changed functions: $functions_to_deploy"
-          echo ::set-output name=functions::$(echo $functions_to_deploy | sed 's/ /,/g')
-
       - name: Dispatch Deploy (Lambdas)
-        run: gh workflow run deploy-lambdas.yml --ref main -f stage=prod -f functions=${{ steps.changed_functions.outputs.functions }}
+        run: gh workflow run deploy-lambdas.yml --ref main -f stage=prod -f functions=all
         timeout-minutes: 1
 
       - name: Dispatch Deploy (ECS)
         run: gh workflow run deploy-ecs.yml --ref main -f stage=prod
         timeout-minutes: 1
-# name: Dispatch Deploy;
-# on:
-#   push:
-#     branches:
-#       - main
-
-# jobs:
-#   deploy:
-#     runs-on: ubuntu-latest
-#     env:
-#       GH_TOKEN: ${{ secrets.GH_TOKEN }}
-#     steps:
-#       - name: Checkout
-#         uses: actions/checkout@v3
-#         with:
-#           fetch-depth: 0
-
-#       - name: Dispatch Deploy (Lambdas)
-#         run: gh workflow run deploy-lambdas.yml --ref main -f stage=prod -f functions=all
-#         timeout-minutes: 1
-
-#       - name: Dispatch Deploy (ECS)
-#         run: gh workflow run deploy-ecs.yml --ref main -f stage=prod
-#         timeout-minutes: 1
