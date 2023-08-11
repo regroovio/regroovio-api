@@ -2,69 +2,42 @@
 
 import { CognitoIdentityProviderClient, SignUpCommand } from "@aws-sdk/client-cognito-identity-provider";
 import calculateSecretHash from "./common/secretHash.mjs";
-import { randomBytes } from 'crypto';
 
 const client = new CognitoIdentityProviderClient({ region: process.env.REGION });
 
-const generateUUID = () => {
-    return randomBytes(16).toString('hex');
-};
-
-const formatPhoneNumber = (number) => {
-    if (number.startsWith('+')) {
-        return number;
-    }
-    return '+972' + number;
-};
-
-const signUp = async (phoneNumber, username) => {
-    const uuid = generateUUID();
-
+const signUp = async (email, username, password) => {
     const secretHash = calculateSecretHash(
-        uuid,
+        email,
         process.env.COGNITO_CLIENT_ID,
         process.env.COGNITO_CLIENT_SECRET
     );
 
-    const userAttributes = [
-        {
-            Name: "phone_number",
-            Value: phoneNumber,
-        },
-        {
-            Name: "preferred_username",
-            Value: username,
-        }
-    ];
-
     const params = {
         ClientId: process.env.COGNITO_CLIENT_ID,
-        Username: uuid,
-        Password: "dummyPassword#123",
+        Username: email,
+        Password: password,
         SecretHash: secretHash,
-        UserAttributes: userAttributes,
+        UserAttributes: [
+            {
+                Name: "email",
+                Value: email,
+            },
+            {
+                Name: "preferred_username",
+                Value: username,
+            }
+        ],
     };
 
     const command = new SignUpCommand(params);
-
-    try {
-        return await client.send(command);
-    } catch (err) {
-        return err;
-    }
+    return await client.send(command);
 };
 
 const app = async (event) => {
     console.log(event);
-    const { phoneNumber, username } = event;
-    const formattedPhoneNumber = formatPhoneNumber(phoneNumber);
-    console.log(formattedPhoneNumber);
+    const { email, username, password } = event;
     try {
-        const signupData = await signUp(formattedPhoneNumber, username);
-        if (signupData.$metadata.httpStatusCode !== 200) {
-            throw new Error(signupData.message);
-        }
-        console.log("Signed up:", signupData);
+        const signupData = await signUp(email, username, password);
         return { message: "Signed up", signupData, statusCode: 200 };
     } catch (err) {
         console.log(err);

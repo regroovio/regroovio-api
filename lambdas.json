@@ -12,18 +12,6 @@
     "path": "./main/api/auth/confirm"
   },
   {
-    "name": "regroovio-create-auth-challenge",
-    "path": "./main/api/auth/create-auth-challenge"
-  },
-  {
-    "name": "regroovio-define-auth-challenge",
-    "path": "./main/api/auth/define-auth-challenge"
-  },
-  {
-    "name": "regroovio-verify-auth-challenge",
-    "path": "./main/api/auth/verify-auth-challenge"
-  },
-  {
     "name": "regroovio-random-tracks",
     "path": "./main/api/tracks/random-tracks"
   },

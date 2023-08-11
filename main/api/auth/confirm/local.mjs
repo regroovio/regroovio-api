@@ -1,8 +1,8 @@
 import { handler } from './index.mjs'
 const start = async () => {
     const response = await handler({
-        phoneNumber: "0504888068",
-        challengeAnswer: "testtest!123123"
+        email: "nethanielmaoz@gmail.com",
+        confirmationCode: "277848"
     })
     console.log(response)
 }
