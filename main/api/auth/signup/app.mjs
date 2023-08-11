@@ -2,26 +2,28 @@
 
 import { CognitoIdentityProviderClient, SignUpCommand } from "@aws-sdk/client-cognito-identity-provider";
 import calculateSecretHash from "./common/secretHash.mjs";
-import { AWS_COGNITO } from "./common/config.mjs";
 
 const client = new CognitoIdentityProviderClient({ region: process.env.REGION });
 
-const signUp = async (email, password) => {
+const signUp = async (phoneNumber, username) => {
     const secretHash = calculateSecretHash(
-        email,
-        AWS_COGNITO.ClientId,
-        AWS_COGNITO.ClientSecret
+        phoneNumber,
+        process.env.COGNITO_CLIENT_ID,
+        process.env.COGNITO_CLIENT_SECRET
     );
     const userAttributes = [
         {
-            Name: "email",
-            Value: email,
+            Name: "phone_number",
+            Value: phoneNumber,
         },
+        {
+            Name: "preferred_username",
+            Value: username,
+        }
     ];
     const params = {
-        ClientId: AWS_COGNITO.ClientId,
-        Password: password,
-        Username: email,
+        ClientId: process.env.COGNITO_CLIENT_ID,
+        Username: phoneNumber,
         SecretHash: secretHash,
         UserAttributes: userAttributes,
     };
@@ -36,19 +38,14 @@ const signUp = async (email, password) => {
 };
 
 const app = async (event) => {
-    const { email, password } = event;
-    console.log('');
-    console.log('');
-    console.log(event);
-    console.log('');
-    console.log('');
+    const { phoneNumber, username } = event;
     try {
-        const signupData = await signUp(email, password);
+        const signupData = await signUp(phoneNumber, username);
         if (signupData.$metadata.httpStatusCode !== 200) {
             throw new Error(signupData.message);
         }
         console.log("Signed up:", signupData);
-        return { message: "Signed up", signupData, statusCode: 400 };
+        return { message: "Signed up", signupData, statusCode: 200 };
     } catch (err) {
         console.log(err);
         return { message: err.message, statusCode: 400 };

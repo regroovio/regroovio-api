@@ -1,21 +1,20 @@
 // confirm/app.mjs
 
 import { CognitoIdentityProviderClient, ConfirmSignUpCommand } from "@aws-sdk/client-cognito-identity-provider";
-import { AWS_COGNITO } from "./common/config.mjs";
 import calculateSecretHash from "./common/secretHash.mjs";
 
 const client = new CognitoIdentityProviderClient({ region: process.env.REGION });
 
-const confirmSignUp = async (email, confirmationCode) => {
+const confirmSignUp = async (phoneNumber, confirmationCode) => {
     const secretHash = calculateSecretHash(
-        email,
-        AWS_COGNITO.ClientId,
-        AWS_COGNITO.ClientSecret
+        phoneNumber,
+        process.env.COGNITO_CLIENT_ID,
+        process.env.COGNITO_CLIENT_SECRET
     );
     const params = {
-        ClientId: AWS_COGNITO.ClientId,
+        ClientId: process.env.COGNITO_CLIENT_ID,
         ConfirmationCode: confirmationCode,
-        Username: email,
+        Username: phoneNumber,
         SecretHash: secretHash,
     };
 
@@ -29,9 +28,9 @@ const confirmSignUp = async (email, confirmationCode) => {
 };
 
 const app = async (event) => {
-    const { email, confirmationCode } = event
+    const { phoneNumber, confirmationCode } = event;
     try {
-        const confirmData = await confirmSignUp(email, confirmationCode);
+        const confirmData = await confirmSignUp(phoneNumber, confirmationCode);
         if (confirmData.$metadata.httpStatusCode !== 200) {
             throw new Error(confirmData.message);
         }

@@ -2,24 +2,22 @@
 
 import { CognitoIdentityProviderClient, InitiateAuthCommand } from "@aws-sdk/client-cognito-identity-provider";
 import calculateSecretHash from "./common/secretHash.mjs";
-import { AWS_COGNITO } from "./common/config.mjs";
 
 const client = new CognitoIdentityProviderClient({ region: process.env.REGION });
 
-const initiateAuth = async (email, password) => {
+const initiateAuth = async (phoneNumber) => {
     const secretHash = calculateSecretHash(
-        email,
-        AWS_COGNITO.ClientId,
-        AWS_COGNITO.ClientSecret
+        phoneNumber,
+        process.env.COGNITO_CLIENT_ID,
+        process.env.COGNITO_CLIENT_SECRET
     );
     const authParams = {
-        USERNAME: email,
-        PASSWORD: password,
+        USERNAME: phoneNumber,
         SECRET_HASH: secretHash,
     };
     const params = {
-        ClientId: AWS_COGNITO.ClientId,
-        AuthFlow: "USER_PASSWORD_AUTH",
+        ClientId: process.env.COGNITO_CLIENT_ID,
+        AuthFlow: "CUSTOM_AUTH",
         AuthParameters: authParams,
     };
 
@@ -33,14 +31,14 @@ const initiateAuth = async (email, password) => {
 };
 
 const app = async (event) => {
-    const { email, password } = event
+    const { phoneNumber } = event;
     try {
-        const loginData = await initiateAuth(email, password);
+        const loginData = await initiateAuth(phoneNumber);
         if (loginData.$metadata.httpStatusCode !== 200) {
             throw new Error(loginData.message);
         }
-        console.log("Authenticated user:", loginData);
-        return { message: "Authenticated", data: loginData, statusCode: 200 };
+        console.log("Authentication started:", loginData);
+        return { message: "Authentication started", data: loginData, statusCode: 200 };
     } catch (err) {
         console.log(err);
         return { message: err.message, statusCode: 400 };
@@ -48,6 +46,3 @@ const app = async (event) => {
 };
 
 export { app };
-
-
-
