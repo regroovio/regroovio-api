@@ -7,10 +7,10 @@ const app = async (event) => {
         } else {
             event.response.answerCorrect = false;
         }
-        return event;  // Return the complete event source
+        return event;
     } catch (err) {
         console.log(err);
-        throw err;  // Propagate the error
+        throw err;
     }
 };
 

@@ -18,10 +18,10 @@ const app = async (event) => {
         event.response.privateChallengeParameters = { secretLoginCode: `${secretLoginCode}` };
         event.response.challengeMetadata = 'PASSWORDLESS_CHALLENGE';
 
-        return event;  // Return the complete event source
+        return event;
     } catch (err) {
         console.log(err);
-        throw err;  // Propagate the error
+        throw err;
     }
 };
 
