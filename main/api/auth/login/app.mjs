@@ -37,6 +37,7 @@ const app = async (event) => {
         if (loginData.$metadata.httpStatusCode !== 200) {
             throw new Error(loginData.message);
         }
+
         console.log("Authentication started:", loginData);
         return { message: "Authentication started", data: loginData, statusCode: 200 };
     } catch (err) {
