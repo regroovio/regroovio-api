@@ -5,12 +5,16 @@ import { CognitoIdentityProviderClient, GetUserCommand } from "@aws-sdk/client-c
 const client = new CognitoIdentityProviderClient({ region: process.env.REGION });
 
 const app = async (event) => {
-    console.log(event);
-    const { token } = event.headers || event;
+    const { Authorization } = event.headers || event;
+    if (!Authorization) {
+        return { isValid: false, message: "No token provided.", statusCode: 400 };
+    }
+    const token = Authorization.replace("Bearer ", "");
     const params = {
         AccessToken: token
     };
     const command = new GetUserCommand(params);
+
     try {
         const response = await client.send(command);
         return { isValid: true, data: response, statusCode: 200 };
