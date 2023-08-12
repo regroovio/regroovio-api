@@ -36,7 +36,7 @@ const signUp = async (email, username, password) => {
 
 const app = async (event) => {
     console.log(event);
-    const { email, username, password } = event;
+    const { email, username, password } = event.body || event;
     try {
         const signupData = await signUp(email, username, password);
         return { message: "Signed up", signupData, statusCode: 200 };
