@@ -6,8 +6,8 @@ import calculateSecretHash from "./common/secretHash.mjs";
 const client = new CognitoIdentityProviderClient({ region: process.env.REGION });
 
 const app = async (event) => {
-    const { email, confirmationCode } = event;
-
+    console.log(event);
+    const { email, confirmationCode } = JSON.parse(event.body) || event;
     const secretHash = calculateSecretHash(
         email,
         process.env.COGNITO_CLIENT_ID,

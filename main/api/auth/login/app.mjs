@@ -7,8 +7,7 @@ const client = new CognitoIdentityProviderClient({ region: process.env.REGION })
 
 const app = async (event) => {
     console.log(event);
-    const { email, password } = event;
-
+    const { email, password } = JSON.parse(event.body) || event;
     const secretHash = calculateSecretHash(
         email,
         process.env.COGNITO_CLIENT_ID,
