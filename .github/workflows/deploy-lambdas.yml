@@ -31,6 +31,7 @@ on:
           - "regroovio-confirm"
           - "regroovio-login"
           - "regroovio-random-tracks"
+          - "regroovio-random-images"
           - "bandcamp-wishlist"
           - "bandcamp-collection"
           - "bandcamp-feed"

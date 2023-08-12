@@ -16,6 +16,10 @@
     "path": "./main/api/tracks/random-tracks"
   },
   {
+    "name": "regroovio-random-images",
+    "path": "./main/api/tracks/random-images"
+  },
+  {
     "name": "bandcamp-wishlist",
     "path": "./bandcamp/wishlist"
   },
