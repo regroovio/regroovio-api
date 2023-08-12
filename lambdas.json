@@ -12,6 +12,10 @@
     "path": "./main/api/auth/confirm"
   },
   {
+    "name": "regroovio-validate",
+    "path": "./main/api/auth/validate"
+  },
+  {
     "name": "regroovio-random-tracks",
     "path": "./main/api/tracks/random-tracks"
   },

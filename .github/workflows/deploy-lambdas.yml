@@ -29,6 +29,7 @@ on:
           - "all"
           - "regroovio-signup"
           - "regroovio-confirm"
+          - "regroovio-validate"
           - "regroovio-login"
           - "regroovio-random-tracks"
           - "regroovio-random-images"
