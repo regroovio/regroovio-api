@@ -6,14 +6,11 @@ const client = new CognitoIdentityProviderClient({ region: process.env.REGION })
 
 const app = async (event) => {
     console.log(event);
-    const { token } = JSON.parse(event.body) || event;
-
+    const { token } = event.headers || event;
     const params = {
         AccessToken: token
     };
-
     const command = new GetUserCommand(params);
-
     try {
         const response = await client.send(command);
         return { isValid: true, data: response, statusCode: 200 };
