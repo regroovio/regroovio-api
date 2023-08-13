@@ -109,7 +109,7 @@ const generatealbumWithDetails = async (linkInfo, tracksS3, album) => {
         album_name: linkInfo.name,
         image: imageId,
         tracks: tracksS3,
-        status: failed ? 'download failed' : 'download success'
+        status: failed ? 'DOWNLOAD FAILED' : 'DOWNLOADED'
     };
 };
 
