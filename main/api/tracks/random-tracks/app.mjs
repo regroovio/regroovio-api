@@ -26,6 +26,7 @@ const app = async (event) => {
         });
 
         console.log({ message: `Total tracks found. [${allPopularTracks.length}]` });
+        allPopularTracks.sort(() => Math.random() - 0.5);
         return allPopularTracks
     } catch (err) {
         console.log('Error processing albums:', err);

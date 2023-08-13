@@ -3,7 +3,7 @@ const start = async () => {
     const response = await handler({
         queryStringParameters: {
             popularity: 10,
-            days: 300
+            days: 30
         }
     })
     console.log(response);
