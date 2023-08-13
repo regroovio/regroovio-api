@@ -5,7 +5,7 @@ import { exec } from 'child_process';
 const app = async (event) => {
     const { action } = event
     return new Promise((resolve, reject) => {
-        eexec(`echo "${process.env.GH_TOKEN}" | ./gh auth login --with-token`, (authError) => {
+        exec(`echo "${process.env.GH_TOKEN}" | ./gh auth login --with-token`, (authError) => {
             if (authError) {
                 console.error(`Authentication Error: ${authError}`);
                 return reject(authError);
