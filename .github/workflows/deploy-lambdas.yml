@@ -50,6 +50,7 @@ on:
           - "spotify-login"
           - "spotify-callback"
           - "spotify-refresh"
+          - "start-stop-ecs"
         required: true
 
 env:

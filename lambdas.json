@@ -24,6 +24,10 @@
     "path": "./main/api/tracks/random-images"
   },
   {
+    "name": "start-stop-ecs",
+    "path": "./main/app/start-stop-ecs"
+  },
+  {
     "name": "bandcamp-wishlist",
     "path": "./bandcamp/wishlist"
   },

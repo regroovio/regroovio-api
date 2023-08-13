@@ -19,6 +19,6 @@ jobs:
         run: gh workflow run deploy-lambdas.yml --ref main -f stage=prod -f functions=all
         timeout-minutes: 1
 
-      # - name: Dispatch Deploy (ECS)
-      #   run: gh workflow run deploy-ecs.yml --ref main -f stage=prod
-      #   timeout-minutes: 1
+      - name: Dispatch Deploy (ECS)
+        run: gh workflow run deploy-ecs.yml --ref main -f stage=prod
+        timeout-minutes: 1
