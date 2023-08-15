@@ -1,8 +1,8 @@
 // post-confirmation/app.mjs
 
-const app = async (event) => {
+const app = async (event, context) => {
     console.log(event);
-    return event;
+    context.succeed(event)
 };
 
 export { app };
