@@ -4,6 +4,10 @@
     "path": "./main/api/auth/login"
   },
   {
+    "name": "regroovio-post-confirmation",
+    "path": "./main/api/auth/post-confirmation"
+  },
+  {
     "name": "regroovio-signup",
     "path": "./main/api/auth/signup"
   },
