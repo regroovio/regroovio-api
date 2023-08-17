@@ -31,6 +31,7 @@ on:
           - "regroovio-confirm"
           - "regroovio-validate"
           - "regroovio-login"
+          - "regroovio-reset-password"
           - "regroovio-post-confirmation"
           - "regroovio-random-tracks"
           - "regroovio-random-images"

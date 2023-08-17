@@ -4,6 +4,10 @@
     "path": "./main/api/auth/login"
   },
   {
+    "name": "regroovio-reset-password",
+    "path": "./main/api/auth/reset-password"
+  },
+  {
     "name": "regroovio-post-confirmation",
     "path": "./main/api/auth/post-confirmation"
   },
