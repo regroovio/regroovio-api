@@ -6,7 +6,7 @@ const client = new CognitoIdentityProviderClient({ region: process.env.REGION })
 
 const app = async (event) => {
     console.log(event);
-    const { email } = JSON.parse(event.body) || event;
+    const { email } = event.body ? JSON.parse(event.body) : event;
     try {
         const params = {
             UserPoolId: process.env.COGNITO_CLIENT_ID,

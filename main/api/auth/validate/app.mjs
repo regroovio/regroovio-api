@@ -6,7 +6,7 @@ const client = new CognitoIdentityProviderClient({ region: process.env.REGION })
 
 const app = async (event) => {
     console.log(event);
-    const { token } = JSON.parse(event.body) || event;
+    const { token } = event.body ? JSON.parse(event.body) : event;
     if (!token) {
         return { isValid: false, message: "No token provided.", statusCode: 400 };
     }
