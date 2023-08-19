@@ -4,10 +4,6 @@
     "path": "./main/api/auth/login"
   },
   {
-    "name": "regroovio-reset-password",
-    "path": "./main/api/auth/reset-password"
-  },
-  {
     "name": "regroovio-post-confirmation",
     "path": "./main/api/auth/post-confirmation"
   },
@@ -22,6 +18,18 @@
   {
     "name": "regroovio-validate",
     "path": "./main/api/auth/validate"
+  },
+  {
+    "name": "regroovio-request-new-password",
+    "path": "./main/api/auth/request-new-password"
+  },
+  {
+    "name": "regroovio-set-new-password",
+    "path": "./main/api/auth/set-new-password"
+  },
+  {
+    "name": "regroovio-verify-reset-code",
+    "path": "./main/api/auth/verify-reset-code"
   },
   {
     "name": "regroovio-random-tracks",
