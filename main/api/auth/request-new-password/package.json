@@ -1,5 +1,5 @@
 {
-  "name": "reset-password",
+  "name": "request-new-password",
   "version": "1.0.0",
   "type": "module",
   "main": "index.mjs",

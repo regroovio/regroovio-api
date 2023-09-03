@@ -1,5 +1,5 @@
 {
-  "name": "post-confirmation",
+  "name": "post-verify-email",
   "version": "1.0.0",
   "type": "module",
   "main": "index.mjs",

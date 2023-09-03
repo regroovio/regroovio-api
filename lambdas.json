@@ -4,20 +4,16 @@
     "path": "./main/api/auth/login"
   },
   {
-    "name": "regroovio-post-confirmation",
-    "path": "./main/api/auth/post-confirmation"
-  },
-  {
     "name": "regroovio-signup",
     "path": "./main/api/auth/signup"
   },
   {
-    "name": "regroovio-confirm",
-    "path": "./main/api/auth/confirm"
+    "name": "regroovio-verify-email",
+    "path": "./main/api/auth/verify-email"
   },
   {
-    "name": "regroovio-validate",
-    "path": "./main/api/auth/validate"
+    "name": "regroovio-validate-token",
+    "path": "./main/api/auth/validate-token"
   },
   {
     "name": "regroovio-request-new-password",

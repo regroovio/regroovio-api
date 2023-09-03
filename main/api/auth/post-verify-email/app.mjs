@@ -1,4 +1,4 @@
-// post-confirmation/app.mjs
+// post-verify-email/app.mjs
 
 import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
 import { DynamoDB } from "@aws-sdk/client-dynamodb";
