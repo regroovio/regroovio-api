@@ -15,7 +15,6 @@ const app = async (event, context) => {
         console.log('sub: ', sub);
         console.log('email: ', email);
         console.log('username: ', username);
-
         const params = {
             TableName: `users-${process.env.STAGE}`,
             Item: {
@@ -24,11 +23,12 @@ const app = async (event, context) => {
                 username
             }
         };
-
         try {
             await documentClient.put(params)
             console.log('User added to DynamoDB');
             context.succeed(event);
+            context.done(event);
+            return event;
         } catch (error) {
             console.error('Error adding user to DynamoDB: ', error);
             context.fail('Error adding user to DynamoDB');

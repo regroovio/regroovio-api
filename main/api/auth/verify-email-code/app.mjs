@@ -1,4 +1,4 @@
-// confirm/app.mjs
+// verify-email-code/app.mjs
 
 import { CognitoIdentityProviderClient, ConfirmSignUpCommand } from "@aws-sdk/client-cognito-identity-provider";
 import calculateSecretHash from "./common/secretHash.mjs";
