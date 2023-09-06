@@ -10,7 +10,7 @@ const sqs = new SQS({ region: process.env.REGION });
 const app = async () => {
     while (true) {
         try {
-            await sleep(15000);
+            await sleep(5000);
             const messages = await receiveMessagesFromSQS();
             if (!messages) continue;
             await runProcess(messages);
