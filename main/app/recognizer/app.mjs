@@ -40,7 +40,7 @@ const alertError = async (err, context) => {
 const receiveMessagesFromSQS = async () => {
     const params = {
         QueueUrl: process.env.SQS_QUEUE_PROCESS,
-        MaxNumberOfMessages: 10,
+        MaxNumberOfMessages: 1,
         VisibilityTimeout: 900,
         WaitTimeSeconds: 0
     };

@@ -29,7 +29,7 @@ const app = async () => {
 const receiveMessagesFromSQS = async () => {
     const params = {
         QueueUrl: process.env.SQS_QUEUE_DOWNLOADS,
-        MaxNumberOfMessages: 10,
+        MaxNumberOfMessages: 1,
         VisibilityTimeout: 900,
         WaitTimeSeconds: 0
     };
