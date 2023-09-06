@@ -1,4 +1,4 @@
-// request-new-password/app.mjs
+// request-password-reset/app.mjs
 
 import { CognitoIdentityProviderClient, AdminResetUserPasswordCommand } from "@aws-sdk/client-cognito-identity-provider";
 

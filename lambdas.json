@@ -8,16 +8,16 @@
     "path": "./main/api/auth/signup"
   },
   {
-    "name": "regroovio-verify-email",
-    "path": "./main/api/auth/verify-email"
+    "name": "regroovio-verify-email-code",
+    "path": "./main/api/auth/verify-email-code"
   },
   {
     "name": "regroovio-validate-token",
     "path": "./main/api/auth/validate-token"
   },
   {
-    "name": "regroovio-request-new-password",
-    "path": "./main/api/auth/request-new-password"
+    "name": "regroovio-request-password-reset",
+    "path": "./main/api/auth/request-password-reset"
   },
   {
     "name": "regroovio-set-new-password",
