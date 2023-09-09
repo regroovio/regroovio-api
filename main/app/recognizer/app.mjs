@@ -85,7 +85,7 @@ const processAndSaveAlbum = async (messages) => {
 const getTokenFromDB = async () => {
     const user_id = process.env.ADMIN_ID;
     const user = await getUserById(user_id);
-    if (!user?.spotify_token || new Date(user?.spotify_token.expiration_time) <= new Date()) {
+    if (!user?.spotify_token || user?.spotify_token.expiration_time < new Date().toISOString()) {
         return await refreshTokenIfExpired(user_id);
     }
     return user.spotify_token.access_token || null;
@@ -112,7 +112,6 @@ const refreshTokenIfExpired = async (user_id) => {
                 expiration_time: expirationTime.toISOString()
             };
             await updateUserToken(user_id, token);
-            currentToken = token;
             return token;
         }
         console.log(response);
@@ -174,7 +173,6 @@ const deleteMessageFromSQS = async (message) => {
 };
 
 const processUnprocessedAlbum = async (album, token) => {
-    console.log(`\nSearching: ${album.artist_name} - ${album.album_name}`);
     album.popularity = 0
     album.missing_tracks = [];
     album.release_date = new Date(album.release_date).toISOString();

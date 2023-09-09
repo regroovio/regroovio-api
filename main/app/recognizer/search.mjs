@@ -54,7 +54,7 @@ const spotifySearchAlbum = async (token, albumName, artistName, year) => {
     const release_year = album.release_date.split("-")[0];
     const includesArtist = album.artists.some((artist) => artist.name.toLowerCase() === artistName.toLowerCase());
     if (album.name.toLowerCase() === albumName.toLowerCase() && (release_year === year || includesArtist)) {
-      console.log('album found: ', album.name);
+      console.log('album found:', album.name);
       album.release_year = release_year;
       albums.push(album);
     }
