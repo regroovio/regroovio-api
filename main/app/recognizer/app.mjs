@@ -3,23 +3,29 @@
 import { SQS } from "@aws-sdk/client-sqs";
 import { DynamoDB } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
-import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { slackBot } from "./common/slackBot.mjs";
 import { search } from "./search.mjs";
+import axios from "axios";
 
-const lambdaClient = new LambdaClient({ region: process.env.REGION });
 const documentClient = DynamoDBDocument.from(new DynamoDB({ region: process.env.REGION }));
 const sqs = new SQS({ region: process.env.REGION });
 
+let token;
+
 const app = async () => {
+    try {
+        token = await getTokenFromDB();
+    } catch (err) {
+        console.error('Error retrieving token from DB:', err);
+        await alertError(err, 'Error retrieving token from DB');
+        return;
+    }
     while (true) {
         try {
             await sleep(5000);
             const messages = await receiveMessagesFromSQS();
             if (!messages) continue;
-            const admin = await fetchAdmin();
-            if (!admin) continue;
-            await processAndSaveAlbum(messages, admin);
+            await processAndSaveAlbum(messages);
         } catch (err) {
             console.error('Error in app function:', err);
             await alertError(err, 'Error in app function');
@@ -49,33 +55,16 @@ const receiveMessagesFromSQS = async () => {
         console.log('No messages to process');
         return null;
     }
-
-    console.log(`Received ${response.Messages.length} messages from SQS`);
     return response.Messages;
 };
 
-const fetchAdmin = async () => {
-    const admin = await getUserById(process.env.ADMIN_ID);
-    if (!admin) {
-        console.error("Admin user not found");
-        return null;
-    }
-    return admin;
-};
-
-const processAndSaveAlbum = async (messages, admin) => {
+const processAndSaveAlbum = async (messages) => {
     for (const message of messages) {
         try {
             const album = JSON.parse(message.Body);
             const tableName = album.table;
             delete album.table;
             console.log(`\nProcessing album: ${album.album_name} | [${messages.indexOf(message) + 1}/${messages.length}]`);
-            const token = await refreshTokenIfExpired(admin.user_id, admin);
-            if (!token) {
-                console.log('Skipped processing album due to missing token.');
-                await alertError(new Error('Missing token'), 'Skipped processing album');
-                continue;
-            }
             const processedAlbum = await processUnprocessedAlbum(album, token);
             if (!processedAlbum || !processedAlbum.tracks || !processedAlbum.tracks.length) {
                 console.log('Skipped processing album due to missing tracks.');
@@ -91,6 +80,89 @@ const processAndSaveAlbum = async (messages, admin) => {
         }
     }
     console.log(messages.length ? '\nQueue processing completed.' : '\nNo albums found.');
+};
+
+const getTokenFromDB = async () => {
+    const user_id = process.env.ADMIN_ID;
+    const user = await getUserById(user_id);
+    if (!user?.spotify_token || new Date(user?.spotify_token.expiration_time) <= new Date()) {
+        return await refreshTokenIfExpired(user_id);
+    }
+    return user.spotify_token.access_token || null;
+};
+
+const refreshTokenIfExpired = async (user_id) => {
+    const client_id = process.env.SPOTIFY_CLIENT_ID;
+    const client_secret = process.env.SPOTIFY_CLIENT_SECRET;
+    const auth = 'Basic ' + (new Buffer.from(client_id + ':' + client_secret).toString('base64'));
+    const data = new URLSearchParams();
+    data.append('grant_type', 'client_credentials');
+    try {
+        const response = await axios.post('https://accounts.spotify.com/api/token', data, {
+            headers: {
+                'Authorization': auth,
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        });
+        if (response.status === 200) {
+            const expirationTime = new Date();
+            expirationTime.setSeconds(expirationTime.getSeconds() + response.data.expires_in);
+            const token = {
+                access_token: response.data.access_token,
+                expiration_time: expirationTime.toISOString()
+            };
+            await updateUserToken(user_id, token);
+            currentToken = token;
+            return token;
+        }
+        console.log(response);
+        return null;
+    } catch (error) {
+        console.log(error);
+        return null;
+    }
+};
+
+const getUserById = async (user_id) => {
+    try {
+        const params = {
+            TableName: `regroovio-users-${process.env.STAGE}`,
+            Key: { user_id: user_id }
+        };
+        const users = await documentClient.scan(params);
+        if (users.Items.length === 0) {
+            throw new Error(`No user with id ${user_id} found`);
+        }
+        return users.Items.find(item => item.user_id === user_id);
+    } catch (err) {
+        console.log(`Error getUserById: ${err}`);
+        throw err;
+    }
+};
+
+const updateUserToken = async (user_id, token) => {
+    if (!token) {
+        throw new Error('Token value is undefined or empty.');
+    }
+    try {
+        const documentClient = DynamoDBDocument.from(new DynamoDB({ region: process.env.REGION }));
+        const table = `regroovio-users-${process.env.STAGE}`;
+        const updateParams = {
+            TableName: table,
+            Key: { user_id: user_id },
+            UpdateExpression: "SET #tokenAttribute = :tokenVal",
+            ExpressionAttributeValues: {
+                ":tokenVal": token
+            },
+            ExpressionAttributeNames: {
+                "#tokenAttribute": "spotify_token"
+            }
+        };
+        await documentClient.update(updateParams);
+    } catch (err) {
+        console.log(`Error updateUserToken: ${err}`);
+        throw err;
+    }
 };
 
 const deleteMessageFromSQS = async (message) => {
@@ -121,58 +193,6 @@ const processUnprocessedAlbum = async (album, token) => {
     }
     album.statuse = album.missing_tracks.length ? 'MISSING_TRACKS' : 'PROCESSED';
     return album
-}
-
-const getUserById = async (user_id) => {
-    try {
-        const params = {
-            TableName: `regroovio-users-${process.env.STAGE}`,
-            Key: { user_id: user_id }
-        };
-        const users = await documentClient.scan(params);
-        if (users.Items.length === 0) {
-            throw new Error(`No user with id ${user_id} found`);
-        }
-        return users.Items.find(item => item.user_id === user_id);
-    } catch (err) {
-        console.log(`Error getUserById: ${err}`);
-        throw err;
-    }
-};
-
-const invokeLambda = async (params) => {
-    try {
-        const command = new InvokeCommand(params);
-        const { Payload } = await lambdaClient.send(command);
-
-        const payloadString = Buffer.from(Payload).toString();
-        const { body } = JSON.parse(payloadString);
-        const parsedBody = JSON.parse(body);
-        if (parsedBody.statusCode !== 200) {
-            throw new Error(parsedBody.body);
-        }
-        return parsedBody;
-    } catch (error) {
-        console.error("Invoking Lambda function:", error);
-        throw error;
-    }
-};
-
-const refreshTokenIfExpired = async (adminId, admin) => {
-    if (!admin) throw new Error("Admin not found");
-    const remainingTimeInMinutes = ('expiration_timestamp_spotify' in admin) ?
-        (parseFloat(admin.expiration_timestamp_spotify) / 1000 - Date.now() / 1000) / 60 : -1;
-    const minutes = parseInt(remainingTimeInMinutes);
-    console.log("Token expires in: ", minutes, " minutes");
-    if (minutes <= 15) {
-        console.log("getting token...");
-        const response = await invokeLambda({
-            FunctionName: `spotify-scrap-token-${process.env.STAGE}`,
-            Payload: JSON.stringify({ "user_id": adminId })
-        });
-        return response.tokens.access_token;
-    }
-    return admin.access_token_spotify;
 }
 
 const processTrack = async (token, track, album) => {
