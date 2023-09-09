@@ -10,7 +10,7 @@ const sqs = new SQS({ region: process.env.REGION });
 const app = async () => {
     while (true) {
         try {
-            await sleep(5000);
+            await sleep(3000);
             const messages = await receiveMessagesFromSQS();
             if (!messages) continue;
             await runProcess(messages);
@@ -29,7 +29,7 @@ const app = async () => {
 const receiveMessagesFromSQS = async () => {
     const params = {
         QueueUrl: process.env.SQS_QUEUE_DOWNLOADS,
-        MaxNumberOfMessages: 1,
+        MaxNumberOfMessages: 5,
         VisibilityTimeout: 900,
         WaitTimeSeconds: 0
     };

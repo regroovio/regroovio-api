@@ -22,7 +22,7 @@ const app = async () => {
     }
     while (true) {
         try {
-            await sleep(5000);
+            await sleep(3000);
             const messages = await receiveMessagesFromSQS();
             if (!messages) continue;
             await processAndSaveAlbum(messages);
@@ -46,7 +46,7 @@ const alertError = async (err, context) => {
 const receiveMessagesFromSQS = async () => {
     const params = {
         QueueUrl: process.env.SQS_QUEUE_PROCESS,
-        MaxNumberOfMessages: 1,
+        MaxNumberOfMessages: 5,
         VisibilityTimeout: 900,
         WaitTimeSeconds: 0
     };
