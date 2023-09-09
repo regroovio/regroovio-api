@@ -29,7 +29,7 @@ const addUserToDB = async ({ sub, email, username }) => {
     const params = {
         TableName: `regroovio-users-${process.env.STAGE}`,
         Item: {
-            userId: sub,
+            user_id: sub,
             email,
             username
         }
