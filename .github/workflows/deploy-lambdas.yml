@@ -30,6 +30,7 @@ on:
           - "regroovio-signup"
           - "regroovio-verify-email-code"
           - "regroovio-post-verify-email"
+          - "regroovio-resend-email-code"
           - "regroovio-validate-token"
           - "regroovio-login"
           - "regroovio-request-password-reset"

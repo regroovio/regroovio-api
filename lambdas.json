@@ -16,6 +16,10 @@
     "path": "./main/api/auth/post-verify-email"
   },
   {
+    "name": "regroovio-resend-email-code",
+    "path": "./main/api/auth/resend-email-code"
+  },
+  {
     "name": "regroovio-validate-token",
     "path": "./main/api/auth/validate-token"
   },
