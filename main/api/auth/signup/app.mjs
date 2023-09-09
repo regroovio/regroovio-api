@@ -14,7 +14,7 @@ const signUp = async (email, username, password) => {
 
     const params = {
         ClientId: process.env.COGNITO_CLIENT_ID,
-        Username: email,
+        Username: username,
         Password: password,
         SecretHash: secretHash,
         UserAttributes: [
