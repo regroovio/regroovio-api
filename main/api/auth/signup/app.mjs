@@ -6,13 +6,11 @@ import calculateSecretHash from "./common/secretHash.mjs";
 const client = new CognitoIdentityProviderClient({ region: process.env.REGION });
 
 const signUp = async (email, username, password) => {
-    console.log(
-        {
-            email,
-            COGNITO_CLIENT_ID: process.env.COGNITO_CLIENT_ID,
-            COGNITO_CLIENT_SECRET: process.env.COGNITO_CLIENT_SECRET
-        }
-    );
+    console.log({
+        email,
+        COGNITO_CLIENT_ID: process.env.COGNITO_CLIENT_ID,
+        COGNITO_CLIENT_SECRET: process.env.COGNITO_CLIENT_SECRET
+    });
     const secretHash = calculateSecretHash(
         email,
         process.env.COGNITO_CLIENT_ID,
@@ -35,7 +33,7 @@ const signUp = async (email, username, password) => {
             }
         ],
     };
-
+    console.log(params);
     const command = new SignUpCommand(params);
     return await client.send(command);
 };
