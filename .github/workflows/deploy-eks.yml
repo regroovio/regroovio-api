@@ -1,4 +1,4 @@
-name: Deploy ECS
+name: Deploy EKS
 
 on:
   workflow_call:
@@ -62,12 +62,7 @@ jobs:
           docker push $IMAGE
           docker push $LATEST_IMAGE
 
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          repository: regroovio/argocd
-          token: ${{ secrets.GH_TOKEN }}
-          fetch-depth: 0
-
       - name: Dispatch bump-k8s-values
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: gh workflow run bump-k8s-values.yaml --ref main -f stage=${{ inputs.stage }} -f image-version=${{ env.IMAGE_TAG }} -f values_files=values.${{ matrix.app }}.yaml
