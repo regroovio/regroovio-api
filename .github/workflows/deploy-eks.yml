@@ -62,6 +62,13 @@ jobs:
           docker push $IMAGE
           docker push $LATEST_IMAGE
 
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          repository: regroovio/argocd
+          token: ${{ secrets.GH_TOKEN }}
+          fetch-depth: 0
+
       - name: Dispatch bump-k8s-values
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
