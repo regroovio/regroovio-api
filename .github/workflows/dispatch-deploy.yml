@@ -23,6 +23,6 @@ jobs:
       #   run: gh workflow run deploy-ecs.yml --ref main -f stage=prod
       #   timeout-minutes: 1
 
-      # - name: Dispatch Deploy (EKS)
-      #   run: gh workflow run deploy-eks.yml --ref main -f stage=prod
-      #   timeout-minutes: 1
+      - name: Dispatch Deploy (EKS)
+        run: gh workflow run deploy-eks.yml --ref main -f stage=prod
+        timeout-minutes: 1
