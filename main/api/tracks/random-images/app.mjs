@@ -38,6 +38,7 @@ const fetchAndExtractImageUrls = async (tableName, minPopularity) => {
 };
 
 const fetchAlbums = async (tableName, minPopularity) => {
+    // limit the number of results to 50
     const params = {
         TableName: tableName,
         FilterExpression: "popularity >= :minPopularity",
@@ -45,6 +46,7 @@ const fetchAlbums = async (tableName, minPopularity) => {
             ":minPopularity": minPopularity
         },
         ScanIndexForward: false,
+        Limit: 50
     };
     return (await document_client.scan(params)).Items;
 };
