@@ -5,28 +5,22 @@ import calculateSecretHash from "./common/secretHash.mjs";
 
 const client = new CognitoIdentityProviderClient({ region: process.env.REGION });
 
-const resendConfirmationCode = async (email) => {
-    const secretHash = calculateSecretHash(
-        email,
-        process.env.COGNITO_CLIENT_ID,
-        process.env.COGNITO_CLIENT_SECRET
-    );
-
+const resendConfirmationCode = async (username) => {
+    const secretHash = calculateSecretHash(username, process.env.COGNITO_CLIENT_ID, process.env.COGNITO_CLIENT_SECRET);
     const params = {
         ClientId: process.env.COGNITO_CLIENT_ID,
-        Username: email,
+        Username: username,
         SecretHash: secretHash
     };
-
     const command = new ResendConfirmationCodeCommand(params);
     return await client.send(command);
 };
 
 const app = async (event) => {
     console.log(event);
-    const { email } = event.body ? JSON.parse(event.body) : event;
+    const { username } = event.body ? JSON.parse(event.body) : event;
     try {
-        const resendData = await resendConfirmationCode(email);
+        const resendData = await resendConfirmationCode(username);
         return { message: "Confirmation code resent", resendData, statusCode: 200 };
     } catch (err) {
         console.log(err);

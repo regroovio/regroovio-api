@@ -32,10 +32,6 @@
     "path": "./main/api/auth/set-new-password"
   },
   {
-    "name": "regroovio-verify-reset-code",
-    "path": "./main/api/auth/verify-reset-code"
-  },
-  {
     "name": "regroovio-random-tracks",
     "path": "./main/api/tracks/random-tracks"
   },

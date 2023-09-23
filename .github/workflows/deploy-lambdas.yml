@@ -35,7 +35,6 @@ on:
           - "regroovio-login"
           - "regroovio-request-password-reset"
           - "regroovio-set-new-password"
-          - "regroovio-verify-reset-code"
           - "regroovio-random-tracks"
           - "regroovio-random-images"
           - "bandcamp-wishlist"
