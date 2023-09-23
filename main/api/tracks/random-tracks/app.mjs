@@ -80,8 +80,13 @@ const processTracks = (albums) => {
                 const popularityB = b.spotify?.popularity || 0;
                 return popularityB - popularityA;
             })[0];
+
+            if (!track.url || !albumItem.artist_name || !albumItem.album_id || !albumItem.album_name || !track.name || !albumItem.image || !albumItem.key_words || !albumItem.release_date) {
+                continue;
+            }
+
             const id = track.url;
-            const popularity = track?.spotify?.popularity || null;
+            const popularity = track?.spotify?.popularity || 0;
             const artist = albumItem.artist_name;
             const album_id = albumItem.album_id;
             const album = albumItem.album_name;
