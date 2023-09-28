@@ -12,7 +12,7 @@ const sqs = new SQS({ region: process.env.REGION });
 const app = async () => {
     while (true) {
         try {
-            await sleep(5000);
+            await sleep(10000);
             const messages = await receiveMessagesFromSQS();
             if (!messages) continue;
             await processAndSaveAlbum(messages);
@@ -64,7 +64,6 @@ const receiveMessagesFromSQS = async () => {
     };
     const response = await sqs.receiveMessage(params);
     if (!response.Messages) {
-        console.log('No messages to process');
         return null;
     }
     return response.Messages;
