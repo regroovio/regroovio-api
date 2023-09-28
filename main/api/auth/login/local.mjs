@@ -3,7 +3,7 @@ const start = async () => {
     const response = await handler({
         email: "nethanielmaoz@gmail.com",
         username: "nethanielmaoz",
-        password: "Asdasdasd!123123"
+        password: "Asd!9898"
     })
     console.log(response)
 }
