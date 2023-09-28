@@ -4,6 +4,10 @@
     "path": "./main/api/auth/login"
   },
   {
+    "name": "regroovio-get-user-genres",
+    "path": "./main/api/auth/get-user-genres"
+  },
+  {
     "name": "regroovio-signup",
     "path": "./main/api/auth/signup"
   },

@@ -33,6 +33,7 @@ on:
           - "regroovio-resend-email-code"
           - "regroovio-validate-token"
           - "regroovio-login"
+          - "regroovio-get-user-genres"
           - "regroovio-request-password-reset"
           - "regroovio-set-new-password"
           - "regroovio-random-tracks"
