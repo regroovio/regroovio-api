@@ -8,7 +8,8 @@ const documentClient = DynamoDBDocument.from(dynamoDB);
 
 const app = async (event) => {
     console.log(event);
-    const minPopularity = event.queryStringParameters?.popularity || 0;
+    const { minPopularity = 0, genres = [] } = event.body ? JSON.parse(event.body) : event;
+
     try {
         let bandcampTables = await fetchBandcampTables();
         let allPopularTracks = [];
@@ -17,7 +18,7 @@ const app = async (event) => {
             console.log(tableName);
             const albums = await fetchAlbums(tableName, minPopularity);
             console.log({ message: `Albums found. [${albums.length}]` });
-            return processTracks(albums);
+            return processTracks(albums, genres);
         });
 
         const allTracks = await Promise.all(fetchTracksPromises);
@@ -33,6 +34,7 @@ const app = async (event) => {
         return { message: 'Failed to process albums', err };
     }
 };
+
 
 const fetchBandcampTables = async () => {
     try {
@@ -71,7 +73,7 @@ const fetchAlbums = async (tableName, minPopularity) => {
     }
 };
 
-const processTracks = (albums) => {
+const processTracks = (albums, genres) => {
     const tracks = [];
     for (const albumItem of albums) {
         if (albumItem.tracks.length > 0) {
@@ -80,11 +82,12 @@ const processTracks = (albums) => {
                 const popularityB = b.spotify?.popularity || 0;
                 return popularityB - popularityA;
             })[0];
-
             if (!track.url || !albumItem.artist_name || !albumItem.album_id || !albumItem.album_name || !track.name || !albumItem.image || !albumItem.key_words || !albumItem.release_date) {
                 continue;
             }
-
+            if (genres && !genres.some(genre => albumItem.key_words.includes(genre))) {
+                continue;
+            }
             const id = track.url;
             const popularity = track?.spotify?.popularity || 0;
             const artist = albumItem.artist_name;
@@ -100,5 +103,6 @@ const processTracks = (albums) => {
     }
     return tracks;
 };
+
 
 export { app }
