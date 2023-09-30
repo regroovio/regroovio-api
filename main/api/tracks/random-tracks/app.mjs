@@ -85,7 +85,7 @@ const processTracks = (albums, genres) => {
             if (!track.url || !albumItem.artist_name || !albumItem.album_id || !albumItem.album_name || !track.name || !albumItem.image || !albumItem.key_words || !albumItem.release_date) {
                 continue;
             }
-            if (genres && !genres.some(genre => albumItem.key_words.includes(genre))) {
+            if (genres.length > 0 && !genres.some(genre => albumItem.key_words.includes(genre))) {
                 continue;
             }
             const id = track.url;
@@ -103,6 +103,5 @@ const processTracks = (albums, genres) => {
     }
     return tracks;
 };
-
 
 export { app }
