@@ -8,6 +8,10 @@
     "path": "./main/api/auth/get-user-genres"
   },
   {
+    "name": "regroovio-add-user-genres",
+    "path": "./main/api/auth/add-user-genres"
+  },
+  {
     "name": "regroovio-signup",
     "path": "./main/api/auth/signup"
   },
