@@ -3,7 +3,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import axios from 'axios';
 
 const client = new S3Client({ region: process.env.REGION });
-const bucketName = `regroovio-albums`;
+const bucketName = `regroovio-album-${process.env.STAGE}-${process.env.REGION}`;
 
 function encodeS3ObjectKey(key) {
     return key

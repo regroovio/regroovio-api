@@ -4,11 +4,11 @@ import { setEnvironmentVariables } from "./common/setEnvironmentVariables.mjs";
 
 import { app } from "./app.mjs";
 
-const handler = async (event, context) => {
+const handler = async () => {
   try {
     await setEnvironmentVariables();
     const startTime = process.hrtime();
-    const result = await app(event);
+    const result = await app();
     const endTime = process.hrtime(startTime);
     const minutes = Math.floor(endTime[0] / 60);
     const seconds = (endTime[0] % 60) + (endTime[1] / 1e9);
@@ -27,4 +27,4 @@ const handler = async (event, context) => {
   }
 };
 
-export { handler };
+handler()
