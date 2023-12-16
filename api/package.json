@@ -1,0 +1,20 @@
+{
+  "name": "regroovio-api",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.mjs",
+  "license": "MIT",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "description": "",
+  "dependencies": {
+    "@aws-sdk/client-ssm": "^3.379.1",
+    "axios": "^1.6.2",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2"
+  }
+}

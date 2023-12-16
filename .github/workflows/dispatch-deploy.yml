@@ -1,20 +1,40 @@
-name: Dispatch Deploy;
+name: Dispatch Deploy
+
+run-name: Dispatch Deploy
+
 on:
   push:
     branches:
       - main
+      - dev
+
+env:
+  PREFIX: regroovio
+  IMAGE_TAG: ${{ github.sha }}-${{ github.run_id }}-${{ github.run_number }}
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
+    strategy:
+      matrix:
+        service: [api]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
         with:
+          repository: regroovio/regroovio-infrastructure
           fetch-depth: 0
+          token: ${{ secrets.GH_TOKEN }}
+          ref: main
 
       - name: Dispatch Deploy (EKS)
-        run: gh workflow run deploy-eks.yml --ref main -f stage=prod
+        run: |
+          gh workflow run deploy-eks.yml --ref main \
+            -f stage=${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }} \
+            -f tag=${{ env.IMAGE_TAG }} \
+            -f repo=${{ github.repository }} \
+            -f prefix=${{ env.PREFIX }} \
+            -f service=${{ matrix.service }}
         timeout-minutes: 1
