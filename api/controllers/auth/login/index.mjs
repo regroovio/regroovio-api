@@ -9,10 +9,10 @@ const client = new CognitoIdentityProviderClient({ region: process.env.REGION })
 const documentClient = DynamoDBDocument.from(new DynamoDB({ region: process.env.REGION }));
 
 const login = async (req, res) => {
-  const { username, password } = req.body;
+  const { email, password } = req.body;
   await loadEnvironmentVariables();
   const secretHash = calculateSecretHash(
-    username,
+    email,
     process.env.COGNITO_CLIENT_ID,
     process.env.COGNITO_CLIENT_SECRET
   );
@@ -20,7 +20,7 @@ const login = async (req, res) => {
     ClientId: process.env.COGNITO_CLIENT_ID,
     AuthFlow: "USER_PASSWORD_AUTH",
     AuthParameters: {
-      USERNAME: username,
+      USERNAME: email,
       PASSWORD: password,
       SECRET_HASH: secretHash
     },

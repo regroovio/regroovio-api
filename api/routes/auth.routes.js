@@ -1,8 +1,11 @@
 import express from 'express';
-import { body, query, validationResult } from 'express-validator';
+import { body, validationResult } from 'express-validator';
 import { login } from '../controllers/auth/login/index.mjs';
 import { signUp } from '../controllers/auth/signup/index.mjs';
 import { verifyEmailCode } from '../controllers/auth/verify-email-code/index.mjs';
+import { resendConfirmationCode } from '../controllers/auth/resend-email-code/index.mjs';
+import { requestPasswordReset } from '../controllers/auth/request-password-reset/index.mjs';
+import { validateToken } from '../controllers/auth/validate-token/index.mjs';
 
 const router = express.Router();
 
@@ -16,6 +19,7 @@ const handleValidationErrors = (req, res, next) => {
 
 router.post('/signup', [
     body('email').isEmail(),
+    body('username'),
     body('password').isLength({ min: 8 })
 ], handleValidationErrors, async (req, res) => {
     const respose = await signUp(req, res);
@@ -30,40 +34,41 @@ router.post('/verify-email-code', [
     res.status(respose.statusCode).send(respose);
 });
 
-router.get('/resend-email-code', [
+router.post('/resend-email-code', [
+    body('email').isEmail(),
 ], handleValidationErrors, async (req, res) => {
-});
-
-router.get('/post-verify-email', [
-], handleValidationErrors, async (req, res) => {
+    const respose = await resendConfirmationCode(req, res);
+    res.status(respose.statusCode).send(respose);
 });
 
 router.post('/login', [
-    body('username'),
+    body('email').isEmail(),
     body('password').isLength({ min: 5 })
 ], handleValidationErrors, async (req, res) => {
     const respose = await login(req, res);
     res.status(respose.statusCode).send(respose);
 });
 
-router.get('/request-password-reset', [
-    query('email').isEmail(),
+router.post('/request-password-reset', [
+    body('email').isEmail(),
 ], handleValidationErrors, async (req, res) => {
+    const respose = await requestPasswordReset(req, res);
+    res.status(respose.statusCode).send(respose);
 });
 
-router.get('/set-new-password', [
+router.post('/set-new-password', [
+    body('username'),
     body('password').isLength({ min: 8 }),
-    body('confirmPassword').custom((value, { req }) => {
-        if (value !== req.body.password) {
-            throw new Error('Password confirmation does not match password');
-        }
-        return true;
-    })
+    body('code').isLength({ min: 6 }),
 ], handleValidationErrors, async (req, res) => {
+    const respose = await setNewPassword(req, res);
+    res.status(respose.statusCode).send(respose);
 });
 
-router.get('/validate-token', [
+router.post('/validate-token', [
+    body('token'),
 ], handleValidationErrors, async (req, res) => {
+    const respose = await validateToken(req, res);
+    res.status(respose.statusCode).send(respose);
 });
-
 export default router;

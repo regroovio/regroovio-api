@@ -13,7 +13,7 @@ env:
   IMAGE_TAG: ${{ github.sha }}-${{ github.run_id }}-${{ github.run_number }}
 
 jobs:
-  deploy:
+  EKS:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -39,7 +39,7 @@ jobs:
             -f service=${{ matrix.service }}
         timeout-minutes: 1
 
-  deploy_lambdas:
+  Lambdas:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.GH_TOKEN }}

@@ -1,26 +1,21 @@
-// resend-email-code/app.mjs
-
 import { CognitoIdentityProviderClient, ResendConfirmationCodeCommand } from "@aws-sdk/client-cognito-identity-provider";
-import calculateSecretHash from "./common/secretHash.mjs";
+import calculateSecretHash from "../../../helpers/secretHash.mjs";
+import loadEnvironmentVariables from "../../../helpers/environment.js";
 
 const client = new CognitoIdentityProviderClient({ region: process.env.REGION });
 
-const resendConfirmationCode = async (username) => {
-  const secretHash = calculateSecretHash(username, process.env.COGNITO_CLIENT_ID, process.env.COGNITO_CLIENT_SECRET);
-  const params = {
-    ClientId: process.env.COGNITO_CLIENT_ID,
-    Username: username,
-    SecretHash: secretHash
-  };
-  const command = new ResendConfirmationCodeCommand(params);
-  return await client.send(command);
-};
-
-const app = async (event) => {
-  console.log(event);
-  const { username } = event.body ? JSON.parse(event.body) : event;
+const resendConfirmationCode = async (req, res) => {
+  const { email } = req.body;
+  await loadEnvironmentVariables();
   try {
-    const resendData = await resendConfirmationCode(username);
+    const secretHash = calculateSecretHash(email, process.env.COGNITO_CLIENT_ID, process.env.COGNITO_CLIENT_SECRET);
+    const params = {
+      ClientId: process.env.COGNITO_CLIENT_ID,
+      Username: email,
+      SecretHash: secretHash
+    };
+    const command = new ResendConfirmationCodeCommand(params);
+    const resendData = await client.send(command);
     return { message: "Confirmation code resent", resendData, statusCode: 200 };
   } catch (err) {
     console.log(err);
@@ -28,4 +23,4 @@ const app = async (event) => {
   }
 };
 
-export { app };
+export { resendConfirmationCode };

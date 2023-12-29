@@ -3,8 +3,8 @@ import calculateSecretHash from "./common/secretHash.mjs";
 
 const client = new CognitoIdentityProviderClient({ region: process.env.REGION });
 
-const app = async (event) => {
-  const { email, username, password, code } = event.body ? JSON.parse(event.body) : event;
+const setNewPassword = async (req, res) => {
+  const { username, password, code } = req.body;
   try {
     const secretHash = calculateSecretHash(username, process.env.COGNITO_CLIENT_ID, process.env.COGNITO_CLIENT_SECRET);
     const params = {
@@ -15,7 +15,6 @@ const app = async (event) => {
       ConfirmationCode: code,
     };
     const response = await client.send(new ConfirmForgotPasswordCommand(params));
-    console.log("Code verified for:", email);
     return { message: "Code verified", statusCode: 200 };
   } catch (err) {
     console.log(err);
@@ -23,4 +22,4 @@ const app = async (event) => {
   }
 };
 
-export { app };
+export { setNewPassword };
