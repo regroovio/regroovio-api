@@ -38,3 +38,11 @@ jobs:
             -f prefix=${{ env.PREFIX }} \
             -f service=${{ matrix.service }}
         timeout-minutes: 1
+
+      - name: Dispatch Deploy (Lambdas)
+        run: |
+          gh workflow run deploy-lambdas.yml --ref main \
+            -f stage=${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }} \
+            -f repo=${{ github.repository }} \
+            -f functions=all
+        timeout-minutes: 1

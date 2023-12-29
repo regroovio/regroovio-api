@@ -1,30 +1,37 @@
-// index.mjs
+import { CognitoIdentityProviderClient, SignUpCommand } from "@aws-sdk/client-cognito-identity-provider";
+import calculateSecretHash from "../../../helpers/secretHash.mjs";
+import loadEnvironmentVariables from "../../../helpers/environment.js";
 
-import { setEnvironmentVariables } from "./common/setEnvironmentVariables.mjs";
+const client = new CognitoIdentityProviderClient({ region: process.env.REGION });
 
-import { app } from "./app.mjs";
-
-const handler = async (event, context) => {
+const signUp = async (req, res) => {
+  const { email, username, password } = req.body;
+  await loadEnvironmentVariables();
   try {
-    await setEnvironmentVariables();
-    const startTime = process.hrtime();
-    const result = await app(event);
-    const endTime = process.hrtime(startTime);
-    const minutes = Math.floor(endTime[0] / 60);
-    const seconds = (endTime[0] % 60) + (endTime[1] / 1e9);
-
-    console.log(`App runtime: ${minutes}m ${seconds.toFixed(2)}s`);
-
-    return {
-      body: JSON.stringify(result),
+    const secretHash = calculateSecretHash(username, process.env.COGNITO_CLIENT_ID, process.env.COGNITO_CLIENT_SECRET);
+    const params = {
+      ClientId: process.env.COGNITO_CLIENT_ID,
+      SecretHash: secretHash,
+      Username: username,
+      Password: password,
+      UserAttributes: [
+        {
+          Name: "email",
+          Value: email,
+        },
+        {
+          Name: "preferred_username",
+          Value: username,
+        }
+      ],
     };
-  } catch (error) {
-    console.log(`Error handler: ${error}`);
-    return {
-      body: JSON.stringify({ error: error }),
-
-    };
+    const command = new SignUpCommand(params);
+    const signupData = await client.send(command);
+    return { message: "Signed up", signupData, statusCode: 200 };
+  } catch (err) {
+    console.log(err);
+    return { message: err.message, statusCode: 400 };
   }
 };
 
-export { handler };
+export { signUp };

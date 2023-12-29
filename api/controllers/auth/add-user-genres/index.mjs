@@ -1,30 +1,42 @@
-// index.mjs
+import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
+import { DynamoDB } from "@aws-sdk/client-dynamodb";
 
-import { setEnvironmentVariables } from "./common/setEnvironmentVariables.mjs";
+const documentClient = DynamoDBDocument.from(new DynamoDB({ region: process.env.REGION }));
 
-import { app } from "./app.mjs";
-
-const handler = async (event, context) => {
-  try {
-    await setEnvironmentVariables();
-    const startTime = process.hrtime();
-    const result = await app(event, context);
-    const endTime = process.hrtime(startTime);
-    const minutes = Math.floor(endTime[0] / 60);
-    const seconds = (endTime[0] % 60) + (endTime[1] / 1e9);
-
-    console.log(`App runtime: ${minutes}m ${seconds.toFixed(2)}s`);
-
-    return {
-      body: JSON.stringify(result),
-    };
-  } catch (error) {
-    console.log(`Error handler: ${error}`);
-    return {
-      body: JSON.stringify({ error: error }),
-
-    };
+const app = async (event, context) => {
+  console.log(event);
+  const { user_id, genres } = event.body ? JSON.parse(event.body) : event;
+  if (user_id && genres) {
+    try {
+      await setUserGenresInDB(user_id, genres);
+      return { message: "Genres updated successfully", statusCode: 200 };
+    } catch (error) {
+      console.error('Error setting user genres in DynamoDB: ', error);
+      return { message: error.message, statusCode: 400 };
+    }
+  } else {
+    console.error('User ID or genres not provided');
+    return { message: 'User ID or genres not provided', statusCode: 400 };
   }
 };
 
-export { handler };
+const setUserGenresInDB = async (user_id, genres) => {
+  const params = {
+    TableName: `regroovio-users-${process.env.STAGE}`,
+    Key: {
+      user_id: user_id
+    },
+    UpdateExpression: "set genres = :g",
+    ExpressionAttributeValues: {
+      ":g": genres
+    }
+  };
+  try {
+    await documentClient.update(params);
+  } catch (error) {
+    console.error('Error setting user genres in DynamoDB: ', error);
+    throw error;
+  }
+};
+
+export { app };

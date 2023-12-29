@@ -1,0 +1,6 @@
+[
+  {
+    "name": "regroovio-post-verify-email",
+    "path": "./lambdas/post-verify-email"
+  }
+]

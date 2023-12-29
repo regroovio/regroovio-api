@@ -1,6 +1,6 @@
 import express from 'express';
 import authRoutes from './routes/auth.routes.js'
-import trackRoutes from './routes/track.routes.js'
+import trackRoutes from './routes/tracks.routes.js'
 
 const app = express();
 app.use(express.urlencoded({ extended: true }));

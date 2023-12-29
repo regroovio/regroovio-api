@@ -1,30 +1,26 @@
-// index.mjs
+import { CognitoIdentityProviderClient, ConfirmForgotPasswordCommand } from "@aws-sdk/client-cognito-identity-provider";
+import calculateSecretHash from "./common/secretHash.mjs";
 
-import { setEnvironmentVariables } from "./common/setEnvironmentVariables.mjs";
+const client = new CognitoIdentityProviderClient({ region: process.env.REGION });
 
-import { app } from "./app.mjs";
-
-const handler = async (event, context) => {
+const app = async (event) => {
+  const { email, username, password, code } = event.body ? JSON.parse(event.body) : event;
   try {
-    await setEnvironmentVariables();
-    const startTime = process.hrtime();
-    const result = await app(event);
-    const endTime = process.hrtime(startTime);
-    const minutes = Math.floor(endTime[0] / 60);
-    const seconds = (endTime[0] % 60) + (endTime[1] / 1e9);
-
-    console.log(`App runtime: ${minutes}m ${seconds.toFixed(2)}s`);
-
-    return {
-      body: JSON.stringify(result),
+    const secretHash = calculateSecretHash(username, process.env.COGNITO_CLIENT_ID, process.env.COGNITO_CLIENT_SECRET);
+    const params = {
+      ClientId: process.env.COGNITO_CLIENT_ID,
+      SecretHash: secretHash,
+      Username: username,
+      Password: password,
+      ConfirmationCode: code,
     };
-  } catch (error) {
-    console.log(`Error handler: ${error}`);
-    return {
-      body: JSON.stringify({ error: error }),
-
-    };
+    const response = await client.send(new ConfirmForgotPasswordCommand(params));
+    console.log("Code verified for:", email);
+    return { message: "Code verified", statusCode: 200 };
+  } catch (err) {
+    console.log(err);
+    return { message: err.message, statusCode: 400 };
   }
 };
 
-export { handler };
+export { app };

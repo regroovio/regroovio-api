@@ -1,30 +1,69 @@
-// index.mjs
+import { CognitoIdentityProviderClient, InitiateAuthCommand } from "@aws-sdk/client-cognito-identity-provider";
+import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
+import { DynamoDB } from "@aws-sdk/client-dynamodb";
+import loadEnvironmentVariables from "../../../helpers/environment.js";
+import calculateSecretHash from "../../../helpers/secretHash.mjs";
 
-import { setEnvironmentVariables } from "./common/setEnvironmentVariables.mjs";
+const client = new CognitoIdentityProviderClient({ region: process.env.REGION });
 
-import { app } from "./app.mjs";
+const documentClient = DynamoDBDocument.from(new DynamoDB({ region: process.env.REGION }));
 
-const handler = async (event, context) => {
+const login = async (req, res) => {
+  const { username, password } = req.body;
+  await loadEnvironmentVariables();
+  const secretHash = calculateSecretHash(
+    username,
+    process.env.COGNITO_CLIENT_ID,
+    process.env.COGNITO_CLIENT_SECRET
+  );
+  const params = {
+    ClientId: process.env.COGNITO_CLIENT_ID,
+    AuthFlow: "USER_PASSWORD_AUTH",
+    AuthParameters: {
+      USERNAME: username,
+      PASSWORD: password,
+      SECRET_HASH: secretHash
+    },
+  };
+  const command = new InitiateAuthCommand(params);
   try {
-    await setEnvironmentVariables();
-    const startTime = process.hrtime();
-    const result = await app(event);
-    const endTime = process.hrtime(startTime);
-    const minutes = Math.floor(endTime[0] / 60);
-    const seconds = (endTime[0] % 60) + (endTime[1] / 1e9);
-
-    console.log(`App runtime: ${minutes}m ${seconds.toFixed(2)}s`);
-
+    const loginData = await client.send(command);
+    const userId = await getUserIdFromDB(email);
     return {
-      body: JSON.stringify(result),
+      message: "Logged in",
+      data: {
+        ...loginData,
+        user_id: userId
+      },
+      statusCode: 200
     };
-  } catch (error) {
-    console.log(`Error handler: ${error}`);
-    return {
-      body: JSON.stringify({ error: error }),
-
-    };
+  } catch (err) {
+    console.log(err);
+    return { message: err.message, statusCode: 400 };
   }
 };
 
-export { handler };
+const getUserIdFromDB = async (email) => {
+  const params = {
+    TableName: `regroovio-users-${process.env.STAGE}`,
+    FilterExpression: "email = :emailValue",
+    ExpressionAttributeValues: {
+      ":emailValue": email
+    }
+  };
+
+  try {
+    const result = await documentClient.scan(params);
+    if (result.Items && result.Items.length > 0) {
+      return result.Items[0].user_id;
+    } else {
+      console.error("User not found in DynamoDB for email:", email);
+      return null;
+    }
+  } catch (error) {
+    console.error('Error fetching user_id from DynamoDB: ', error);
+    throw error;
+  }
+};
+
+export { login };

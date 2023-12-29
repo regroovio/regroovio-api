@@ -1,30 +1,31 @@
-// index.mjs
+import { CognitoIdentityProviderClient, ConfirmSignUpCommand } from "@aws-sdk/client-cognito-identity-provider";
+import calculateSecretHash from "../../../helpers/secretHash.mjs";
+import loadEnvironmentVariables from "../../../helpers/environment.js";
 
-import { setEnvironmentVariables } from "./common/setEnvironmentVariables.mjs";
+const client = new CognitoIdentityProviderClient({ region: process.env.REGION });
 
-import { app } from "./app.mjs";
-
-const handler = async (event, context) => {
+const verifyEmailCode = async (req, res) => {
+  const { username, confirmationCode } = req.body;
+  await loadEnvironmentVariables();
+  const secretHash = calculateSecretHash(
+    username,
+    process.env.COGNITO_CLIENT_ID,
+    process.env.COGNITO_CLIENT_SECRET
+  );
+  const params = {
+    ClientId: process.env.COGNITO_CLIENT_ID,
+    Username: username,
+    ConfirmationCode: confirmationCode,
+    SecretHash: secretHash,
+  };
+  const command = new ConfirmSignUpCommand(params);
   try {
-    await setEnvironmentVariables();
-    const startTime = process.hrtime();
-    const result = await app(event);
-    const endTime = process.hrtime(startTime);
-    const minutes = Math.floor(endTime[0] / 60);
-    const seconds = (endTime[0] % 60) + (endTime[1] / 1e9);
-
-    console.log(`App runtime: ${minutes}m ${seconds.toFixed(2)}s`);
-
-    return {
-      body: JSON.stringify(result),
-    };
-  } catch (error) {
-    console.log(`Error handler: ${error}`);
-    return {
-      body: JSON.stringify({ error: error }),
-
-    };
+    const response = await client.send(command);
+    return { message: "Email confirmed", data: response, statusCode: 200 };
+  } catch (err) {
+    console.log(err);
+    return { message: err.message, statusCode: 400 };
   }
 };
 
-export { handler };
+export { verifyEmailCode };

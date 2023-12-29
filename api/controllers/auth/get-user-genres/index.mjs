@@ -1,30 +1,41 @@
-// index.mjs
+import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
+import { DynamoDB } from "@aws-sdk/client-dynamodb";
 
-import { setEnvironmentVariables } from "./common/setEnvironmentVariables.mjs";
+const documentClient = DynamoDBDocument.from(new DynamoDB({ region: process.env.REGION }));
 
-import { app } from "./app.mjs";
+const app = async (event, context) => {
+  console.log(event);
+  const { user_id } = event.body ? JSON.parse(event.body) : event;
+  if (user_id) {
+    try {
+      const userGenres = await fetchUserGenresFromDB(user_id);
+      return { data: userGenres, statusCode: 200 };
+    } catch (error) {
+      console.error('Error fetching user genres from DynamoDB: ', error);
+      return { message: error.message, statusCode: 400 };
+    }
+  } else {
+    console.error('User ID not provided');
+    return { message: 'User ID not provided', statusCode: 400 };
 
-const handler = async (event, context) => {
-  try {
-    await setEnvironmentVariables();
-    const startTime = process.hrtime();
-    const result = await app(event, context);
-    const endTime = process.hrtime(startTime);
-    const minutes = Math.floor(endTime[0] / 60);
-    const seconds = (endTime[0] % 60) + (endTime[1] / 1e9);
-
-    console.log(`App runtime: ${minutes}m ${seconds.toFixed(2)}s`);
-
-    return {
-      body: JSON.stringify(result),
-    };
-  } catch (error) {
-    console.log(`Error handler: ${error}`);
-    return {
-      body: JSON.stringify({ error: error }),
-
-    };
   }
 };
 
-export { handler };
+const fetchUserGenresFromDB = async (user_id) => {
+  const params = {
+    TableName: `regroovio-users-${process.env.STAGE}`,
+    Key: {
+      user_id: user_id
+    }
+  };
+  try {
+    const result = await documentClient.get(params);
+    const genres = result.Item.genres ? result.Item.genres : [];
+    return genres;
+  } catch (error) {
+    console.error('Error fetching user genres from DynamoDB: ', error);
+    throw error;
+  }
+};
+
+export { app };

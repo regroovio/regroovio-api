@@ -3,12 +3,10 @@ import loadEnvironmentVariables from '../helpers/environment.js';
 
 const router = express.Router();
 
-router.post('/add/genre', async (req, res) => {
-    await loadEnvironmentVariables();
+router.post('/genre', async (req, res) => {
 });
 
-router.get('/get/genre', async (req, res) => {
-    await loadEnvironmentVariables();
+router.get('/genre', async (req, res) => {
 });
 
 

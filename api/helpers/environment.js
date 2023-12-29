@@ -1,4 +1,6 @@
 import { SSMClient, GetParameterCommand } from "@aws-sdk/client-ssm";
+import dotenv from 'dotenv';
+dotenv.config();
 
 const loadEnvironmentVariables = async () => {
     const client = new SSMClient({ region: process.env.REGION });

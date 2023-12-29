@@ -1,30 +1,55 @@
-// index.mjs
+import { DynamoDB } from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
 
-import { setEnvironmentVariables } from "./common/setEnvironmentVariables.mjs";
+const dynamo_db = new DynamoDB({ region: process.env.REGION });
+const document_client = DynamoDBDocument.from(dynamo_db);
 
-import { app } from "./app.mjs";
-
-const handler = async (event, context) => {
+const getRandomImages = async (req, res) => {
   try {
-    await setEnvironmentVariables();
-    const startTime = process.hrtime();
-    const result = await app(event);
-    const endTime = process.hrtime(startTime);
-    const minutes = Math.floor(endTime[0] / 60);
-    const seconds = (endTime[0] % 60) + (endTime[1] / 1e9);
-
-    console.log(`App runtime: ${minutes}m ${seconds.toFixed(2)}s`);
-
-    return {
-      body: JSON.stringify(result),
-    };
-  } catch (error) {
-    console.log(`Error handler: ${error}`);
-    return {
-      body: JSON.stringify({ error: error }),
-
-    };
+    const minPopularity = req.query.minPopularity || 0;
+    const bandcampTables = await fetchBandcampTables();
+    const allImageUrls = await Promise.all(bandcampTables.map(tableName => fetchAndExtractImageUrls(tableName, minPopularity)));
+    return allImageUrls.flat();
+  } catch (err) {
+    console.error('Error processing albums:', err);
+    throw new Error('Failed to process albums');
   }
 };
 
-export { handler };
+const fetchBandcampTables = async () => {
+  let params = {};
+  let bandcampTables = [];
+  let result;
+
+  do {
+    result = await dynamo_db.listTables(params);
+    bandcampTables.push(...result.TableNames.filter(name => !name.includes("regroovio-users") && name.includes(process.env.STAGE)));
+    params.ExclusiveStartTableName = result.LastEvaluatedTableName;
+  } while (result.LastEvaluatedTableName);
+
+  return bandcampTables;
+};
+
+const fetchAndExtractImageUrls = async (tableName, minPopularity) => {
+  const albums = await fetchAlbums(tableName, minPopularity);
+  return extractImageUrls(albums);
+};
+
+const fetchAlbums = async (tableName, minPopularity) => {
+  const params = {
+    TableName: tableName,
+    FilterExpression: "popularity >= :minPopularity",
+    ExpressionAttributeValues: {
+      ":minPopularity": minPopularity
+    },
+    ScanIndexForward: false,
+    Limit: 50
+  };
+  return (await document_client.scan(params)).Items;
+};
+
+const extractImageUrls = (albums) => {
+  return albums.map(albumItem => albumItem.image).filter(Boolean);
+};
+
+export { getRandomImages };
