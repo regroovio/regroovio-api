@@ -39,6 +39,19 @@ jobs:
             -f service=${{ matrix.service }}
         timeout-minutes: 1
 
+  deploy_lambdas:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          repository: regroovio/regroovio-infrastructure
+          fetch-depth: 0
+          token: ${{ secrets.GH_TOKEN }}
+          ref: main
+
       - name: Dispatch Deploy (Lambdas)
         run: |
           gh workflow run deploy-lambdas.yml --ref main \
