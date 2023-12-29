@@ -45,4 +45,5 @@ jobs:
             -f stage=${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }} \
             -f repo=${{ github.repository }} \
             -f functions=all
+
         timeout-minutes: 1
