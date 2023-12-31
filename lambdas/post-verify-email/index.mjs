@@ -19,7 +19,7 @@ const handler = async (event, context) => {
       body: JSON.stringify(result),
     };
   } catch (error) {
-    console.log(`Error handler: ${error}`);
+    console.error(`Error handler: ${error}`);
     return {
       body: JSON.stringify({ error: error }),
 

@@ -12,7 +12,7 @@ const validateToken = async (req, res) => {
     const response = await client.send(command);
     return { isValid: true, data: response, statusCode: 200 };
   } catch (err) {
-    console.log(err);
+    console.error(err);
     return { isValid: false, message: err.message, statusCode: 400 };
   }
 };

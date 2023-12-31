@@ -6,12 +6,10 @@ import { DynamoDB } from "@aws-sdk/client-dynamodb";
 const documentClient = DynamoDBDocument.from(new DynamoDB({ region: process.env.REGION }));
 
 const app = async (event, context) => {
-    console.log(event);
     const { userAttributes } = event.request || event;
     const { sub, email, preferred_username: username } = userAttributes;
 
     if (email && username) {
-        console.log('sub: ', sub, 'email: ', email, 'username: ', username);
         const success = await addUserToDB({ sub, email, username });
         if (success) {
             context.succeed(event);
@@ -36,7 +34,6 @@ const addUserToDB = async ({ sub, email, username }) => {
     };
     try {
         await documentClient.put(params);
-        console.log('User added to DynamoDB');
         return true;
     } catch (error) {
         console.error('Error adding user to DynamoDB: ', error);

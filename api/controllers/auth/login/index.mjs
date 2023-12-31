@@ -38,7 +38,7 @@ const login = async (req, res) => {
       statusCode: 200
     };
   } catch (err) {
-    console.log(err);
+    console.error(err);
     return { message: err.message, statusCode: 400 };
   }
 };

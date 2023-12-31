@@ -12,10 +12,9 @@ const requestPasswordReset = async (req, res) => {
       Username: email
     };
     const response = await client.send(new AdminResetUserPasswordCommand(params));
-    console.log("Password reset for:", email);
     return { message: "A password reset code has been sent to your email", data: response, statusCode: 200 };
   } catch (err) {
-    console.log(err);
+    console.error(err);
     return { message: err.message, statusCode: 400 };
   }
 };

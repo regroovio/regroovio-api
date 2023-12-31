@@ -29,7 +29,7 @@ const signUp = async (req, res) => {
     const signupData = await client.send(command);
     return { message: "Signed up", signupData, statusCode: 200 };
   } catch (err) {
-    console.log(err);
+    console.error(err);
     return { message: err.message, statusCode: 400 };
   }
 };

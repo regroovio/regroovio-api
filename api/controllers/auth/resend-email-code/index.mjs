@@ -18,7 +18,7 @@ const resendConfirmationCode = async (req, res) => {
     const resendData = await client.send(command);
     return { message: "Confirmation code resent", resendData, statusCode: 200 };
   } catch (err) {
-    console.log(err);
+    console.error(err);
     return { message: err.message, statusCode: 400 };
   }
 };

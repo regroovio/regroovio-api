@@ -22,10 +22,9 @@ const getNewReleases = async (req, res) => {
       allPopularTracks.push(...tracks);
     });
 
-    console.log({ message: `Total tracks found. [${allPopularTracks.length}]` });
     return allPopularTracks
   } catch (err) {
-    console.log('Error processing albums:', err);
+    console.error('Error processing albums:', err);
     return { message: 'Failed to process albums', err };
   }
 };
@@ -44,7 +43,7 @@ const fetchBandcampTables = async () => {
     } while (result.LastEvaluatedTableName);
     return bandcampTables;
   } catch (err) {
-    console.log(`Error listing Bandcamp tables: ${err}`);
+    console.error(`Error listing Bandcamp tables: ${err}`);
     return [];
   }
 };
@@ -68,7 +67,7 @@ const fetchAlbums = async (tableName, minPopularity, daysAgo) => {
     const result = await documentClient.scan(params);
     return result.Items
   } catch (err) {
-    console.log(`Error fetching albums: ${err}`);
+    console.error(`Error fetching albums: ${err}`);
     return [];
   }
 };

@@ -23,7 +23,7 @@ const verifyEmailCode = async (req, res) => {
     const response = await client.send(command);
     return { message: "Email confirmed", data: response, statusCode: 200 };
   } catch (err) {
-    console.log(err);
+    console.error(err);
     return { message: err.message, statusCode: 400 };
   }
 };

@@ -19,7 +19,7 @@ const setEnvironmentVariables = async () => {
         const parsedData = JSON.parse(data.Parameter.Value);
         process.env = { ...process.env, ...parsedData };
     } catch (error) {
-        console.log(error);
+        console.error(error);
     }
 }
 
